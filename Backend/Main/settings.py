@@ -40,10 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'Category',
     'Product',
-    'Color',
-    'Emoji',
     'Order',
-    'Sales',
+    "Auxiliary",
 
 ]
 

@@ -26,7 +26,7 @@ class ColorView(APIView):
 
     def put(self, request, id):
         try:
-            color = Color.objects.get(id=id)
+            color = Color.objects.get(ID=id)
         except Color.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -38,7 +38,7 @@ class ColorView(APIView):
 
     def delete(self, request, id):
         try:
-            color = Color.objects.get(id=id)
+            color = Color.objects.get(ID=id)
         except Color.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -65,7 +65,7 @@ class EmojiView(APIView):
 
     def put(self, request, id):
         try:
-            emoji = Emoji.objects.get(id=id)
+            emoji = Emoji.objects.get(ID=id)
         except Emoji.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -77,7 +77,7 @@ class EmojiView(APIView):
 
     def delete(self, request, id):
         try:
-            emoji = Emoji.objects.get(id=id)
+            emoji = Emoji.objects.get(ID=id)
         except Emoji.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 

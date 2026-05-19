@@ -1,0 +1,59 @@
+{
+  "info": {
+    "name": "Billing And Sales - Backend API",
+    "_postman_id": "b46c1d6a-0000-4000-8000-000000000000",
+    "description": "Collection for Product and Order endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "http://{{HOST}}/products/", "host": ["http://{{HOST}}"], "path": ["products", ""] }
+          }
+        },
+        {
+          "name": "Get Product",
+          "request": { "method": "GET", "url": { "raw": "http://{{HOST}}/products/:id/", "host": ["http://{{HOST}}"], "path": ["products", ":id", ""] } }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"Name\": \"Widget\",\n  \"Price\": \"199.99\",\n  \"category\": 2\n}" },
+            "url": { "raw": "http://{{HOST}}/products/create/", "host": ["http://{{HOST}}"], "path": ["products", "create", ""] }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"Name\": \"Widget Pro\",\n  \"Price\": \"219.99\",\n  \"ProductCategory\": 3\n}" },
+            "url": { "raw": "http://{{HOST}}/products/:id/update/", "host": ["http://{{HOST}}"], "path": ["products", ":id", "update", ""] }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": { "method": "DELETE", "url": { "raw": "http://{{HOST}}/products/:id/delete/", "host": ["http://{{HOST}}"], "path": ["products", ":id", "delete", ""] } }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        { "name": "List Orders", "request": { "method": "GET", "url": { "raw": "http://{{HOST}}/orders/", "host": ["http://{{HOST}}"], "path": ["orders", ""] } } },
+        { "name": "Create Order", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ColorId\": 1,\n  \"TotalQuantity\": 0,\n  \"UpiAmount\": \"0.00\",\n  \"CashAmount\": \"0.00\",\n  \"Completed\": false\n}" }, "url": { "raw": "http://{{HOST}}/orders/create/", "host": ["http://{{HOST}}"], "path": ["orders", "create", ""] } } },
+        { "name": "Update Order", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"OrderItems\": [ { \"ProductID\": 5, \"Quantity\": 2, \"PriceAtPurchase\": \"49.99\" } ],\n  \"TotalQuantity\": 2\n}" }, "url": { "raw": "http://{{HOST}}/orders/:id/update/", "host": ["http://{{HOST}}"], "path": ["orders", ":id", "update", ""] } } },
+        { "name": "Patch Order", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{ \"Completed\": true }" }, "url": { "raw": "http://{{HOST}}/orders/:id/patch/", "host": ["http://{{HOST}}"], "path": ["orders", ":id", "patch", ""] } } },
+        { "name": "Delete Order", "request": { "method": "DELETE", "url": { "raw": "http://{{HOST}}/orders/:id/delete/", "host": ["http://{{HOST}}"], "path": ["orders", ":id", "delete", ""] } } }
+      ]
+    }
+  ]
+}

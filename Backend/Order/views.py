@@ -4,12 +4,26 @@ from rest_framework import status
 from .models import Order,OrderItem
 from .serializers import OrderSerializer, OrderItemSerializer
 
+from django.utils import timezone
 
 class OrderList(APIView):
+
     def get(self, request):
-        orders = Order.objects.all()
+        orders = Order.objects.filter(CreatedAt__date=timezone.now().date(), Completed=True)
+        orders_count = orders.count()
+        total_upi = total_cash = 0
+        for order in orders:
+            total_upi += order.UpiAmount
+            total_cash += order.CashAmount
+        total_amount = total_upi + total_cash
         serializer = OrderSerializer(orders, many=True)
-        return Response(serializer.data)
+        return Response({
+            "orders": serializer.data,
+            "orders_count": orders_count,
+            "total_upi": total_upi,
+            "total_cash": total_cash,
+            "total_amount": total_amount
+        })
 
     def post(self, request):
         serializer = OrderSerializer(data=request.data)
@@ -26,7 +40,6 @@ class OrderList(APIView):
                 {"error": "Order not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
-
         items = request.data.pop("OrderItems", [])
 
         serializer = OrderSerializer(order, data=request.data, partial=True)

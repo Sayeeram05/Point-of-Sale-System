@@ -23,22 +23,41 @@ Serializers: `OrderSerializer` includes `OrderItems` as a nested, read-only list
   - Example response:
 
 ```json
-[
-  {
-    "ID": 1,
-    "ColorId": 2,
-    "EmojiId": 3,
-    "TotalQuantity": 4,
-    "UpiAmount": "123.45",
-    "CashAmount": "0.00",
-    "Completed": false,
-    "CreatedAt": "2024-04-01T12:34:56Z",
-    "UpdatedAt": "2024-04-01T12:34:56Z",
-    "OrderItems": [
-      { "ID": 10, "OrderId": 1, "ProductID": 5, "Quantity": 2, "PriceAtPurchase": "49.99" }
-    ]
-  }
-]
+{
+    "orders": [
+        {
+            "ID": 2,
+            "OrderItems": [
+                {
+                    "ID": 11,
+                    "Quantity": 2,
+                    "PriceAtPurchase": "50.00",
+                    "OrderId": 2,
+                    "ProductID": 1
+                },
+                {
+                    "ID": 12,
+                    "Quantity": 3,
+                    "PriceAtPurchase": "50.00",
+                    "OrderId": 2,
+                    "ProductID": 2
+                }
+            ],
+            "TotalQuantity": 5,
+            "UpiAmount": "250.00",
+            "CashAmount": "100.00",
+            "Completed": true,
+            "CreatedAt": "2026-05-19T08:11:09.427994+05:30",
+            "UpdatedAt": "2026-05-19T11:25:55.342208+05:30",
+            "ColorId": 1,
+            "EmojiId": 1
+        }
+    ],
+    "orders_count": 1,
+    "total_upi_amount": 250.0,
+    "total_cash_amount": 100.0,
+    "total_amount": 350.0
+}
 ```
 
 - POST /orders/create/

@@ -9,6 +9,14 @@ Base paths (replace HOST accordingly):
 - `PATCH  /orders/<id>/patch/`
 - `DELETE /orders/<id>/delete/`
 
+Query parameters (for `GET /orders/`):
+- `date`: optional string to request grouped analytics. Supported values:
+  - `today`, `yesterday` (hourly grouping)
+  - `this_week` (daily grouping)
+  - `this_month` (weekly grouping)
+  - `this_year` (monthly grouping)
+  - `custom` (requires `start_date` and `end_date` in `YYYY-MM-DD` — grouping chosen based on range)
+
 ## Models
 
 - Order: `ID`, `ColorId` (FK), `EmojiId` (FK), `TotalQuantity`, `UpiAmount`, `CashAmount`, `Completed`, `CreatedAt`, `UpdatedAt`
@@ -19,55 +27,36 @@ Serializers: `OrderSerializer` includes `OrderItems` as a nested, read-only list
 ## Endpoints
 
 - GET /orders/
-  - Returns: 200 OK with JSON array of orders (each includes `OrderItems`).
-  - Example response:
+  - Returns: 200 OK with a JSON object containing `summary` (totals) and `analytics` (grouped metrics) when `date` is used. Without `date` the endpoint will still return a `summary` and an empty or null `analytics` array.
+  - Response shape example (analytics present):
 
 ```json
 {
-    "orders": [
-        {
-            "ID": 2,
-            "OrderItems": [
-                {
-                    "ID": 11,
-                    "Quantity": 2,
-                    "PriceAtPurchase": "50.00",
-                    "OrderId": 2,
-                    "ProductID": 1
-                },
-                {
-                    "ID": 12,
-                    "Quantity": 3,
-                    "PriceAtPurchase": "50.00",
-                    "OrderId": 2,
-                    "ProductID": 2
-                }
-            ],
-            "TotalQuantity": 5,
-            "UpiAmount": "250.00",
-            "CashAmount": "100.00",
-            "Completed": true,
-            "CreatedAt": "2026-05-19T08:11:09.427994+05:30",
-            "UpdatedAt": "2026-05-19T11:25:55.342208+05:30",
-            "ColorId": 1,
-            "EmojiId": 1
-        }
-    ],
+  "summary": {
     "orders_count": 1,
-    "total_upi_amount": 250.0,
-    "total_cash_amount": 100.0,
+    "total_upi": 250.0,
+    "total_cash": 100.0,
     "total_amount": 350.0
+  },
+  "analytics": [
+    {
+      "period": "2026-05-19T08:00:00",
+      "orders_count": 1,
+      "total_upi": 250.0,
+      "total_cash": 100.0
+    }
+  ]
 }
 ```
 
 - POST /orders/create/
-  - Creates an Order record. Nested `OrderItems` are ignored on create (read-only).
+  - Creates an Order record. Nested `OrderItems` are ignored on create (read-only); to add items use the `PUT /orders/<id>/update/` endpoint after creating the order.
   - Request body keys (example): `ColorId`, `EmojiId`, `TotalQuantity`, `UpiAmount`, `CashAmount`, `Completed`.
   - Success: 201 Created with created order JSON.
 
 - PUT /orders/<id>/update/
   - Updates order and optionally replaces `OrderItems`.
-  - If `OrderItems` array is provided, the server deletes existing items and recreates items from the array.
+  - If `OrderItems` array is provided, the server deletes existing items for that order and recreates them from the provided array (this is a full replace operation). Send the complete desired final items list.
   - Each item must include `ProductID`, `Quantity`, `PriceAtPurchase`. The server sets `OrderId` automatically.
   - Example request body:
 
@@ -116,6 +105,12 @@ curl -X POST http://HOST/orders/create/ \
 curl -X PUT http://HOST/orders/1/update/ \
   -H "Content-Type: application/json" \
   -d '{"OrderItems":[{"ProductID":5,"Quantity":2,"PriceAtPurchase":"49.99"}], "TotalQuantity":2}'
+```
+
+ - Example: get analytics for today:
+
+```bash
+curl -X GET "http://HOST/orders/?date=today"
 ```
 
 ## Files

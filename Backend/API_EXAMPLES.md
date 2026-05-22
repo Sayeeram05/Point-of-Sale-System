@@ -44,6 +44,11 @@ curl -X DELETE http://HOST/products/5/delete/
 
 ```bash
 curl -X GET http://HOST/orders/
+# With analytics: hourly/daily/week/month/year grouping
+curl -X GET "http://HOST/orders/?date=today"
+curl -X GET "http://HOST/orders/?date=this_week"
+# Custom range (requires start_date and end_date in YYYY-MM-DD)
+curl -X GET "http://HOST/orders/?date=custom&start_date=2026-05-01&end_date=2026-05-07"
 ```
 
 -- Create order (no items)

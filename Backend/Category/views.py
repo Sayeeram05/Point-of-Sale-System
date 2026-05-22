@@ -3,13 +3,16 @@ from rest_framework.response import Response
 from .serializers import CategorySerializer
 from rest_framework import status
 from .models import Category
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
+@method_decorator(csrf_exempt, name='dispatch')
 class CategoryView(APIView):
 
     def get(self, request):
-        Data = Category.objects.all()
-        serializers = CategorySerializer(Data, many=True)
-        return Response(serializers.data, status=status.HTTP_200_OK)
+        categories = Category.objects.all()
+        serializer = CategorySerializer(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request):
         serializer = CategorySerializer(data=request.data)
@@ -21,7 +24,6 @@ class CategoryView(APIView):
     def put(self, request, id):
         try:
             category = Category.objects.get(ID=id)
-            print(category,request.data)
         except Category.DoesNotExist:
             return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -39,4 +41,3 @@ class CategoryView(APIView):
 
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    

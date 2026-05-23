@@ -15,10 +15,15 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "http://{{HOST}}/products/", "host": ["http://{{HOST}}"], "path": ["products", ""] }
-          }
-        },
-        {
-          "name": "Get Product",
+          {
+            "name": "List Orders",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": { "raw": "http://{{HOST}}/orders/", "host": ["http://{{HOST}}"], "path": ["orders", ""] },
+              "description": "Returns analytics when using query param `date` (e.g. `today`, `this_week`, `this_month`, `this_year`, or `custom` with `start_date` and `end_date` YYYY-MM-DD). Response has `summary` and `analytics` fields."
+            }
+          },
           "request": { "method": "GET", "url": { "raw": "http://{{HOST}}/products/:id/", "host": ["http://{{HOST}}"], "path": ["products", ":id", ""] } }
         },
         {
@@ -49,8 +54,8 @@
       "name": "Orders",
       "item": [
         { "name": "List Orders", "request": { "method": "GET", "url": { "raw": "http://{{HOST}}/orders/", "host": ["http://{{HOST}}"], "path": ["orders", ""] } } },
-        { "name": "Create Order", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ColorId\": 1,\n  \"TotalQuantity\": 0,\n  \"UpiAmount\": \"0.00\",\n  \"CashAmount\": \"0.00\",\n  \"Completed\": false\n}" }, "url": { "raw": "http://{{HOST}}/orders/create/", "host": ["http://{{HOST}}"], "path": ["orders", "create", ""] } } },
-        { "name": "Update Order", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"OrderItems\": [ { \"ProductID\": 5, \"Quantity\": 2, \"PriceAtPurchase\": \"49.99\" } ],\n  \"TotalQuantity\": 2\n}" }, "url": { "raw": "http://{{HOST}}/orders/:id/update/", "host": ["http://{{HOST}}"], "path": ["orders", ":id", "update", ""] } } },
+        { "name": "Create Order", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"ColorId\": 1,\n  \"TotalQuantity\": 0,\n  \"UpiAmount\": \"0.00\",\n  \"CashAmount\": \"0.00\",\n  \"Completed\": false\n}" }, "url": { "raw": "http://{{HOST}}/orders/create/", "host": ["http://{{HOST}}"], "path": ["orders", "create", ""] }, "description": "Creates an order. Nested `OrderItems` are ignored on create — use PUT to add/replace items." } },
+        { "name": "Update Order", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"OrderItems\": [ { \"ProductID\": 5, \"Quantity\": 2, \"PriceAtPurchase\": \"49.99\" } ],\n  \"TotalQuantity\": 2\n}" }, "url": { "raw": "http://{{HOST}}/orders/:id/update/", "host": ["http://{{HOST}}"], "path": ["orders", ":id", "update", ""] }, "description": "Replaces all existing OrderItems for the order: server deletes old items and recreates from `OrderItems` array." } },
         { "name": "Patch Order", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{ \"Completed\": true }" }, "url": { "raw": "http://{{HOST}}/orders/:id/patch/", "host": ["http://{{HOST}}"], "path": ["orders", ":id", "patch", ""] } } },
         { "name": "Delete Order", "request": { "method": "DELETE", "url": { "raw": "http://{{HOST}}/orders/:id/delete/", "host": ["http://{{HOST}}"], "path": ["orders", ":id", "delete", ""] } } }
       ]

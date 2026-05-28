@@ -100,7 +100,7 @@ class _WaffleButtonState extends State<WaffleButton>
             child: AnimatedContainer(
               duration: WaffleTheme.fastAnimation,
               width: widget.width,
-              height: 48,
+              constraints: const BoxConstraints(minHeight: 44),
               decoration: BoxDecoration(
                 color: _backgroundColor,
                 borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius),
@@ -125,7 +125,7 @@ class _WaffleButtonState extends State<WaffleButton>
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: WaffleTheme.spacingL,
-                      vertical: WaffleTheme.spacingM,
+                      vertical: WaffleTheme.spacingS,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

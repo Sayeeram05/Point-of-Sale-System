@@ -341,7 +341,7 @@ class OrderList(APIView):
             )
 
         # =====================================================
-        # TOTALS
+        # TOTALS AND INDIVIDUAL ORDERS
         # =====================================================
 
         totals = orders.aggregate(
@@ -354,6 +354,31 @@ class OrderList(APIView):
 
         total_amount = total_upi + total_cash
 
+        # Get individual orders for the orders list
+        individual_orders = orders.select_related('ColorId', 'EmojiId').prefetch_related('OrderItems__ProductID').order_by('-CreatedAt')[:50]  # Limit to 50 most recent orders
+        
+        orders_list = []
+        for order in individual_orders:
+            # Get order items with product names
+            items = []
+            for item in order.OrderItems.all():
+                items.append(f"{item.ProductID.Name} ({item.Quantity})")
+            
+            # Determine payment method
+            payment_method = 'UPI' if order.UpiAmount > order.CashAmount else 'Cash'
+            if order.UpiAmount > 0 and order.CashAmount > 0:
+                payment_method = f'UPI ₹{order.UpiAmount} + Cash ₹{order.CashAmount}'
+            
+            orders_list.append({
+                'id': f'#ORD-{order.ID}',
+                'date': order.CreatedAt.isoformat(),
+                'items': items,
+                'total_amount': float(order.UpiAmount + order.CashAmount),
+                'payment_method': payment_method,
+                'status': 'Completed' if order.Completed else 'Pending',
+                'customer_name': f'Customer {order.ID}',  # Since there's no customer name in the model
+            })
+
         return Response({
 
             "summary": {
@@ -363,7 +388,9 @@ class OrderList(APIView):
                 "total_amount": total_amount
             },
 
-            "analytics": list(grouped_orders)
+            "analytics": list(grouped_orders),
+            
+            "orders": orders_list
 
         })
 

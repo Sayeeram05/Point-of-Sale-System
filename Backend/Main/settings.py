@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-*+2@%=haufqxr#j52z&%+g%om)l(y$bul8&r1_ah^e4khju%6m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+
+# HTTPS Configuration
+SECURE_SSL_REDIRECT = False  # Set to True in production
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_TLS = True  # Enable TLS support for development
 
 
 # Application definition
@@ -86,7 +91,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pos_db',
         'USER': 'root',
-        'PASSWORD': '7418022289',
+        'PASSWORD': 'Kavi@1976',
         'HOST': 'localhost',
         'PORT': '3306',
     }
@@ -130,7 +135,7 @@ USE_TZ = False
 STATIC_URL = 'static/'
 
 # CORS settings for Flutter web app
-# Allow Flutter web development server to access Django API
+# Allow Flutter web development server to access Django API via HTTP and HTTPS
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",  # Flutter web dev server default port
     "http://localhost:8081",  # Alternative Flutter web port
@@ -140,6 +145,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8081",
     "http://127.0.0.1:8082",
     "http://127.0.0.1:8083",
+    "https://localhost:8080",  # HTTPS versions for secure connections
+    "https://localhost:8081",
+    "https://localhost:8082", 
+    "https://localhost:8083",
+    "https://127.0.0.1:8080",
+    "https://127.0.0.1:8081",
+    "https://127.0.0.1:8082",
+    "https://127.0.0.1:8083",
 ]
 
 # For development only - allows all origins (less secure but easier for development)

@@ -1,8 +1,8 @@
 /// Application configuration for API endpoints and service selection
 class AppConfig {
-  // API Configuration
+  // API Configuration - Using HTTP for development (HTTPS requires SSL certificates)
   static const String djangoBaseUrl = 'http://localhost:8000/api';
-  static const bool useMockServices = false; // Changed to false - now using Django API!
+  static const bool useMockServices = false; // Using Django API
   
   // Development settings
   static const bool enableDebugLogs = true;
@@ -13,6 +13,6 @@ class AppConfig {
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
   
   // Feature flags
-  static const bool enableOrderManagement = false; // Coming soon
+  static const bool enableOrderManagement = true; // Now enabled
   static const bool enableRealTimeUpdates = false; // Future feature
 }

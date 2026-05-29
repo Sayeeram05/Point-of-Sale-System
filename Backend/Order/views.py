@@ -20,7 +20,17 @@ from .serializers import OrderSerializer, OrderItemSerializer
 class OrderList(APIView):
 
 
-    def get(self, request):
+    def get(self, request, id=None):
+        if id is not None:
+            try:
+                order = Order.objects.get(ID=id)
+            except Order.DoesNotExist:
+                return Response(
+                    {"error": "Order not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            serializer = OrderSerializer(order)
+            return Response(serializer.data)
 
         date = request.query_params.get("date")
 

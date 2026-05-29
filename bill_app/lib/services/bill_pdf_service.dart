@@ -1,0 +1,618 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/order.dart';
+import '../models/b2b_settings.dart';
+
+class BillPdfService {
+  // ─── Brand Colors ─────────────────────────────────────────────────────────
+  static const _navy = PdfColor.fromInt(0xFF1A2B4A);
+  static const _blue = PdfColor.fromInt(0xFF2C5F8A);
+  static const _lightBg = PdfColor.fromInt(0xFFF8FAFC);
+  static const _border = PdfColor.fromInt(0xFFDDE3EA);
+  static const _dark = PdfColor.fromInt(0xFF1E293B);
+  static const _muted = PdfColor.fromInt(0xFF64748B);
+  static const _accent = PdfColor.fromInt(0xFF0EA5E9);
+
+  // ─── Number Formatting ────────────────────────────────────────────────────
+  static final _fmt = NumberFormat('#,##0.00', 'en_IN');
+  static String fmt(double v) => _fmt.format(v);
+
+  // ─── Indian Number Words ──────────────────────────────────────────────────
+  static const List<String> _ones = [
+    '',
+    'One',
+    'Two',
+    'Three',
+    'Four',
+    'Five',
+    'Six',
+    'Seven',
+    'Eight',
+    'Nine',
+    'Ten',
+    'Eleven',
+    'Twelve',
+    'Thirteen',
+    'Fourteen',
+    'Fifteen',
+    'Sixteen',
+    'Seventeen',
+    'Eighteen',
+    'Nineteen',
+  ];
+  static const List<String> _tens = [
+    '',
+    '',
+    'Twenty',
+    'Thirty',
+    'Forty',
+    'Fifty',
+    'Sixty',
+    'Seventy',
+    'Eighty',
+    'Ninety',
+  ];
+
+  static String _words(int n) {
+    if (n == 0) return '';
+    if (n < 20) return _ones[n];
+    if (n < 100) {
+      return '${_tens[n ~/ 10]}${n % 10 != 0 ? ' ${_ones[n % 10]}' : ''}';
+    }
+    if (n < 1000) {
+      return '${_ones[n ~/ 100]} Hundred${n % 100 != 0 ? ' ${_words(n % 100)}' : ''}';
+    }
+    if (n < 100000) {
+      return '${_words(n ~/ 1000)} Thousand${n % 1000 != 0 ? ' ${_words(n % 1000)}' : ''}';
+    }
+    if (n < 10000000) {
+      return '${_words(n ~/ 100000)} Lakh${n % 100000 != 0 ? ' ${_words(n % 100000)}' : ''}';
+    }
+    return '${_words(n ~/ 10000000)} Crore${n % 10000000 != 0 ? ' ${_words(n % 10000000)}' : ''}';
+  }
+
+  static String amountInWords(double amount) {
+    final int rupees = amount.floor();
+    final int paise = ((amount - rupees) * 100).round();
+    String words = 'Rupees ${_words(rupees)}';
+    if (paise > 0) words += ' and ${_words(paise)} Paise';
+    return '$words Only';
+  }
+
+  // ─── PDF Generation ───────────────────────────────────────────────────────
+  static Future<Uint8List> generateBillPdf(
+    Order order,
+    B2BSettings settings,
+  ) async {
+    final pdf = pw.Document();
+    final fontData = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
+    final boldFontData = await rootBundle.load(
+      'assets/fonts/NotoSans-Bold.ttf',
+    );
+    final font = pw.Font.ttf(fontData);
+    final boldFont = pw.Font.ttf(boldFontData);
+
+    // Load the banner logo
+    pw.MemoryImage? logoImage;
+    try {
+      final logoData = await rootBundle.load('assets/icon/BillLogo.jpeg');
+      logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
+    } catch (_) {}
+
+    final orderDate = order.parsedOrderDate ?? DateTime.now();
+    final dateStr = DateFormat('dd-MM-yyyy').format(orderDate);
+    final timeStr = DateFormat('hh:mm a').format(orderDate);
+    final grandTotal = order.totalPrice;
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 36, vertical: 28),
+        header: (pw.Context context) {
+          if (context.pageNumber == 1) {
+            return pw.Container(
+              decoration: const pw.BoxDecoration(
+                border: pw.Border(
+                  top: pw.BorderSide(color: _border, width: 0.8),
+                  left: pw.BorderSide(color: _border, width: 0.8),
+                  right: pw.BorderSide(color: _border, width: 0.8),
+                ),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                children: [
+                  _buildLogoBanner(logoImage),
+                  _buildBusinessInfo(settings, font, boldFont),
+                  pw.Container(height: 2.5, color: _accent),
+                  _buildBillInfo(order, dateStr, timeStr, font, boldFont),
+                ],
+              ),
+            );
+          }
+          return pw.Container(
+            padding: const pw.EdgeInsets.only(bottom: 8),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(
+                bottom: pw.BorderSide(color: _border, width: 0.5),
+              ),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'Bill No: #${order.orderId} (continued)',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 9,
+                    color: _dark,
+                  ),
+                ),
+                pw.Text(
+                  '$dateStr  $timeStr',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 9,
+                    color: _dark,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        build: (pw.Context context) {
+          return [
+            _buildItemsTable(order, font, boldFont),
+            _buildSummarySection(order, grandTotal, font, boldFont),
+            _buildAmountInWords(grandTotal, font, boldFont),
+            _buildFooter(font, boldFont),
+          ];
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  // ─── Logo Banner (full width) ─────────────────────────────────────────────
+  static pw.Widget _buildLogoBanner(pw.MemoryImage? logoImage) {
+    if (logoImage == null) return pw.SizedBox(height: 0);
+    const logoBlue = PdfColor.fromInt(0xFF89D4F5); // logo's left colour
+    const logoYellow = PdfColor.fromInt(0xFFFFE040); // logo's right colour
+    return pw.CustomPaint(
+      // PDF canvas: origin bottom-left, y increases upward
+      // h = visual top, 0 = visual bottom
+      painter: (canvas, size) {
+        final w = size.x;
+        final h = size.y;
+        // Logo diagonal is "\" direction (top-left → bottom-right visually).
+        // PDF y: 0 = visual bottom, h = visual top.
+        // So "\" means: at top (h) cut is LEFT of center, at bottom (0) cut is RIGHT.
+        // LEFT side → yellow (inverted from logo)
+        canvas
+          ..setFillColor(logoYellow)
+          ..moveTo(0, h)
+          ..lineTo(w * 0.48, h) // top cut at 49%
+          ..lineTo(w * 0.525, 0) // bottom cut at 55%
+          ..lineTo(0, 0)
+          ..fillPath();
+        // RIGHT side → blue (inverted from logo)
+        canvas
+          ..setFillColor(logoBlue)
+          ..moveTo(w * 0.48, h)
+          ..lineTo(w, h)
+          ..lineTo(w, 0)
+          ..lineTo(w * 0.525, 0)
+          ..fillPath();
+      },
+      child: pw.SizedBox(
+        width: double.infinity,
+        height: 80,
+        child: pw.Center(
+          child: pw.Image(logoImage, fit: pw.BoxFit.contain, height: 64),
+        ),
+      ),
+    );
+  }
+
+  // ─── Business Info (below logo) ───────────────────────────────────────────
+  static pw.Widget _buildBusinessInfo(
+    B2BSettings settings,
+    pw.Font font,
+    pw.Font boldFont,
+  ) {
+    return pw.Container(
+      color: _navy,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                if (settings.addressLine1.isNotEmpty)
+                  pw.Text(
+                    settings.addressLine1,
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 7.5,
+                      color: const PdfColor.fromInt(0xFFCBD5E1),
+                    ),
+                  ),
+                if (settings.addressLine2.isNotEmpty)
+                  pw.Text(
+                    settings.addressLine2,
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 7.5,
+                      color: const PdfColor.fromInt(0xFFCBD5E1),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text(
+                'Ph: ${settings.phone1}',
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 7.5,
+                  color: const PdfColor.fromInt(0xFFCBD5E1),
+                ),
+              ),
+              if (settings.phone2.isNotEmpty)
+                pw.Text(
+                  'Ph: ${settings.phone2}',
+                  style: pw.TextStyle(
+                    font: font,
+                    fontSize: 7.5,
+                    color: const PdfColor.fromInt(0xFFCBD5E1),
+                  ),
+                ),
+              if (settings.gstin.isNotEmpty)
+                pw.Text(
+                  'GSTIN: ${settings.gstin}',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 7.5,
+                    color: const PdfColor.fromInt(0xFF93C5FD),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Bill Info Row ────────────────────────────────────────────────────────
+  static pw.Widget _buildBillInfo(
+    Order order,
+    String dateStr,
+    String timeStr,
+    pw.Font font,
+    pw.Font boldFont,
+  ) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: const pw.BoxDecoration(
+        color: _lightBg,
+        border: pw.Border(bottom: pw.BorderSide(color: _border, width: 0.5)),
+      ),
+      child: pw.Row(
+        children: [
+          pw.Expanded(
+            child: pw.Row(
+              children: [
+                pw.Text(
+                  'Bill No: ',
+                  style: pw.TextStyle(font: font, fontSize: 9, color: _muted),
+                ),
+                pw.Text(
+                  '#${order.orderId}',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 11,
+                    color: _dark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          pw.Text(
+            '$dateStr  $timeStr',
+            style: pw.TextStyle(font: boldFont, fontSize: 9, color: _dark),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Items Table ──────────────────────────────────────────────────────────
+  static pw.Widget _buildItemsTable(
+    Order order,
+    pw.Font font,
+    pw.Font boldFont,
+  ) {
+    final hStyle = pw.TextStyle(
+      font: boldFont,
+      fontSize: 8,
+      color: PdfColors.white,
+    );
+    final cStyle = pw.TextStyle(font: font, fontSize: 8.5, color: _dark);
+    final cBold = pw.TextStyle(font: boldFont, fontSize: 8.5, color: _dark);
+
+    final cols = <int, pw.TableColumnWidth>{
+      0: const pw.FlexColumnWidth(0.6),
+      1: const pw.FlexColumnWidth(4.5),
+      2: const pw.FlexColumnWidth(1.2),
+      3: const pw.FlexColumnWidth(1.8),
+      4: const pw.FlexColumnWidth(2.0),
+    };
+
+    final rows = <pw.TableRow>[
+      // Header
+      pw.TableRow(
+        decoration: const pw.BoxDecoration(color: _blue),
+        children: [
+          _tc('No.', hStyle, center: true),
+          _tc('Description', hStyle),
+          _tc('Qty', hStyle, center: true),
+          _tc('Rate', hStyle, right: true),
+          _tc('Amount', hStyle, right: true),
+        ],
+      ),
+      // Items
+      ...order.items.asMap().entries.map((e) {
+        final i = e.key;
+        final item = e.value;
+        final bg = i.isOdd ? _lightBg : PdfColors.white;
+        return pw.TableRow(
+          decoration: pw.BoxDecoration(color: bg),
+          children: [
+            _tc('${i + 1}', cStyle, center: true),
+            _tc(item.product.toUpperCase(), cBold),
+            _tc('${item.pieces}', cStyle, center: true),
+            _tc(fmt(item.priceDouble), cStyle, right: true),
+            _tc(fmt(item.totalPrice), cBold, right: true),
+          ],
+        );
+      }),
+      // Total row
+      pw.TableRow(
+        decoration: const pw.BoxDecoration(
+          color: _lightBg,
+          border: pw.Border(top: pw.BorderSide(color: _border, width: 1)),
+        ),
+        children: [
+          _tc('', cBold),
+          _tc('', cBold),
+          _tc(
+            '${order.totalItems}',
+            pw.TextStyle(font: boldFont, fontSize: 9, color: _blue),
+            center: true,
+          ),
+          _tc(
+            'Total',
+            pw.TextStyle(font: boldFont, fontSize: 9, color: _blue),
+            right: true,
+          ),
+          _tc(
+            fmt(order.totalPrice),
+            pw.TextStyle(font: boldFont, fontSize: 10, color: _navy),
+            right: true,
+          ),
+        ],
+      ),
+    ];
+
+    return pw.Table(
+      border: pw.TableBorder.symmetric(
+        inside: const pw.BorderSide(
+          width: 0.3,
+          color: PdfColor.fromInt(0xFFE2E8F0),
+        ),
+      ),
+      columnWidths: cols,
+      children: rows,
+    );
+  }
+
+  static pw.Widget _tc(
+    String text,
+    pw.TextStyle style, {
+    bool center = false,
+    bool right = false,
+  }) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      alignment: right
+          ? pw.Alignment.centerRight
+          : center
+          ? pw.Alignment.center
+          : pw.Alignment.centerLeft,
+      child: pw.Text(text, style: style),
+    );
+  }
+
+  // ─── Summary Section ──────────────────────────────────────────────────────
+  static pw.Widget _buildSummarySection(
+    Order order,
+    double grandTotal,
+    pw.Font font,
+    pw.Font boldFont,
+  ) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          top: pw.BorderSide(color: _border, width: 0.5),
+          bottom: pw.BorderSide(color: _border, width: 0.5),
+        ),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.end,
+        children: [
+          // Left: Payment
+          pw.Expanded(
+            flex: 1,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Payment',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 8,
+                    color: _muted,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                if (order.cashAmountDouble > 0)
+                  pw.Text(
+                    'Cash:  \u20B9${fmt(order.cashAmountDouble)}',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 8.5,
+                      color: _dark,
+                    ),
+                  ),
+                if (order.upiAmountDouble > 0)
+                  pw.Text(
+                    'UPI:  \u20B9${fmt(order.upiAmountDouble)}',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 8.5,
+                      color: _dark,
+                    ),
+                  ),
+                if (order.cashAmountDouble <= 0 && order.upiAmountDouble <= 0)
+                  pw.Text(
+                    '--',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 8.5,
+                      color: _muted,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // Right: Grand Total
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text(
+                'TOTAL',
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 8,
+                  color: _muted,
+                  letterSpacing: 1,
+                ),
+              ),
+              pw.SizedBox(height: 2),
+              pw.Text(
+                '\u20B9${fmt(grandTotal)}',
+                style: pw.TextStyle(font: boldFont, fontSize: 24, color: _navy),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Amount In Words ──────────────────────────────────────────────────────
+  static pw.Widget _buildAmountInWords(
+    double total,
+    pw.Font font,
+    pw.Font boldFont,
+  ) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      color: const PdfColor.fromInt(0xFFFEFCE8),
+      child: pw.Text(
+        amountInWords(total),
+        style: pw.TextStyle(
+          font: boldFont,
+          fontSize: 8,
+          color: const PdfColor.fromInt(0xFF92400E),
+        ),
+      ),
+    );
+  }
+
+  // ─── Footer ───────────────────────────────────────────────────────────────
+  static pw.Widget _buildFooter(pw.Font font, pw.Font boldFont) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: pw.Column(
+        children: [
+          pw.Text(
+            'Thank you for your purchase!',
+            style: pw.TextStyle(font: boldFont, fontSize: 10, color: _navy),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Get B2C save directory (user-configurable via SharedPreferences) ────
+  static Future<String> getB2cSaveDir() async {
+    final prefs = await SharedPreferences.getInstance();
+    final custom = prefs.getString('b2c_bill_save_path') ?? '';
+    if (custom.isNotEmpty) return custom;
+
+    // Default path
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        final extDir = await getExternalStorageDirectory();
+        if (extDir != null) {
+          final root = extDir.parent.parent.parent.parent;
+          return '${root.path}/Download/B2C_Bills';
+        }
+      } catch (_) {}
+    }
+    final appDir = await getApplicationDocumentsDirectory();
+    return '${appDir.path}/B2C_Bills';
+  }
+
+  // ─── Save PDF ─────────────────────────────────────────────────────────────
+  static Future<String> savePdf(Uint8List pdfBytes, Order order) async {
+    final dirPath = await getB2cSaveDir();
+
+    final dir = Directory(dirPath);
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+
+    final fileName = _buildFileName(order);
+    final file = File('$dirPath/$fileName');
+    await file.writeAsBytes(pdfBytes);
+    return file.path;
+  }
+
+  /// Opens system share dialog with consistent filename.
+  static Future<void> shareOrPrint(Uint8List pdfBytes, Order order) async {
+    final fileName = _buildFileName(order);
+    await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
+  }
+
+  /// Consistent filename: Bill_orderId_YYYYMMDD.pdf
+  static String _buildFileName(Order order) {
+    final orderDate = order.parsedOrderDate ?? DateTime.now();
+    final dateStr = DateFormat('yyyyMMdd').format(orderDate);
+    return 'Bill_${order.orderId}_$dateStr.pdf';
+  }
+}

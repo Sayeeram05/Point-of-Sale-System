@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import OrderList
+from .views import OrderList, OrdersListToday
 
 urlpatterns = [
     path('orders/create/', OrderList.as_view(), name='order-create'),
@@ -8,4 +8,5 @@ urlpatterns = [
     path('orders/<int:id>/patch/', OrderList.as_view(), name='order-patch'),
     path('orders/<int:id>/delete/', OrderList.as_view(), name='order-delete'),
     path('orders/', OrderList.as_view(), name='order-list'),
+    path('orders/today/', OrdersListToday.as_view(), name='order-today'),
 ]

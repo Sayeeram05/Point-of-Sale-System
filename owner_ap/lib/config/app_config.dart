@@ -1,7 +1,7 @@
 /// Application configuration for API endpoints and service selection
 class AppConfig {
   // API Configuration - Using HTTP for development (HTTPS requires SSL certificates)
-  static const String djangoBaseUrl = 'http://localhost:8000/api';
+  static const String djangoBaseUrl = 'http://localhost:8001/api';
   static const bool useMockServices = false; // Using Django API
   
   // Development settings

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 # WAFFLE SHOP - COMPLETE DATABASE DUMMY DATA GENERATOR
 # =========================================================
 
-YEARS = 3
+YEARS = 1
 ORDERS_PER_DAY = (8, 30)
 
 queries = []

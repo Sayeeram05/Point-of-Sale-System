@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../services/debug_service.dart';
-import '../models/order.dart';
-import '../widgets/order_card.dart';
+import '../services/woffle_api_service.dart';
+import '../services/woffle_debug_service.dart';
+import '../models/woffle_order.dart';
+import '../widgets/woffle_order_card.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import '../widgets/order_detail_dialog.dart';
-import '../widgets/emoji_color_dialog.dart';
-import 'menu_page.dart';
-import 'settings_page.dart';
-import '../theme/app_theme.dart';
+import '../widgets/woffle_order_detail_dialog.dart';
+import '../widgets/woffle_emoji_color_dialog.dart';
+import 'woffle_menu_page.dart';
+import 'woffle_settings_page.dart';
+import '../theme/woffle_app_theme.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -116,8 +116,54 @@ class _DashboardPageState extends State<DashboardPage>
 
   List<Order> _getFilteredOrders() {
     if (_dailySummary == null) return [];
-
     return _dailySummary!.orders;
+  }
+
+  /// Computes sorted orders for display and their corresponding display numbers.
+  ///
+  /// Display numbers are assigned based on creation time (oldest order = #1).
+  /// The returned list is sorted by status (pending first) then by date (newest first),
+  /// but each order retains its proper sequential number based on when it was created.
+  (List<Order> sortedOrders, Map<int, int> displayNumbers) _computeSortedOrdersWithDisplayNumbers() {
+    final filtered = _getFilteredOrders();
+    if (filtered.isEmpty) {
+      return (<Order>[], <int, int>{});
+    }
+
+    // Create a copy for sorting by creation time to assign display numbers
+    final ordersByCreationTime = List<Order>.from(filtered);
+    // Sort by creation date (oldest first) to assign sequential numbers
+    ordersByCreationTime.sort((a, b) {
+      final aDate = a.parsedOrderDate;
+      final bDate = b.parsedOrderDate;
+      if (aDate != null && bDate != null) {
+        return aDate.compareTo(bDate); // Oldest first
+      }
+      // Fallback: use orderId as proxy for creation time if date unavailable
+      return a.orderId.compareTo(b.orderId);
+    });
+
+    // Assign display numbers based on creation order (oldest = #1)
+    final displayNumbers = <int, int>{};
+    for (int i = 0; i < ordersByCreationTime.length; i++) {
+      displayNumbers[ordersByCreationTime[i].orderId] = i + 1;
+    }
+
+    // Now create the display-sorted list (pending first, then by date newest first)
+    final sortedForDisplay = List<Order>.from(filtered);
+    sortedForDisplay.sort((a, b) {
+      // First: sort by completion status (pending first)
+      if (a.completed != b.completed) {
+        return a.completed ? 1 : -1;
+      }
+      // Second: sort by date (newest first for display)
+      final bDate = b.parsedOrderDate;
+      final aDate = a.parsedOrderDate;
+      if (bDate != null && aDate != null) return bDate.compareTo(aDate);
+      return 0;
+    });
+
+    return (sortedForDisplay, displayNumbers);
   }
 
   Future<void> _createNewOrder() async {
@@ -125,33 +171,17 @@ class _DashboardPageState extends State<DashboardPage>
       final order = await ApiService.createOrder();
       DebugService.log('Order : $order');
       if (mounted) {
-        // Order created notification removed per user request
-        int newOrderIndex = 1;
-        if (_dailySummary != null && _dailySummary!.orders.isNotEmpty) {
-          final sortedOrders = List<Order>.from(_dailySummary!.orders);
-          // Sort by completion status first (pending first), then by date (newest first)
-          sortedOrders.sort((a, b) {
-            // If completion status is different, put pending orders first
-            if (a.completed != b.completed) {
-              return a.completed
-                  ? 1
-                  : -1; // false (pending) comes before true (completed)
-            }
-            // If same completion status, sort by date (newest first)
-            final bDate = b.parsedOrderDate;
-            final aDate = a.parsedOrderDate;
-            if (bDate != null && aDate != null) return bDate.compareTo(aDate);
-            return 0;
-          });
-          newOrderIndex =
-              sortedOrders.indexWhere((o) => o.orderId == order.orderId) + 1;
-          if (newOrderIndex == 0) newOrderIndex = sortedOrders.length + 1;
+        // Calculate the new order's display number (will be the highest = total orders)
+        int displayNumber = 1;
+        if (_dailySummary != null) {
+          // Newest order gets the next sequential number
+          displayNumber = _dailySummary!.orders.length + 1;
         }
         await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) =>
-                MenuPage(orderId: order.orderId, orderIndex: newOrderIndex),
+                MenuPage(orderId: order.orderId, orderIndex: displayNumber),
           ),
         );
         _staggerController.reset();
@@ -268,7 +298,7 @@ class _DashboardPageState extends State<DashboardPage>
                   ),
                   SizedBox(width: isTablet ? 16 : 12),
                   Text(
-                    'Fruitice',
+                    'Woffle',
                     style: AppTheme.headingMedium(context).copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -327,31 +357,35 @@ class _DashboardPageState extends State<DashboardPage>
         color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.1) : null,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
-          size: isTablet ? 32 : 28,
-        ),
-        title: Text(
-          title,
-          style: AppTheme.titleMedium.copyWith(
-            color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: isTablet ? 18 : 16,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          leading: Icon(
+            icon,
+            color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+            size: isTablet ? 32 : 28,
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: AppTheme.bodySmall.copyWith(
-            color: isSelected
-                ? AppTheme.primaryColor.withValues(alpha: 0.7)
-                : AppTheme.textTertiary,
-            fontSize: isTablet ? 14 : 13,
+          title: Text(
+            title,
+            style: AppTheme.titleMedium.copyWith(
+              color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              fontSize: isTablet ? 18 : 16,
+            ),
           ),
+          subtitle: Text(
+            subtitle,
+            style: AppTheme.bodySmall.copyWith(
+              color: isSelected
+                  ? AppTheme.primaryColor.withValues(alpha: 0.7)
+                  : AppTheme.textTertiary,
+              fontSize: isTablet ? 14 : 13,
+            ),
+          ),
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -368,19 +402,10 @@ class _DashboardPageState extends State<DashboardPage>
         ? _buildSummaryCards(isTablet, compact: true)
         : <Widget>[];
 
-    // Pre-compute filtered & sorted orders once (was computed 2× per build with O(n log n) sort)
-    final sortedOrders = () {
-      final filtered = _getFilteredOrders();
-      final sorted = List<Order>.from(filtered);
-      sorted.sort((a, b) {
-        if (a.completed != b.completed) return a.completed ? 1 : -1;
-        final bDate = b.parsedOrderDate;
-        final aDate = a.parsedOrderDate;
-        if (bDate != null && aDate != null) return bDate.compareTo(aDate);
-        return 0;
-      });
-      return sorted;
-    }();
+    // Pre-compute filtered & sorted orders with proper display numbers
+    // Orders are sorted by status (pending first) then by date (newest first for display)
+    // But display numbers are assigned by creation time (oldest = #1, newest = highest)
+    final (sortedOrders, displayNumbers) = _computeSortedOrdersWithDisplayNumbers();
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -408,7 +433,7 @@ class _DashboardPageState extends State<DashboardPage>
           children: [
             Expanded(
               child: Text(
-                'Fruitice',
+                'Woffle',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: isTablet ? 28 : 22,
@@ -649,9 +674,12 @@ class _DashboardPageState extends State<DashboardPage>
                                 tablet: 8,
                                 desktop: 16,
                               ),
-                              children: sortedOrders.map((order) {
-                                final rawDelay =
-                                    ((order.displayIndex ?? 1) - 1) * 0.1;
+                              children: sortedOrders.asMap().entries.map((entry) {
+                                final listIndex = entry.key;
+                                final order = entry.value;
+                                // Get the proper display number based on creation order
+                                final displayNumber = displayNumbers[order.orderId] ?? (listIndex + 1);
+                                final rawDelay = listIndex * 0.1;
                                 final animationDelay = rawDelay.clamp(0.0, 1.0);
                                 final animation =
                                     Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -682,7 +710,7 @@ class _DashboardPageState extends State<DashboardPage>
                                           child: RepaintBoundary(
                                             child: OrderCard(
                                               order: order,
-                                              orderLabel: order.orderLabel,
+                                              displayNumber: displayNumber,
                                               onTap: () => _showOrderDetail(order),
                                               onDoubleTap: order.completed
                                                   ? null

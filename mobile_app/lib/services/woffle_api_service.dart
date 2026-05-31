@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/order.dart';
-import '../models/menu.dart';
-import '../models/user_preferences.dart';
-import 'debug_service.dart';
+import '../models/woffle_order.dart';
+import '../models/woffle_menu.dart';
+import '../models/woffle_user_preferences.dart';
+import 'woffle_debug_service.dart';
 
 /// Simple TTL cache for API responses that rarely change mid-session.
 class _ApiCache {
@@ -469,7 +469,7 @@ class ApiService {
     try {
       final response = await _client
           .delete(
-            Uri.parse('$baseUrl/api/emoji/$emojiId/'),
+            Uri.parse('$baseUrl/api/emoji/$emojiId/delete/'),
             headers: _headers,
           )
           .timeout(_timeout);
@@ -531,7 +531,7 @@ class ApiService {
     try {
       final response = await _client
           .delete(
-            Uri.parse('$baseUrl/api/color/$colorId/'),
+            Uri.parse('$baseUrl/api/color/$colorId/delete/'),
             headers: _headers,
           )
           .timeout(_timeout);

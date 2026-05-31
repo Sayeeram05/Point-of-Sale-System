@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:file_picker/file_picker.dart';
-import '../services/api_service.dart';
-import '../services/bill_pdf_service.dart';
-import '../models/user_preferences.dart';
-import '../services/app_colors.dart';
-import '../theme/app_theme.dart';
-import '../widgets/color_picker_dialog.dart';
+import '../services/woffle_api_service.dart';
+import '../services/woffle_bill_pdf_service.dart';
+import '../models/woffle_user_preferences.dart';
+import '../services/woffle_app_colors.dart';
+import '../theme/woffle_app_theme.dart';
+import '../widgets/woffle_color_picker_dialog.dart';
+import '../widgets/woffle_bill_path_settings.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -208,15 +208,46 @@ class _SettingsPageState extends State<SettingsPage>
       ),
     );
 
-    if (confirm == true && emoji.id != null) {
+    if (confirm == true) {
+      if (emoji.id == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cannot delete emoji: missing ID.'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
       try {
-        await ApiService.deleteEmoji(emoji.id!);
-        setState(() {
-          _emojis.removeWhere((e) => e.id == emoji.id);
-        });
-        // Notification removed per user request
+        final success = await ApiService.deleteEmoji(emoji.id!);
+        if (success) {
+          setState(() {
+            _emojis.removeWhere((e) => e.id == emoji.id);
+          });
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to delete emoji. Please try again.'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
       } catch (e) {
-        // Error notification removed per user request
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting emoji: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }
@@ -316,16 +347,46 @@ class _SettingsPageState extends State<SettingsPage>
       ),
     );
 
-    if (confirm == true && color.id != null) {
+    if (confirm == true) {
+      if (color.id == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cannot delete color: missing ID.'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
       try {
-        await ApiService.deleteColor(color.id!);
-        setState(() {
-          _colors.removeWhere((c) => c.id == color.id);
-        });
-
-        // Color deleted notification removed per user request
+        final success = await ApiService.deleteColor(color.id!);
+        if (success) {
+          setState(() {
+            _colors.removeWhere((c) => c.id == color.id);
+          });
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to delete color. Please try again.'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
       } catch (e) {
-        // Error notification removed per user request
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting color: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }
@@ -686,210 +747,7 @@ class _SettingsPageState extends State<SettingsPage>
   }
 
   Widget _buildBillsTab() {
-    return FutureBuilder<String>(
-      future: BillPdfService.getB2cSaveDir(),
-      builder: (context, snapshot) {
-        final currentPath = snapshot.data ?? '';
-        return FutureBuilder<SharedPreferences>(
-          future: SharedPreferences.getInstance(),
-          builder: (context, prefsSnap) {
-            if (!prefsSnap.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final prefs = prefsSnap.data!;
-            final isCustom =
-                (prefs.getString('b2c_bill_save_path') ?? '').isNotEmpty;
-            final pathCtrl = TextEditingController(text: currentPath);
-
-            return Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: AppTheme.elevationSmall,
-                      border: Border.all(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF8E1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.receipt_long,
-                                color: Color(0xFFF57F17),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'B2C Bill Save Location',
-                              style: AppTheme.titleLarge.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Choose where B2C bills are saved on this device.',
-                          style: AppTheme.bodyMedium.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        TextField(
-                          controller: pathCtrl,
-                          readOnly: true,
-                          decoration: InputDecoration(
-                            labelText: 'Save Path',
-                            hintText: isCustom
-                                ? null
-                                : 'Default — Downloads/B2C_Bills',
-                            prefixIcon: const Icon(Icons.folder_outlined),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: AppTheme.primaryColor,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  final dir = await FilePicker.platform
-                                      .getDirectoryPath(
-                                        dialogTitle:
-                                            'Choose B2C bill save folder',
-                                      );
-                                  if (dir != null) {
-                                    await prefs.setString(
-                                      'b2c_bill_save_path',
-                                      dir,
-                                    );
-                                    if (context.mounted) {
-                                      setState(() {});
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'B2C bill path set to $dir',
-                                          ),
-                                          backgroundColor: Colors.green,
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                                icon: const Icon(Icons.folder_open),
-                                label: const Text('Browse'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryColor,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            OutlinedButton.icon(
-                              onPressed: isCustom
-                                  ? () async {
-                                      await prefs.remove('b2c_bill_save_path');
-                                      if (context.mounted) {
-                                        setState(() {});
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Reset to default location',
-                                            ),
-                                            backgroundColor: Colors.orange,
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  : null,
-                              icon: const Icon(Icons.restart_alt),
-                              label: const Text('Reset'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                  horizontal: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.amber.shade100),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Colors.amber.shade700,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Tap Browse to choose where B2C bills are saved.\n'
-                            'Leave default to save in Downloads/B2C_Bills.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.amber.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
+    return const BillPathSettingsWidget();
   }
 
   Widget _buildSectionHeader(String title, IconData icon, int count) {

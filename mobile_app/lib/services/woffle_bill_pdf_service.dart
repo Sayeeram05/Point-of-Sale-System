@@ -7,7 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/order.dart';
+import '../models/woffle_order.dart';
 
 class BillPdfService {
   // ─── Brand Colors ─────────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ class BillPdfService {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  'Fruitice Billing',
+                  'Woffle Billing',
                   style: pw.TextStyle(
                     font: boldFont,
                     fontSize: 11,
@@ -552,28 +552,80 @@ class BillPdfService {
     );
   }
 
-  // ─── Get B2C save directory (user-configurable via SharedPreferences) ────
-  static Future<String> getB2cSaveDir() async {
+  // ─── Get bill save directory (user-configurable via SharedPreferences) ────
+  /// Gets the current bill save directory path.
+  ///
+  /// Priority:
+  /// 1. User-selected custom path from SharedPreferences
+  /// 2. Platform-specific default path:
+  ///    - Android: /storage/emulated/0/Download/Bills
+  ///    - iOS: App Documents/Bills
+  ///
+  /// The directory is automatically created if it doesn't exist.
+  static Future<String> getBillSaveDir() async {
     final prefs = await SharedPreferences.getInstance();
-    final custom = prefs.getString('b2c_bill_save_path') ?? '';
-    if (custom.isNotEmpty) return custom;
+    final customPath = prefs.getString('bill_save_path') ?? '';
 
-    if (kIsWeb) {
-      return 'Web browser: use share instead of local save';
-    }
-
-    // Default path
-    if (Platform.isAndroid) {
-      try {
-        final extDir = await getExternalStorageDirectory();
-        if (extDir != null) {
-          final root = extDir.parent.parent.parent.parent;
-          return '${root.path}/Download/B2C_Bills';
+    // Use custom path if set
+    if (customPath.isNotEmpty) {
+      final dir = Directory(customPath);
+      if (!await dir.exists()) {
+        try {
+          await dir.create(recursive: true);
+        } catch (_) {
+          // Fall back to default if custom path fails
         }
-      } catch (_) {}
+      }
+      if (await dir.exists()) {
+        return customPath;
+      }
     }
+
+    // Web platform - use share instead of file system
+    if (kIsWeb) {
+      return '';
+    }
+
+    // Get platform-specific default path
+    String defaultPath;
+    if (Platform.isAndroid) {
+      defaultPath = await _getAndroidDefaultPath();
+    } else {
+      defaultPath = await _getIOSDefaultPath();
+    }
+
+    // Ensure directory exists
+    final dir = Directory(defaultPath);
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+
+    return defaultPath;
+  }
+
+  /// Gets the default save path for Android
+  /// Tries external Downloads directory first, falls back to app documents
+  static Future<String> _getAndroidDefaultPath() async {
+    try {
+      final extDir = await getExternalStorageDirectory();
+      if (extDir != null) {
+        // Navigate to external storage root (/storage/emulated/0)
+        final root = extDir.parent.parent.parent.parent;
+        return '${root.path}/Download/Bills';
+      }
+    } catch (_) {
+      // Fall through to app documents
+    }
+
     final appDir = await getApplicationDocumentsDirectory();
-    return '${appDir.path}/B2C_Bills';
+    return '${appDir.path}/Bills';
+  }
+
+  /// Gets the default save path for iOS
+  /// Uses app documents directory (sandboxed)
+  static Future<String> _getIOSDefaultPath() async {
+    final appDir = await getApplicationDocumentsDirectory();
+    return '${appDir.path}/Bills';
   }
 
   // ─── Save PDF ─────────────────────────────────────────────────────────────
@@ -584,7 +636,7 @@ class BillPdfService {
       return 'Shared via browser';
     }
 
-    final dirPath = await getB2cSaveDir();
+    final dirPath = await getBillSaveDir();
 
     final dir = Directory(dirPath);
     if (!dir.existsSync()) {

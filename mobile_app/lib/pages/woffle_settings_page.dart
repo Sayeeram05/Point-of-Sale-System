@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/api_service.dart';
-import '../services/bill_pdf_service.dart';
-import '../models/user_preferences.dart';
-import '../services/app_colors.dart';
-import '../theme/app_theme.dart';
-import '../widgets/color_picker_dialog.dart';
-import '../widgets/bill_path_settings.dart';
+import '../services/woffle_api_service.dart';
+import '../services/woffle_bill_pdf_service.dart';
+import '../models/woffle_user_preferences.dart';
+import '../services/woffle_app_colors.dart';
+import '../theme/woffle_app_theme.dart';
+import '../widgets/woffle_color_picker_dialog.dart';
+import '../widgets/woffle_bill_path_settings.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

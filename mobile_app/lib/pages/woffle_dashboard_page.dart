@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../services/debug_service.dart';
-import '../models/order.dart';
-import '../widgets/order_card.dart';
+import '../services/woffle_api_service.dart';
+import '../services/woffle_debug_service.dart';
+import '../models/woffle_order.dart';
+import '../widgets/woffle_order_card.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import '../widgets/order_detail_dialog.dart';
-import '../widgets/emoji_color_dialog.dart';
-import 'menu_page.dart';
-import 'settings_page.dart';
-import '../theme/app_theme.dart';
+import '../widgets/woffle_order_detail_dialog.dart';
+import '../widgets/woffle_emoji_color_dialog.dart';
+import 'woffle_menu_page.dart';
+import 'woffle_settings_page.dart';
+import '../theme/woffle_app_theme.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -298,7 +298,7 @@ class _DashboardPageState extends State<DashboardPage>
                   ),
                   SizedBox(width: isTablet ? 16 : 12),
                   Text(
-                    'Fruitice',
+                    'Woffle',
                     style: AppTheme.headingMedium(context).copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -357,31 +357,35 @@ class _DashboardPageState extends State<DashboardPage>
         color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.1) : null,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
-          size: isTablet ? 32 : 28,
-        ),
-        title: Text(
-          title,
-          style: AppTheme.titleMedium.copyWith(
-            color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: isTablet ? 18 : 16,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          leading: Icon(
+            icon,
+            color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+            size: isTablet ? 32 : 28,
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: AppTheme.bodySmall.copyWith(
-            color: isSelected
-                ? AppTheme.primaryColor.withValues(alpha: 0.7)
-                : AppTheme.textTertiary,
-            fontSize: isTablet ? 14 : 13,
+          title: Text(
+            title,
+            style: AppTheme.titleMedium.copyWith(
+              color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              fontSize: isTablet ? 18 : 16,
+            ),
           ),
+          subtitle: Text(
+            subtitle,
+            style: AppTheme.bodySmall.copyWith(
+              color: isSelected
+                  ? AppTheme.primaryColor.withValues(alpha: 0.7)
+                  : AppTheme.textTertiary,
+              fontSize: isTablet ? 14 : 13,
+            ),
+          ),
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -429,7 +433,7 @@ class _DashboardPageState extends State<DashboardPage>
           children: [
             Expanded(
               child: Text(
-                'Fruitice',
+                'Woffle',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: isTablet ? 28 : 22,

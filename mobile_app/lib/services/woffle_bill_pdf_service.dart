@@ -7,7 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/order.dart';
+import '../models/woffle_order.dart';
 
 class BillPdfService {
   // ─── Brand Colors ─────────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ class BillPdfService {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  'Fruitice Billing',
+                  'Woffle Billing',
                   style: pw.TextStyle(
                     font: boldFont,
                     fontSize: 11,

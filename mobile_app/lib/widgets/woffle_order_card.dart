@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/order.dart';
-import '../services/app_colors.dart';
-import '../services/api_service.dart';
-import '../theme/app_theme.dart';
+import '../models/woffle_order.dart';
+import '../services/woffle_app_colors.dart';
+import '../services/woffle_api_service.dart';
+import '../theme/woffle_app_theme.dart';
 
 /// OrderCard - A refined order card widget with fixed layout, alignment, and styling.
 ///

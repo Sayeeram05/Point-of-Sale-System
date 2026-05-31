@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'pages/dashboard_page.dart';
-import 'theme/app_theme.dart';
-import 'services/app_performance.dart';
-import 'services/network_config.dart';
-import 'services/api_service.dart';
+import 'pages/woffle_dashboard_page.dart';
+import 'theme/woffle_app_theme.dart';
+import 'services/woffle_app_performance.dart';
+import 'services/woffle_network_config.dart';
+import 'services/woffle_api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,7 +54,7 @@ class BillApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fruitice',
+      title: 'Woffle',
       theme: AppTheme.lightTheme,
       home: const _IpGate(),
       debugShowCheckedModeBanner: false,

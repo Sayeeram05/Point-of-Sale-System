@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/order.dart';
-import '../services/api_service.dart';
-import '../services/bill_pdf_service.dart';
-import '../theme/app_theme.dart';
+import '../models/woffle_order.dart';
+import '../services/woffle_api_service.dart';
+import '../services/woffle_bill_pdf_service.dart';
+import '../theme/woffle_app_theme.dart';
 
 class OrderDetailDialog extends StatefulWidget {
   final Order order;

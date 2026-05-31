@@ -1,12 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import '../services/api_service.dart';
-import '../services/optimized_image_service.dart';
-import '../models/menu.dart';
-import '../models/order.dart';
-import '../widgets/order_detail_dialog.dart';
+import '../services/woffle_api_service.dart';
+import '../services/woffle_optimized_image_service.dart';
+import '../models/woffle_menu.dart';
+import '../models/woffle_order.dart';
+import '../widgets/woffle_order_detail_dialog.dart';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// --- Design tokens ------------------------------------------------------------
 class _Colors {
   static const primary          = Color(0xFFFF8C00);
   static const primaryLight     = Color(0xFFFFF3E0);
@@ -92,7 +92,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       if (kDebugMode) debugPrint('Failed to sync order before pop: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save order items — try again')),
+          const SnackBar(content: Text('Failed to save order items � try again')),
         );
       }
       return false;
@@ -230,7 +230,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     }
 
     if (urls.isNotEmpty) {
-      // Fire-and-forget — downloads happen in the background with
+      // Fire-and-forget � downloads happen in the background with
       // controlled concurrency (6 parallel downloads at a time).
       OptimizedImageService.preloadImages(urls, concurrency: 8);
     }
@@ -357,7 +357,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
 
 
 
-  // ── UI Components ──────────────────────────────────────────────────────────
+  // -- UI Components ----------------------------------------------------------
   Widget _buildAppBar() {
     return Container(
       color: _Colors.background,
@@ -394,7 +394,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
                     ),
                     if (_totalPieces > 0)
                       Text(
-                        '$_totalPieces items • ₹${_totalPrice.toStringAsFixed(0)}',
+                        '$_totalPieces items � ?${_totalPrice.toStringAsFixed(0)}',
                         style: const TextStyle(
                           color: _Colors.textMid,
                           fontSize: 13,
@@ -437,7 +437,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
         onChanged: (_) => setState(() {}),
         style: const TextStyle(fontSize: 15, color: _Colors.textDark),
         decoration: InputDecoration(
-          hintText: 'Search menu items…',
+          hintText: 'Search menu items�',
           hintStyle:
               const TextStyle(color: _Colors.textLight, fontSize: 15),
           prefixIcon:
@@ -541,7 +541,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Image (takes all remaining vertical space) ────────────────────
+          // -- Image (takes all remaining vertical space) --------------------
           Expanded(
             child: ClipRRect(
               borderRadius:
@@ -583,7 +583,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
             ),
           ),
 
-          // ── Footer: name-price + quantity pill (fixed height) ─────────────
+          // -- Footer: name-price + quantity pill (fixed height) -------------
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
             child: Column(
@@ -667,7 +667,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       height: 34,
       child: Row(
         children: [
-          // Left: cream pill — minus button + count
+          // Left: cream pill � minus button + count
           Expanded(
             child: Container(
               height: double.infinity,
@@ -717,7 +717,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
 
           const SizedBox(width: 6),
 
-          // Right: solid orange circle — plus only
+          // Right: solid orange circle � plus only
           GestureDetector(
             onTap: () {
               _addProductToOrder(product);
@@ -931,7 +931,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       customerName: '',
       status: 'Pending',
       displayIndex: widget.orderIndex ?? 0,
-      emoji: '🍦', // Default emoji
+      emoji: '??', // Default emoji
       color: '#2196F3', // Default color
       completed: false,
       orderDate: DateTime.now().toIso8601String(),
@@ -950,7 +950,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     );
 
     if (completed == true) {
-      // Order marked complete on server — skip item sync to preserve completion status
+      // Order marked complete on server � skip item sync to preserve completion status
       // Just close the menu page without syncing items
       _suppressDeleteOnPop = true;
       if (mounted) {
@@ -1009,7 +1009,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
                         fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    '₹${_totalPrice.toStringAsFixed(0)}',
+                    '?${_totalPrice.toStringAsFixed(0)}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -1055,7 +1055,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
           ),
           SizedBox(height: 16),
           Text(
-            'Loading menu…',
+            'Loading menu�',
             style: TextStyle(
                 color: _Colors.textMid,
                 fontSize: 15,

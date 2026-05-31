@@ -5,7 +5,7 @@ import '../themes/waffle_theme.dart';
 import '../widgets/waffle_summary_card.dart';
 import '../widgets/waffle_order_card.dart';
 import 'waffle_order_screen.dart';
-import 'waffle_order_details_screen.dart';
+import 'waffle_order_details_screen.dart'; 
 
 class WaffleDashboardScreen extends StatefulWidget {
   const WaffleDashboardScreen({super.key});

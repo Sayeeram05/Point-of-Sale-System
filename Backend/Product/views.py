@@ -91,8 +91,18 @@ class ProductDetail(APIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProductByCategory(APIView):
-    def get(self, request, category_id):
-        products = Product.objects.filter(ProductCategory=category_id, Deleted=False)
+    def get(self, request, category_id = None):
+        if category_id is None:
+            categories = Category.objects.all()
+            print(categories)
+            menu = {}
+            for category in categories:
+                products = Product.objects.filter(ProductCategory=category.ID, Deleted=False)
+                print(category.Name, products)
+                menu[category.Name] = ProductSerializer(products, many=True).data
+            return Response(menu, status=status.HTTP_200_OK)
+        else:
+            products = Product.objects.filter(ProductCategory=category_id, Deleted=False)
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

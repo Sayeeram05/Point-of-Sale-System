@@ -157,18 +157,28 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
     }
     setState(() => _isSaving = true);
     try {
-      await _orderService.completeOrder(
+      final completed = await _orderService.completeOrder(
         widget.orderId,
         cash: _cashAmount,
         upi: _upiAmount,
       );
-      await _loadOrder();
+      if (!mounted) return;
+      setState(() {
+        _order = completed;
+        _isSaving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Order marked complete'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop(true);
     } catch (e) {
       setState(() {
         _error = e.toString();
+        _isSaving = false;
       });
-    } finally {
-      setState(() => _isSaving = false);
     }
   }
 

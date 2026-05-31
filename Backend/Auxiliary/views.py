@@ -10,16 +10,24 @@ class ColorView(APIView):
     def get(self, request):
         colors = Color.objects.all()
         serializer = ColorSerializer(colors, many=True)
-
-        if not serializer.data:
-            return Response({"message": "No colors found"}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = ColorSerializer(data=request.data)
+        data = request.data.copy()
+        if "color" in data and "HexCode" not in data:
+            data["HexCode"] = data["color"]
+        if "hex" in data and "HexCode" not in data:
+            data["HexCode"] = data["hex"]
+
+        serializer = ColorSerializer(data=data)
         if serializer.is_valid():
-            if Color.objects.filter(HexCode=serializer.validated_data['HexCode']).exists():
-                return Response({"message": "Color with this hex code already exists"}, status=status.HTTP_400_BAD_REQUEST)
+            if Color.objects.filter(
+                HexCode=serializer.validated_data["HexCode"]
+            ).exists():
+                return Response(
+                    {"message": "Color with this hex code already exists"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -30,7 +38,13 @@ class ColorView(APIView):
         except Color.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ColorSerializer(color, data=request.data)
+        data = request.data.copy()
+        if "color" in data and "HexCode" not in data:
+            data["HexCode"] = data["color"]
+        if "hex" in data and "HexCode" not in data:
+            data["HexCode"] = data["hex"]
+
+        serializer = ColorSerializer(color, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -45,20 +59,27 @@ class ColorView(APIView):
         color.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class EmojiView(APIView):
     def get(self, request):
         emojis = Emoji.objects.all()
         serializer = EmojiSerializer(emojis, many=True)
-
-        if not serializer.data:
-            return Response({"message": "No emojis found"}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = EmojiSerializer(data=request.data)
+        data = request.data.copy()
+        if "emoji_text" in data and "Emoji" not in data:
+            data["Emoji"] = data["emoji_text"]
+        if "emoji" in data and "Emoji" not in data:
+            data["Emoji"] = data["emoji"]
+
+        serializer = EmojiSerializer(data=data)
         if serializer.is_valid():
-            if Emoji.objects.filter(Emoji=serializer.validated_data['Emoji']).exists():
-                return Response({"message": "Emoji with this unicode already exists"}, status=status.HTTP_400_BAD_REQUEST)
+            if Emoji.objects.filter(Emoji=serializer.validated_data["Emoji"]).exists():
+                return Response(
+                    {"message": "Emoji with this unicode already exists"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -69,7 +90,13 @@ class EmojiView(APIView):
         except Emoji.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = EmojiSerializer(emoji, data=request.data)
+        data = request.data.copy()
+        if "emoji_text" in data and "Emoji" not in data:
+            data["Emoji"] = data["emoji_text"]
+        if "emoji" in data and "Emoji" not in data:
+            data["Emoji"] = data["emoji"]
+
+        serializer = EmojiSerializer(emoji, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

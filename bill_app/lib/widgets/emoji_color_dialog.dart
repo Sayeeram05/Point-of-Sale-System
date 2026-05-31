@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../models/user_preferences.dart';
 import '../models/order.dart';
 import '../services/app_colors.dart';
+import '../theme/app_theme.dart';
 import 'color_picker_dialog.dart';
 
 class EmojiColorDialog extends StatefulWidget {
@@ -162,10 +163,10 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
                 isTablet ? 16 : 12,
               ),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.blue[600]!, Colors.blue[700]!],
+                  colors: [AppTheme.primaryColor, AppTheme.primaryDark],
                 ),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(24),
@@ -173,7 +174,7 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue[600]!.withValues(alpha: 0.3),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -286,17 +287,16 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
               child: TabBar(
                 controller: _tabController,
                 indicator: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [
-                      Colors.blue[500]!,
-                      Colors.blue[600]!,
-                      Colors.blue[700]!,
+                      AppTheme.primaryColor,
+                      AppTheme.primaryDark,
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue[600]!.withValues(alpha: 0.4),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -358,11 +358,11 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
                             height: isTablet ? 70 : 50,
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.blue[50],
+                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: CircularProgressIndicator(
-                              color: Colors.blue[600],
+                              color: AppTheme.primaryColor,
                               strokeWidth: 3,
                             ),
                           ),
@@ -520,13 +520,13 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
                     child: Container(
                       height: isTablet ? 54 : 44,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.blue[500]!, Colors.blue[600]!],
+                        gradient: const LinearGradient(
+                          colors: [AppTheme.primaryColor, AppTheme.primaryDark],
                         ),
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.blue[600]!.withValues(alpha: 0.4),
+                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -601,13 +601,13 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
               ),
               Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue[500]!, Colors.blue[600]!],
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue[600]!.withValues(alpha: 0.3),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -719,19 +719,19 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
                             child: Container(
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? Colors.blue[50]
+                                    ? AppTheme.primaryColor.withValues(alpha: 0.1)
                                     : Colors.grey[50],
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: isSelected
-                                      ? Colors.blue[500]!
+                                      ? AppTheme.primaryColor
                                       : Colors.grey[200]!,
                                   width: isSelected ? 2.5 : 1.5,
                                 ),
                                 boxShadow: isSelected
                                     ? [
                                         BoxShadow(
-                                          color: Colors.blue[500]!.withValues(
+                                          color: AppTheme.primaryColor.withValues(
                                             alpha: 0.2,
                                           ),
                                           blurRadius: 8,
@@ -794,13 +794,13 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
               ),
               Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue[500]!, Colors.blue[600]!],
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue[600]!.withValues(alpha: 0.3),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -885,11 +885,9 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
                   )
                 : GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: isTablet
-                          ? 6
-                          : 4, // Increased count for smaller cards
-                      crossAxisSpacing: isTablet ? 14 : 8, // Reduced spacing
-                      mainAxisSpacing: isTablet ? 14 : 8, // Reduced spacing
+                      crossAxisCount: isTablet ? 8 : 6, // More columns for sleeker boxes
+                      crossAxisSpacing: isTablet ? 10 : 6, // Tighter spacing
+                      mainAxisSpacing: isTablet ? 10 : 6,
                       childAspectRatio: 1,
                     ),
                     itemCount: _colors.length,
@@ -903,7 +901,7 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(10),
                             onTap: () {
                               setState(() {
                                 _selectedColor = color.color;
@@ -912,7 +910,7 @@ class _EmojiColorDialogState extends State<EmojiColorDialog>
                             child: Container(
                               decoration: BoxDecoration(
                                 color: AppColors.fromHex(color.color),
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: isSelected
                                       ? Colors.white

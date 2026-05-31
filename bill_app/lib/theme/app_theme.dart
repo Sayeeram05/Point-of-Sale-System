@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppTheme {
-  // Primary Colors
-  static const Color primaryColor = Color(0xFF2196F3);
-  static const Color primaryDark = Color(0xFF1976D2);
-  static const Color primaryLight = Color(0xFF64B5F6);
+  // Primary Colors - Warm Burnt Orange/Amber Palette
+  static const Color primaryColor = Color(0xFFE67E22);  // Burnt Orange
+  static const Color primaryDark = Color(0xFFD35400);  // Darker Burnt Orange
+  static const Color primaryLight = Color(0xFFF39C12);  // Amber/Gold
   static const Color accent = Color(0xFF4CAF50);
 
   // Background Colors
@@ -268,7 +268,7 @@ class AppTheme {
   // Theme Data
   static ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
-    primarySwatch: Colors.blue,
+    primarySwatch: Colors.orange,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: backgroundColor,
     cardColor: cardColor,

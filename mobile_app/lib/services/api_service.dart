@@ -469,7 +469,7 @@ class ApiService {
     try {
       final response = await _client
           .delete(
-            Uri.parse('$baseUrl/api/emoji/$emojiId/'),
+            Uri.parse('$baseUrl/api/emoji/$emojiId/delete/'),
             headers: _headers,
           )
           .timeout(_timeout);
@@ -531,7 +531,7 @@ class ApiService {
     try {
       final response = await _client
           .delete(
-            Uri.parse('$baseUrl/api/color/$colorId/'),
+            Uri.parse('$baseUrl/api/color/$colorId/delete/'),
             headers: _headers,
           )
           .timeout(_timeout);

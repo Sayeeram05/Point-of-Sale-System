@@ -324,6 +324,13 @@ class OrderList(APIView):
                     "payment_method": payment_method,
                     "status": "Completed" if order.Completed else "Pending",
                     "customer_name": f"Customer {order.ID}",  # Since there's no customer name in the model
+                    "completed": bool(order.Completed),
+                    "emoji": getattr(order.EmojiId, "Emoji", None)
+                    if getattr(order, "EmojiId", None)
+                    else None,
+                    "color": getattr(order.ColorId, "HexCode", None)
+                    if getattr(order, "ColorId", None)
+                    else None,
                 }
             )
 
@@ -544,6 +551,26 @@ class OrderList(APIView):
                 {"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
+        # Handle emoji/color directly from request data
+        emoji_text = request.data.get('emoji')
+        color_hex = request.data.get('color')
+
+        if emoji_text is not None:
+            try:
+                from Auxiliary.models import Emoji
+                emoji_obj = Emoji.objects.get(Emoji=emoji_text)
+                order.EmojiId = emoji_obj
+            except Emoji.DoesNotExist:
+                pass
+
+        if color_hex is not None:
+            try:
+                from Auxiliary.models import Color
+                color_obj = Color.objects.get(HexCode=color_hex)
+                order.ColorId = color_obj
+            except Color.DoesNotExist:
+                pass
+
         serializer = OrderSerializer(order, data=request.data, partial=True)
 
         if serializer.is_valid():
@@ -676,7 +703,14 @@ class OrdersListToday(OrderList):
                     "cash_amount": float(order.CashAmount),
                     "payment_method": payment_method,
                     "status": "Completed" if order.Completed else "Pending",
+                    "completed": bool(order.Completed),
                     "customer_name": f"Customer {order.ID}",
+                    "emoji": getattr(order.EmojiId, "Emoji", None)
+                    if getattr(order, "EmojiId", None)
+                    else None,
+                    "color": getattr(order.ColorId, "HexCode", None)
+                    if getattr(order, "ColorId", None)
+                    else None,
                 }
             )
 

@@ -66,9 +66,7 @@ class WaffleProductsScreen extends StatelessWidget {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? WaffleTheme.primaryColor
-                          : Colors.white,
+                      color: isSelected ? WaffleTheme.primaryColor : Colors.white,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: isSelected
@@ -185,9 +183,7 @@ class _WaffleProductCard extends StatelessWidget {
                     width: double.infinity,
                     decoration: const BoxDecoration(
                       color: Color(0xFFF5ECD7),
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(15),
-                      ),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
                     ),
                     child: Center(
                       child: Container(
@@ -214,31 +210,29 @@ class _WaffleProductCard extends StatelessWidget {
                   ),
                   if (inCart)
                     Positioned(
-                      left: 10,
-                      top: 10,
+                      left: 8,
+                      bottom: 8,
                       child: Container(
-                        width: 20,
-                        height: 20,
+                        width: 28,
+                        height: 28,
                         decoration: BoxDecoration(
                           color: WaffleTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white, width: 1.5),
-                          boxShadow: const [
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
                             BoxShadow(
                               color: Colors.black26,
-                              blurRadius: 3,
-                              offset: Offset(0, 1),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
                             ),
                           ],
                         ),
                         child: Center(
                           child: Text(
-                            '${quantity}',
+                            'x$quantity',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
-                              fontSize: 10,
-                              height: 1.0,
+                              fontSize: 11,
                             ),
                           ),
                         ),

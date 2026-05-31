@@ -498,8 +498,7 @@ class _DashboardPageState extends State<DashboardPage>
                             if (isTablet)
                               IntrinsicHeight(
                                 child: Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(flex: 1, child: cards[0]),
                                     const SizedBox(width: 8),
@@ -517,7 +516,7 @@ class _DashboardPageState extends State<DashboardPage>
                                 children: [
                                   Row(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(child: cards[0]),
                                       const SizedBox(width: 4),
@@ -539,8 +538,7 @@ class _DashboardPageState extends State<DashboardPage>
                             else
                               IntrinsicHeight(
                                 child: Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(child: cards[0]),
                                     const SizedBox(width: 8),
@@ -683,7 +681,8 @@ class _DashboardPageState extends State<DashboardPage>
                                             child: OrderCard(
                                               order: order,
                                               orderLabel: order.orderLabel,
-                                              onTap: () => _showOrderDetail(order),
+                                              onTap: () =>
+                                                  _showOrderDetail(order),
                                               onDoubleTap: order.completed
                                                   ? null
                                                   : () => _showOrderOptions(
@@ -907,7 +906,6 @@ class _SummaryCard extends StatelessWidget {
 
   // ...existing code...
 }
-
 
 class PaymentDialog extends StatefulWidget {
   final Order order;

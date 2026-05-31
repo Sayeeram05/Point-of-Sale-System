@@ -2,11 +2,23 @@
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
 import '../services/optimized_image_service.dart';
-import '../services/app_performance.dart';
 import '../models/menu.dart';
 import '../models/order.dart';
-import '../theme/app_theme.dart';
 import '../widgets/order_detail_dialog.dart';
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+class _Colors {
+  static const primary          = Color(0xFFFF8C00);
+  static const primaryLight     = Color(0xFFFFF3E0);
+  static const background       = Color(0xFFF5F5F0);
+  static const cardBg           = Colors.white;
+  static const imageBg          = Color(0xFFEDE8E1);
+  static const pillBg           = Color(0xFFF0EDE8);
+  static const textDark         = Color(0xFF1C1917);
+  static const textMid          = Color(0xFF57534E);
+  static const textLight        = Color(0xFF9CA3AF);
+  static const chipUnselectedBg = Color(0xFFF0EDE8);
+}
 
 class MenuPage extends StatefulWidget {
   final int orderId;
@@ -31,17 +43,22 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   String _error = '';
   double _totalPrice = 0.0;
   int _totalPieces = 0;
-  AnimationController? _toggleAnimationController;
-  AnimationController? _badgeAnimationController;
-  final Map<String, AnimationController> _productBadgeControllers = {};
 
-  // In-flight guard to prevent concurrent API mutations
+  // Animation controllers
+  AnimationController? _cartAnimationController;
+  AnimationController? _fabAnimationController;
+  final Map<String, AnimationController> _productAnimationControllers = {};
+
+  // Category and search functionality
+  String _selectedCategory = 'All';
+  List<String> _categories = ['All'];
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  // UI state
   bool _isApiCallInFlight = false;
-
-  // Pre-computed caches (updated in _updateTotals)
-  Map<String, int> _quantityMap = {};
-  int _iceCount = 0;
   bool _suppressDeleteOnPop = false;
+  Map<String, int> _quantityMap = {};
 
   Future<bool> _syncOrderBeforePop() async {
     if (_isApiCallInFlight) return false;
@@ -104,32 +121,36 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _initializeAnimations();
+
     if (widget.initialOrderItems != null) {
       _currentOrderItems = List<OrderItem>.from(widget.initialOrderItems!);
       _updateTotals();
     }
 
-    // Initialize toggle animation with optimized duration
-    _toggleAnimationController = AnimationController(
-      duration: AppPerformance.normalAnimation,
-      vsync: this,
-    );
-
-    // Initialize badge animation controller with optimized duration
-    _badgeAnimationController = AnimationController(
-      duration: AppPerformance.slowAnimation,
-      vsync: this,
-    );
-
     _loadMenu();
+  }
+
+  void _initializeAnimations() {
+    _cartAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _fabAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
   }
 
   @override
   void dispose() {
-    _toggleAnimationController?.dispose();
-    _badgeAnimationController?.dispose();
-    // Dispose all product badge controllers
-    for (final controller in _productBadgeControllers.values) {
+    _cartAnimationController?.dispose();
+    _fabAnimationController?.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+
+    for (final controller in _productAnimationControllers.values) {
       controller.dispose();
     }
     super.dispose();
@@ -152,18 +173,33 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
         _isLoading = false;
       });
 
-      // Preload all product images in the background so they are
-      // ready instantly when the user scrolls to them.
+      _extractCategories(menu);
       _preloadAllProductImages(menu);
-
-      // Also load the current order to populate _currentOrderItems
       await _loadCurrentOrder();
+      
+      // Trigger initial animations
+      _fabAnimationController?.forward();
     } catch (e) {
       setState(() {
         _error = e.toString();
         _isLoading = false;
       });
     }
+  }
+
+  void _extractCategories(Menu menu) {
+    final Set<String> categorySet = {'All'};
+    
+    // Extract categories from ice sticks
+    for (final categories in menu.iceSticks.values) {
+      for (final category in categories) {
+        categorySet.add(category.name);
+      }
+    }
+
+    setState(() {
+      _categories = categorySet.toList()..sort();
+    });
   }
 
   /// Collect every product image URL from the menu and preload them all
@@ -226,7 +262,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     );
     _totalPieces = _currentOrderItems.fold(0, (sum, item) => sum + item.pieces);
 
-    // Pre-compute quantity lookup map for O(1) access (was O(n) per product per build)
     final map = <String, int>{};
     for (final item in _currentOrderItems) {
       final key = item.product.trim().toLowerCase();
@@ -234,38 +269,27 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     }
     _quantityMap = map;
 
-    // Cache counts (was recomputed 6× in AppBar per build)
-    _iceCount = _currentOrderItems.fold(0, (sum, item) => sum + item.pieces);
-
-    // Trigger badge animation when totals update
-    _badgeAnimationController?.forward().then((_) {
-      _badgeAnimationController?.reverse();
+    // Trigger cart animation
+    _cartAnimationController?.forward().then((_) {
+      _cartAnimationController?.reverse();
     });
   }
 
-  static const int _maxBadgeControllers = 50;
-
-  void _animateBadgeForProduct(String productKey) {
-    // Create or get animation controller for this specific product
-    if (!_productBadgeControllers.containsKey(productKey)) {
-      // Evict oldest entries if at capacity
-      if (_productBadgeControllers.length >= _maxBadgeControllers) {
-        final oldest = _productBadgeControllers.keys.first;
-        _productBadgeControllers[oldest]?.dispose();
-        _productBadgeControllers.remove(oldest);
-      }
-      _productBadgeControllers[productKey] = AnimationController(
-        duration: AppPerformance.slowAnimation,
+  void _animateProduct(String productKey) {
+    if (!_productAnimationControllers.containsKey(productKey)) {
+      _productAnimationControllers[productKey] = AnimationController(
+        duration: const Duration(milliseconds: 300),
         vsync: this,
       );
     }
 
-    final controller = _productBadgeControllers[productKey]!;
+    final controller = _productAnimationControllers[productKey]!;
     controller.forward().then((_) {
       controller.reverse();
     });
   }
 
+  
   OrderItem? _getOrderItem(Product product) {
     final target = product.name.trim().toLowerCase();
     final idx = _currentOrderItems.indexWhere(
@@ -274,326 +298,534 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     return idx >= 0 ? _currentOrderItems[idx] : null;
   }
 
+  List<Product> _getFilteredProducts() {
+    if (_menu == null) return [];
+
+    List<Product> allProducts = [];
+
+    // Get products based on selected category
+    if (_selectedCategory == 'All') {
+      // Get all products from all categories
+      for (final categories in _menu!.iceSticks.values) {
+        for (final category in categories) {
+          allProducts.addAll(category.products);
+        }
+      }
+    } else {
+      // Get products from specific category
+      for (final categories in _menu!.iceSticks.values) {
+        for (final category in categories) {
+          if (category.name == _selectedCategory) {
+            allProducts = category.products;
+            break;
+          }
+        }
+      }
+    }
+
+    // Apply search filter
+    if (_searchController.text.isNotEmpty) {
+      final searchQuery = _searchController.text.toLowerCase();
+      allProducts = allProducts.where((product) {
+        return product.name.toLowerCase().contains(searchQuery);
+      }).toList();
+    }
+
+    // Remove duplicates based on name
+    final Map<String, Product> uniqueProducts = {};
+    for (final product in allProducts) {
+      final String productName = product.name.toLowerCase();
+      if (!uniqueProducts.containsKey(productName)) {
+        uniqueProducts[productName] = product;
+      }
+    }
+
+    return uniqueProducts.values.toList();
+  }
+
+  
 
 
-  Widget _buildProductItem(
-    BuildContext context,
-    Product product,
-    int quantity,
-    OrderItem? orderItem,
-    bool isActive, {
-    bool isIceSticks = true,
-  }) {
-    // Create a unique key for this specific product
-    final String itemKey = 'product_${product.name}';
 
-    return RepaintBoundary(
-      child: Padding(
-        padding: const EdgeInsets.all(1.0),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap:
-                isActive &&
-                    (product.pieces == null || quantity < product.pieces!)
-                ? () {
-                    _addProductToOrder(product);
-                    // Trigger animation for this specific item
-                    _animateBadgeForProduct(itemKey);
-                  }
-                : null,
-            borderRadius: BorderRadius.circular(20),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Main container with modern card design
-                AnimatedContainer(
-                  duration: AppPerformance.normalAnimation,
-                  curve: Curves.easeInOut,
-                  padding: const EdgeInsets.all(1.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.white,
-                    gradient: quantity > 0
-                        ? LinearGradient(
-                            colors: [
-                              AppTheme.primaryColor.withValues(alpha: 0.08),
-                              AppTheme.primaryColor.withValues(alpha: 0.03),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : LinearGradient(
-                            colors: [Colors.white, Colors.grey[50]!],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                    border: Border.all(
-                      color: quantity > 0
-                          ? AppTheme.primaryColor.withValues(alpha: 0.3)
-                          : Colors.grey[200]!,
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: quantity > 0
-                            ? AppTheme.primaryColor.withValues(alpha: 0.15)
-                            : Colors.black.withValues(alpha: 0.08),
-                        spreadRadius: 0,
-                        blurRadius: quantity > 0 ? 12 : 8,
-                        offset: const Offset(0, 4),
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        spreadRadius: 0,
-                        blurRadius: 2,
-                        offset: const Offset(0, -1),
-                      ),
-                    ],
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.grey[50],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: AspectRatio(
-                        aspectRatio: 1.0,
-                        child:
-                            product.image != null && product.image!.isNotEmpty
-                            ? OptimizedImageService.optimizedNetworkImage(
-                                imageUrl: product.image!,
-                                width:
-                                    400, // Use reasonable max size instead of infinity
-                                height:
-                                    400, // Use reasonable max size instead of infinity
-                                fit: BoxFit.contain,
-                                errorWidget: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.grey[200]!,
-                                        Colors.grey[100]!,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.icecream_rounded,
-                                        color: Colors.grey[500],
-                                        size:
-                                            isIceSticks &&
-                                                AppTheme.isMobileOnly(context)
-                                            ? 36
-                                            : 32,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        product.name,
-                                        style: TextStyle(
-                                          color: Colors.grey[700],
-                                          fontSize:
-                                              isIceSticks &&
-                                                  AppTheme.isMobileOnly(context)
-                                              ? 11
-                                              : 10,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.grey[200]!,
-                                      Colors.grey[100]!,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.icecream_rounded,
-                                      color: Colors.grey[500],
-                                      size:
-                                          isIceSticks &&
-                                              AppTheme.isMobileOnly(context)
-                                          ? 36
-                                          : 32,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      product.name,
-                                      style: TextStyle(
-                                        color: Colors.grey[700],
-                                        fontSize:
-                                            isIceSticks &&
-                                                AppTheme.isMobileOnly(context)
-                                            ? 11
-                                            : 10,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
+  // ── UI Components ──────────────────────────────────────────────────────────
+  Widget _buildAppBar() {
+    return Container(
+      color: _Colors.background,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  final shouldPop = await _handleWillPop();
+                  if (shouldPop && mounted) navigator.pop();
+                },
+                icon: const Icon(Icons.arrow_back_ios_new,
+                    color: _Colors.textDark, size: 20),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.orderIndex != null
+                          ? 'Order #${widget.orderIndex}'
+                          : 'Order #${widget.orderId}',
+                      style: const TextStyle(
+                        color: _Colors.textDark,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
                       ),
                     ),
-                  ),
+                    if (_totalPieces > 0)
+                      Text(
+                        '$_totalPieces items • ₹${_totalPrice.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          color: _Colors.textMid,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
                 ),
-                // Unified badge UI for both ice sticks and tubs
-                if (quantity > 0)
-                  Positioned(
-                    bottom: -8,
-                    left: -19,
-                    child: buildMenuBadge(
-                      quantity,
-                      onTap: orderItem != null
-                          ? () {
-                              _decreaseQuantity(orderItem);
-                              _animateBadgeForProduct(itemKey);
-                            }
-                          : null,
-                    ),
-                  ),
-                // Enhanced inactive overlay — shows product name
-                if (!isActive)
-                  Positioned(
-                    left: 6,
-                    right: 6,
-                    top: 6,
-                    bottom: 6,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.8),
-                          width: 2,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 4,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.block_rounded,
-                              color: Colors.red.withValues(alpha: 0.9),
-                              size:
-                                  isIceSticks && AppTheme.isMobileOnly(context)
-                                  ? 16
-                                  : 14,
-                            ),
-                            const SizedBox(height: 3),
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  product.name,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 10,
-                                    height: 1.2,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _showOrderDetails,
+                icon: const Icon(Icons.check_circle_rounded, size: 22),
+                label: const Text('Complete'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _Colors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shadowColor: _Colors.primary.withValues(alpha: 0.45),
+                  padding: const EdgeInsets.only(
+                      left: 16, right: 22, top: 14, bottom: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999)),
+                  textStyle: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-
-
-  // Unified badge UI for both ice sticks and tubs
-  Widget buildMenuBadge(int quantity, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        constraints: BoxConstraints(
-          minWidth: AppTheme.isMobileOnly(context) ? 30 : 38,
-          minHeight: AppTheme.isMobileOnly(context) ? 30 : 38,
-        ),
-        padding: EdgeInsets.symmetric(
-          horizontal: AppTheme.isMobileOnly(context) ? 10 : 14,
-          vertical: AppTheme.isMobileOnly(context) ? 5 : 8,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        focusNode: _searchFocusNode,
+        onChanged: (_) => setState(() {}),
+        style: const TextStyle(fontSize: 15, color: _Colors.textDark),
+        decoration: InputDecoration(
+          hintText: 'Search menu items…',
+          hintStyle:
+              const TextStyle(color: _Colors.textLight, fontSize: 15),
+          prefixIcon:
+              const Icon(Icons.search_rounded, color: _Colors.textLight, size: 22),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close_rounded,
+                      color: _Colors.textLight, size: 20),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: _Colors.chipUnselectedBg,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
           ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              spreadRadius: 1,
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            'x$quantity',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: AppTheme.isMobileOnly(context) ? 13 : 17,
-              letterSpacing: 1.0,
-              shadows: const [
-                Shadow(
-                  color: Colors.black54,
-                  blurRadius: 1,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide:
+                const BorderSide(color: _Colors.primary, width: 1.5),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCategoryChips() {
+    return SizedBox(
+      height: 44,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          final category = _categories[index];
+          final isSelected = category == _selectedCategory;
+
+          return GestureDetector(
+            onTap: () => setState(() => _selectedCategory = category),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeInOut,
+              margin: const EdgeInsets.only(right: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? _Colors.primary
+                    : _Colors.chipUnselectedBg,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Center(
+                child: Text(
+                  category,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : _Colors.textMid,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildItemCard(BuildContext context, Product product) {
+    final quantity   = _getProductQuantity(product);
+    final orderItem  = _getOrderItem(product);
+    final isActive   = product.active != false;
+    final productKey = 'product_${product.name}';
+    final priceAmt   =
+        double.tryParse(product.price.toString())?.toStringAsFixed(0)
+        ?? product.price.toString();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _Colors.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      // Expanded image + fixed-height footer = fills mainAxisExtent exactly.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Image (takes all remaining vertical space) ────────────────────
+          Expanded(
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(14)),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  product.image != null && product.image!.isNotEmpty
+                      ? OptimizedImageService.optimizedNetworkImage(
+                          imageUrl: product.image!,
+                          width: 300,
+                          height: 220,
+                          fit: BoxFit.cover,
+                          errorWidget: _imagePlaceholder(),
+                        )
+                      : _imagePlaceholder(),
+                  if (!isActive)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.52),
+                      alignment: Alignment.center,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Unavailable',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Footer: name-price + quantity pill (fixed height) ─────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // "Name - price" on one line, wraps to 2 lines max
+                RichText(
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _Colors.textDark,
+                      height: 1.3,
+                    ),
+                    children: [
+                      TextSpan(text: product.name),
+                      TextSpan(
+                        text: ' - ',
+                        style: TextStyle(color: _Colors.textMid),
+                      ),
+                      TextSpan(
+                        text: '\u20b9$priceAmt',
+                        style: const TextStyle(color: _Colors.textDark),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 7),
+                // Quantity bar
+                if (!isActive)
+                  Container(
+                    height: 34,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _Colors.pillBg,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'Unavailable',
+                      style: TextStyle(
+                          color: _Colors.textLight,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  )
+                else
+                  _buildQuantityPill(
+                    quantity: quantity,
+                    orderItem: orderItem,
+                    product: product,
+                    productKey: productKey,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _imagePlaceholder() {
+    return Container(
+      color: _Colors.imageBg,
+      child: const Center(
+        child: Icon(Icons.restaurant_menu_rounded,
+            color: Color(0xFFC4B5A5), size: 34),
+      ),
+    );
+  }
+
+  Widget _buildQuantityPill({
+    required int quantity,
+    required OrderItem? orderItem,
+    required Product product,
+    required String productKey,
+  }) {
+    return SizedBox(
+      height: 34,
+      child: Row(
+        children: [
+          // Left: cream pill — minus button + count
+          Expanded(
+            child: Container(
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: _Colors.pillBg,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: quantity > 0 && orderItem != null
+                        ? () {
+                            _decreaseQuantity(orderItem);
+                            _animateProduct(productKey);
+                          }
+                        : null,
+                    child: SizedBox(
+                      width: 34,
+                      height: double.infinity,
+                      child: Center(
+                        child: Icon(
+                          Icons.remove_rounded,
+                          size: 15,
+                          color: quantity > 0
+                              ? _Colors.textMid
+                              : _Colors.textLight,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        quantity.toString(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _Colors.textDark,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 6),
+
+          // Right: solid orange circle — plus only
+          GestureDetector(
+            onTap: () {
+              _addProductToOrder(product);
+              _animateProduct(productKey);
+            },
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: const BoxDecoration(
+                color: _Colors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                size: 17,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader() {
+    final label = _selectedCategory == 'All'
+        ? 'All Items'
+        : _selectedCategory;
+    final products = _getFilteredProducts();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: _Colors.textDark,
+              letterSpacing: -0.4,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: _Colors.primaryLight,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${products.length}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: _Colors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductsGrid() {
+    final filteredProducts = _getFilteredProducts();
+
+    if (filteredProducts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off_rounded, size: 56, color: Colors.grey[300]),
+            const SizedBox(height: 12),
+            const Text(
+              'No items found',
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: _Colors.textMid),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Try a different category or search term',
+              style: TextStyle(fontSize: 13, color: _Colors.textLight),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final crossAxisCount = MediaQuery.of(context).size.width >= 900
+        ? 4
+        : MediaQuery.of(context).size.width >= 600
+            ? 3
+            : 2;
+
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 120),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        mainAxisExtent: 240,
+      ),
+      itemCount: filteredProducts.length,
+      itemBuilder: (context, index) =>
+          _buildItemCard(context, filteredProducts[index]),
     );
   }
 
   Future<void> _addProductToOrder(Product product) async {
-    if (_isApiCallInFlight) return; // Prevent rapid concurrent updates
+    if (_isApiCallInFlight) return;
 
     _isApiCallInFlight = true;
+    final productKey = 'product_${product.name}';
+    
     try {
       final existingIndex = _currentOrderItems.indexWhere(
         (item) =>
@@ -626,6 +858,8 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
           _updateTotals();
         });
       }
+      
+      _animateProduct(productKey);
     } catch (e) {
       if (kDebugMode) debugPrint('Error adding product: $e');
     } finally {
@@ -716,634 +950,225 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     }
   }
 
-  // Helper methods to count ice sticks (return cached values from _updateTotals)
-  int _getIceCount() => _iceCount;
-
-  List<Widget> _buildProductRows(List<Product> products) {
-    // Filter out duplicate products based on name (keep only the first occurrence)
-    final Map<String, Product> uniqueProducts = {};
-    for (final product in products) {
-      final String productName = product.name.toLowerCase();
-      if (!uniqueProducts.containsKey(productName)) {
-        uniqueProducts[productName] = product;
-      }
-    }
-
-    final List<Product> filteredProducts = uniqueProducts.values.toList();
-
-    // Responsive columns based on orientation and device
-    final isPortrait =
-        MediaQuery.of(context).orientation == Orientation.portrait;
-
-    final int columns =
-        AppTheme.isMobileOnly(context) ? 5 : (isPortrait ? 8 : 13);
-
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double itemSpacing = AppTheme.isMobileOnly(context)
-        ? 10.0
-        : 20.0; //change
-    final double itemWidth = AppTheme.isMobileOnly(context)
-        ? (screenWidth - 16) / columns
-        : (screenWidth - 24) / columns;
-    final double itemHeight = AppTheme.isMobileOnly(context)
-        ? 100.0
-        : AppTheme.responsiveValue(
-            context,
-            mobile: 90,
-            tablet: 105,
-            desktop: 100,
-          );
-
-    return [
-      Wrap(
-        spacing: itemSpacing,
-        runSpacing: AppTheme.isMobileOnly(context) ? 14.0 : 18.0,
-        children: filteredProducts.map((product) {
-          final quantity = _getProductQuantity(product);
-          final orderItem = _getOrderItem(product);
-          final isActive = product.active != false;
-          return SizedBox(
-            key: ValueKey('product_${product.productId}'),
-            width: itemWidth,
-            height: itemHeight,
-            child: _buildProductItem(
-              context,
-              product,
-              quantity,
-              orderItem,
-              isActive,
-              isIceSticks: true,
+  Widget _buildFloatingCartSummary() {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 1),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _fabAnimationController!,
+        curve: Curves.easeOutBack,
+      )),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _Colors.primary,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: _Colors.primary.withValues(alpha: 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
-          );
-        }).toList(),
-      ),
-    ];
-  }
-
-  Widget _buildIceSticksList() {
-    if (_menu == null || _menu!.allIceStickCategories.isEmpty) {
-      return Center(
-        child: Text(
-          'No Ice Sticks Available',
-          style: AppTheme.headingSmall(
-            context,
-          ).copyWith(color: Colors.grey[600]),
+          ],
         ),
-      );
-    }
-
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: AppTheme.isMobileOnly(context)
-            ? 4.0
-            : AppTheme.spacingMedium,
-      ),
-      child: ListView.builder(
-        addAutomaticKeepAlives: false,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.only(
-          bottom: AppTheme.responsiveValue(
-            context,
-            mobile:
-                80, // Increased from 20 to 80 for better bottom spacing on mobile
-            tablet:
-                100, // Increased from 32 to 100 for better bottom spacing on tablet
-            desktop:
-                120, // Increased from 40 to 120 for better bottom spacing on desktop
-          ),
-        ),
-        itemCount: _menu!.allIceStickCategories.length,
-        itemBuilder: (context, categoryIndex) {
-          final category = _menu!.allIceStickCategories[categoryIndex];
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Category header
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTheme.spacingMedium,
-                  vertical: AppTheme.isMobileOnly(context)
-                      ? 4.0
-                      : AppTheme.spacingSmall,
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.shopping_bag_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$_totalPieces item${_totalPieces == 1 ? '' : 's'}',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    '₹${_totalPrice.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: _showOrderDetails,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Text(
-                  category.name,
-                  style: AppTheme.headingSmall(context).copyWith(
-                    fontSize: AppTheme.isMobileOnly(context) ? 12 : 18,
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.w700,
+                child: const Text(
+                  'View Cart',
+                  style: TextStyle(
+                    color: _Colors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              // Category products with row wrapping (max 11 items per row)
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTheme.isMobileOnly(context)
-                      ? 2.0
-                      : AppTheme.spacingMedium,
-                ),
-                child: Column(
-                  children: _buildProductRows(
-                    category.products,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            color: _Colors.primary,
+            strokeWidth: 3,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Loading menu…',
+            style: TextStyle(
+                color: _Colors.textMid,
+                fontSize: 15,
+                fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off_rounded,
+                size: 56, color: Color(0xFFFFB74D)),
+            const SizedBox(height: 16),
+            const Text(
+              'Could not load menu',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: _Colors.textDark),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 13, color: _Colors.textMid),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadMenu,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _Colors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.restaurant_menu_rounded,
+              size: 56, color: Color(0xFFD4C4B0)),
+          SizedBox(height: 16),
+          Text(
+            'No Menu Items Available',
+            style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: _Colors.textMid),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Contact your administrator to add items',
+            style: TextStyle(fontSize: 13, color: _Colors.textLight),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  
 
 
   @override
   Widget build(BuildContext context) {
-    final appBarHeight = AppTheme.responsiveValue(
-      context,
-      mobile: 40.0,
-      tablet: 56.0,
-      desktop: 48.0,
-    );
-
-    return WillPopScope(
-      onWillPop: _handleWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final navigator = Navigator.of(context);
+        final shouldPop = await _handleWillPop();
+        if (shouldPop && mounted) navigator.pop();
+      },
       child: Scaffold(
-        backgroundColor: AppTheme.backgroundColor,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(appBarHeight),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              boxShadow: AppTheme.elevationMedium,
-            ),
-            child: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: false,
-              title: AppTheme.isMobileOnly(context)
-                  ? Row(
-                      children: [
-                        // Mobile: Show order number first
-                        Text(
-                          widget.orderIndex != null
-                              ? 'Order #${widget.orderIndex}'
-                              : 'Order #${widget.orderId}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Mobile: Show ice count
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.icecream_rounded,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${_getIceCount()}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        // Tablet/Desktop: Show order title + ice count
-                        Text(
-                          widget.orderIndex != null
-                              ? 'Order #${widget.orderIndex}'
-                              : 'New Order',
-                          style: AppTheme.headingMedium(context).copyWith(
-                            color: Colors.white,
-                            fontSize: AppTheme.responsiveValue(
-                              context,
-                              mobile: 14,
-                              tablet: 22,
-                              desktop: 18,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Add ice count for tablets/desktop too
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.icecream_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${_getIceCount()}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppTheme.primaryColor.withValues(alpha: 0.85),
-                                AppTheme.primaryLight.withValues(alpha: 0.85),
+        backgroundColor: _Colors.background,
+        body: Column(
+          children: [
+            _buildAppBar(),
+            Expanded(
+              child: _isLoading
+                  ? _buildLoadingState()
+                  : _error.isNotEmpty
+                      ? _buildErrorState()
+                      : _menu == null ||
+                              _menu!.allIceStickCategories.isEmpty
+                          ? _buildEmptyState()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSearchBar(),
+                                _buildCategoryChips(),
+                                _buildSectionHeader(),
+                                Expanded(child: _buildProductsGrid()),
                               ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.25,
-                                ),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.shopping_cart_rounded,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '$_totalPieces',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                  letterSpacing: 1.2,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black26,
-                                      blurRadius: 4,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              const Icon(
-                                Icons.currency_rupee_rounded,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                              Text(
-                                _totalPrice.toStringAsFixed(0),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                  letterSpacing: 1.2,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black26,
-                                      blurRadius: 4,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-              leading: IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
-                  size: AppTheme.responsiveValue(
-                    context,
-                    mobile: 20,
-                    tablet: 28,
-                    desktop: 28,
-                  ),
-                ),
-                onPressed: () async {
-                  final navigator = Navigator.of(context);
-                  final shouldPop = await _handleWillPop();
-                  if (shouldPop && mounted) {
-                    navigator.pop(true);
-                  }
-                },
-              ),
-              actions: [
-                Container(
-                  margin: EdgeInsets.only(
-                    right: AppTheme.spacingLarge,
-                    top: AppTheme.isMobileOnly(context) ? 6 : 0,
-                    bottom: AppTheme.isMobileOnly(context) ? 6 : 0,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Pending button removed per user request
-                      // Complete/Done button - always show in app bar
-                      ElevatedButton.icon(
-                        onPressed: _showOrderDetails,
-                        style: AppTheme.successButtonStyle.copyWith(
-                          backgroundColor: WidgetStateProperty.all(
-                            AppTheme.success,
-                          ),
-                          foregroundColor: WidgetStateProperty.all(
-                            Colors.white,
-                          ),
-                          elevation: WidgetStateProperty.all(0),
-                          shadowColor: WidgetStateProperty.all(
-                            Colors.transparent,
-                          ),
-                          shape: WidgetStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.radiusXLarge,
-                              ),
-                            ),
-                          ),
-                          padding: WidgetStateProperty.all(
-                            EdgeInsets.symmetric(
-                              horizontal: AppTheme.responsiveValue(
-                                context,
-                                mobile: 8, // Reduced padding for mobile
-                                tablet: 18,
-                                desktop: 16,
-                              ),
-                              vertical: AppTheme.responsiveValue(
-                                context,
-                                mobile: 4, // Reduced padding for mobile
-                                tablet: 12,
-                                desktop: 10,
-                              ),
-                            ),
-                          ),
-                        ),
-                        icon: Icon(
-                          Icons.payment_rounded,
-                          size: AppTheme.responsiveValue(
-                            context,
-                            mobile: 14,
-                            tablet: 22,
-                            desktop: 18,
-                          ),
-                        ),
-                        label: Text(
-                          AppTheme.isMobileOnly(context)
-                              ? 'Done' // "Done" on mobile phones
-                              : 'Complete', // "Complete" on tablets and larger screens
-                          style: AppTheme.labelMedium.copyWith(
-                            color: Colors.white,
-                            fontSize: AppTheme.responsiveValue(
-                              context,
-                              mobile: 10,
-                              tablet: 16,
-                              desktop: 14,
-                            ),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
-          ),
+          ],
         ),
-        body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.primaryColor,
-                  strokeWidth: 3,
-                ),
-              )
-            : _error.isNotEmpty
-            ? Center(
-                child: Container(
-                  padding: const EdgeInsets.all(AppTheme.spacingXLarge),
-                  margin: const EdgeInsets.all(AppTheme.spacingLarge),
-                  decoration: AppTheme.cardDecoration.copyWith(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                    boxShadow: AppTheme.elevationMedium,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(AppTheme.spacingLarge),
-                        decoration: BoxDecoration(
-                          color: AppTheme.error.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.error_outline_rounded,
-                          size: AppTheme.responsiveValue(
-                            context,
-                            mobile: 48,
-                            tablet: 64,
-                            desktop: 72,
-                          ),
-                          color: AppTheme.error,
-                        ),
-                      ),
-                      const SizedBox(height: AppTheme.spacingLarge),
-                      Text(
-                        'Failed to load menu',
-                        style: AppTheme.headingSmall(context).copyWith(
-                          fontSize: AppTheme.responsiveValue(
-                            context,
-                            mobile: 20,
-                            tablet: 24,
-                            desktop: 28,
-                          ),
-                          color: AppTheme.error,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppTheme.spacingMedium),
-                      Text(
-                        _error,
-                        textAlign: TextAlign.center,
-                        style: AppTheme.bodyMedium.copyWith(
-                          fontSize: AppTheme.responsiveValue(
-                            context,
-                            mobile: 14,
-                            tablet: 16,
-                            desktop: 18,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppTheme.spacingXLarge),
-                      ElevatedButton.icon(
-                        onPressed: _loadMenu,
-                        style: AppTheme.primaryButtonStyle.copyWith(
-                          padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(
-                              horizontal: AppTheme.spacingLarge,
-                              vertical: AppTheme.spacingMedium,
-                            ),
-                          ),
-                        ),
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: Text(
-                          'Try Again',
-                          style: AppTheme.labelLarge.copyWith(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : _menu == null || _menu!.allIceStickCategories.isEmpty
-            ? Center(
-                child: Container(
-                  padding: const EdgeInsets.all(AppTheme.spacingXLarge),
-                  margin: const EdgeInsets.all(AppTheme.spacingLarge),
-                  decoration: AppTheme.elevatedCardDecoration,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(AppTheme.spacingXLarge),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.restaurant_menu_rounded,
-                          size: AppTheme.responsiveValue(
-                            context,
-                            mobile: 56,
-                            tablet: 72,
-                            desktop: 88,
-                          ),
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: AppTheme.spacingXLarge),
-                      Text(
-                        'No Menu Items Available',
-                        style: AppTheme.headingSmall(context).copyWith(
-                          fontSize: AppTheme.responsiveValue(
-                            context,
-                            mobile: 22,
-                            tablet: 26,
-                            desktop: 30,
-                          ),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppTheme.spacingMedium),
-                      Text(
-                        'Contact your administrator to add menu items',
-                        textAlign: TextAlign.center,
-                        style: AppTheme.bodyMedium.copyWith(
-                          fontSize: AppTheme.responsiveValue(
-                            context,
-                            mobile: 16,
-                            tablet: 18,
-                            desktop: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : Column(
-                children: [
-                  // Toggle Button - centered
-                  Center(
-                    child: Container(
-                      margin: EdgeInsets.symmetric(
-                        horizontal: AppTheme.responsiveValue(
-                          context,
-                          mobile: 8,
-                          tablet: 12,
-                          desktop: 16,
-                        ),
-                        vertical: AppTheme.responsiveValue(
-                          context,
-                          mobile: 4,
-                          tablet: 6,
-                          desktop: 8,
-                        ),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.responsiveValue(
-                            context,
-                            mobile: 20,
-                            tablet: 25,
-                            desktop: 30,
-                          ),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: AppTheme.responsiveValue(
-                              context,
-                              mobile: 6,
-                              tablet: 8,
-                              desktop: 10,
-                            ),
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Only show Ice Sticks tab
-                          // removed Tubs and Scoops tabs
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Content
-                  Expanded(
-                    child: _buildIceSticksList(),
-                  ),
-                ],
-              ),
+        floatingActionButton:
+            _totalPieces > 0 ? _buildFloatingCartSummary() : null,
+        floatingActionButtonLocation:
+            FloatingActionButtonLocation.centerFloat,
       ),
     );
   }
-
-  // Scoops-related methods
 }
-  // Scoops and tubs removed: related UI and helper methods deleted.

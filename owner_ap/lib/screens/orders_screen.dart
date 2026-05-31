@@ -26,6 +26,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
   List<OrderItem> _orders = [];
   String _searchQuery = '';
   String _sortBy = 'newest';
+  int _currentPage = 0;
+  final int _ordersPerPage = 6;
 
   @override
   void initState() {
@@ -59,6 +61,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           _orders = ordersData
               .map((order) => OrderItem.fromJson(order))
               .toList();
+          _currentPage = 0;
           _isLoading = false;
         });
 
@@ -664,6 +667,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
+                    _currentPage = 0;
                   });
                 },
                 decoration: InputDecoration(
@@ -715,6 +719,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       onSelected: (value) {
                         setState(() {
                           _sortBy = value;
+                          _currentPage = 0;
                         });
                       },
                       itemBuilder: (context) => [
@@ -778,6 +783,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
+                    _currentPage = 0;
                   });
                 },
                 decoration: InputDecoration(
@@ -824,6 +830,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               onSelected: (value) {
                 setState(() {
                   _sortBy = value;
+                  _currentPage = 0;
                 });
               },
               itemBuilder: (context) => [
@@ -929,27 +936,141 @@ class _OrdersScreenState extends State<OrdersScreen> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenWidth = constraints.maxWidth;
-        final maxCardWidth = screenWidth < 500 ? screenWidth : 420.0;
-        final childAspectRatio = screenWidth < 600 ? 1.05 : 1.2;
+    final pageCount = (filteredOrders.length / _ordersPerPage).ceil();
+    final currentPage = _currentPage.clamp(
+      0,
+      pageCount > 0 ? pageCount - 1 : 0,
+    );
+    final pageOrders = filteredOrders
+        .skip(currentPage * _ordersPerPage)
+        .take(_ordersPerPage)
+        .toList();
 
-        return GridView.builder(
-          padding: const EdgeInsets.only(top: WaffleTheme.spacingS),
-          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: maxCardWidth,
-            crossAxisSpacing: WaffleTheme.spacingS,
-            mainAxisSpacing: WaffleTheme.spacingS,
-            childAspectRatio: childAspectRatio,
+    if (pageOrders.isEmpty) {
+      return Center(
+        child: WaffleCard(
+          child: Padding(
+            padding: const EdgeInsets.all(WaffleTheme.spacingL),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  color: WaffleTheme.textLight,
+                  size: 48,
+                ),
+                const SizedBox(height: WaffleTheme.spacingM),
+                Text(
+                  'No orders found on this page',
+                  style: TextStyle(
+                    color: WaffleTheme.textDark,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: WaffleTheme.spacingS),
+                Text(
+                  'Try switching pages or adjusting your filters.',
+                  style: TextStyle(color: WaffleTheme.textLight),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
-          itemCount: filteredOrders.length,
-          itemBuilder: (context, index) {
-            final order = filteredOrders[index];
-            return _buildOrderCard(order);
-          },
-        );
-      },
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final screenWidth = constraints.maxWidth;
+              final maxCardWidth = screenWidth < 500 ? screenWidth : 420.0;
+              final childAspectRatio = screenWidth < 600 ? 1.05 : 1.2;
+
+              return GridView.builder(
+                padding: const EdgeInsets.only(top: WaffleTheme.spacingS),
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: maxCardWidth,
+                  crossAxisSpacing: WaffleTheme.spacingS,
+                  mainAxisSpacing: WaffleTheme.spacingS,
+                  childAspectRatio: childAspectRatio,
+                ),
+                itemCount: pageOrders.length,
+                itemBuilder: (context, index) {
+                  final order = pageOrders[index];
+                  return _buildOrderCard(order);
+                },
+              );
+            },
+          ),
+        ),
+        if (pageCount > 1)
+          Padding(
+            padding: const EdgeInsets.only(
+              top: WaffleTheme.spacingS,
+              left: WaffleTheme.spacingS,
+              right: WaffleTheme.spacingS,
+              bottom: WaffleTheme.spacingM,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Page ${currentPage + 1} of $pageCount',
+                      style: TextStyle(
+                        color: WaffleTheme.textLight,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: WaffleTheme.spacingS),
+                    Text(
+                      'Showing ${pageOrders.length} of ${filteredOrders.length} orders',
+                      style: TextStyle(color: WaffleTheme.textLight),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    SizedBox(
+                      height: 40,
+                      child: WaffleButton(
+                        text: 'Previous',
+                        type: WaffleButtonType.outline,
+                        onPressed: currentPage > 0
+                            ? () {
+                                setState(() {
+                                  _currentPage = currentPage - 1;
+                                });
+                              }
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: WaffleTheme.spacingS),
+                    SizedBox(
+                      height: 40,
+                      child: WaffleButton(
+                        text: 'Next',
+                        type: WaffleButtonType.outline,
+                        onPressed: currentPage < pageCount - 1
+                            ? () {
+                                setState(() {
+                                  _currentPage = currentPage + 1;
+                                });
+                              }
+                            : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -1443,7 +1564,7 @@ class _OrderDialogState extends State<_OrderDialog> {
         _cashAmountController.text = widget.order!.totalAmount.toString();
       }
 
-      // Parse items - for editing, we'll start with empty selection since we don't have product IDs
+      // We'll populate selected products after products list loads
       _selectedProducts = [];
     }
   }
@@ -1455,9 +1576,44 @@ class _OrderDialogState extends State<_OrderDialog> {
         setState(() {
           _products = response.cast<Map<String, dynamic>>();
         });
+        // If editing an existing order, try to map its item strings to product objects
+        if (widget.order != null && _selectedProducts.isEmpty) {
+          _populateSelectedProductsFromOrder();
+        }
       }
     } catch (e) {
       // Handle error silently, user can still create orders
+    }
+  }
+
+  void _populateSelectedProductsFromOrder() {
+    final order = widget.order!;
+    final List<Map<String, dynamic>> populated = [];
+
+    for (final itemStr in order.items) {
+      // Attempt to parse quantity from trailing " (n)" style
+      final qtyMatch = RegExp(r"\((\d+)\)\s*").firstMatch(itemStr);
+      int qty = 1;
+      String name = itemStr;
+      if (qtyMatch != null) {
+        qty = int.tryParse(qtyMatch.group(1) ?? '1') ?? 1;
+        name = itemStr.replaceAll(RegExp(r"\s*\(\d+\)\s*$"), '').trim();
+      }
+
+      final match = _products.cast<Map<String, dynamic>?>().firstWhere(
+        (p) => p != null && p['Name']?.toString().trim() == name,
+        orElse: () => null,
+      );
+
+      if (match != null) {
+        populated.add({'product': match, 'quantity': qty});
+      }
+    }
+
+    if (populated.isNotEmpty) {
+      setState(() {
+        _selectedProducts = populated;
+      });
     }
   }
 

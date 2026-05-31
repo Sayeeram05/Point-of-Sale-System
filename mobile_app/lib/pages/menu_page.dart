@@ -103,6 +103,9 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
 
   Future<bool> _handleWillPop() async {
     if (_suppressDeleteOnPop) {
+      if (_currentOrderItems.isNotEmpty) {
+        return await _syncOrderBeforePop();
+      }
       return true;
     }
 
@@ -118,13 +121,17 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     return true;
   }
 
+  bool get _isEditingExistingOrder =>
+      widget.initialOrderItems != null && widget.initialOrderItems!.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
 
-    if (widget.initialOrderItems != null) {
+    if (widget.initialOrderItems != null && widget.initialOrderItems!.isNotEmpty) {
       _currentOrderItems = List<OrderItem>.from(widget.initialOrderItems!);
+      _suppressDeleteOnPop = true;
       _updateTotals();
     }
 
@@ -175,7 +182,10 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
 
       _extractCategories(menu);
       _preloadAllProductImages(menu);
-      await _loadCurrentOrder();
+
+      if (!_isEditingExistingOrder) {
+        await _loadCurrentOrder();
+      }
       
       // Trigger initial animations
       _fabAnimationController?.forward();

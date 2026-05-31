@@ -551,7 +551,7 @@ class _DashboardPageState extends State<DashboardPage>
               }
             }
           },
-          backgroundColor: Colors.blue[600],
+          backgroundColor: AppTheme.primaryDark,
           foregroundColor: Colors.white,
           elevation: 8,
           shape: RoundedRectangleBorder(
@@ -645,12 +645,15 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             ),
           ] else ...[
-            ...sortedOrders.map(
-              (order) => Padding(
+            ...sortedOrders.asMap().entries.map(
+              (entry) {
+                final index = entry.key + 1; // Sequential 1-based index
+                final order = entry.value;
+                return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: OrderCard(
                   order: order,
-                  index: order.displayIndex ?? 0,
+                  index: index,
                   onTap: () => _showOrderDetail(order),
                   onDoubleTap: order.completed
                       ? null
@@ -679,9 +682,9 @@ class _DashboardPageState extends State<DashboardPage>
                   },
                   onOrderDeleted: () => _loadDashboardData(forceRefresh: true),
                 ),
-              ),
-            ),
-          ],
+              );
+            },
+          ),
           const SizedBox(height: 90),
         ],
       ),
@@ -695,7 +698,7 @@ class _DashboardPageState extends State<DashboardPage>
         title: 'Orders',
         value: '${_dailySummary!.totalOrders}',
         icon: Icons.shopping_cart,
-        color: Colors.blue,
+        color: AppTheme.primaryColor,
         isTablet: isTablet,
         compact: compact,
       ),
@@ -865,9 +868,9 @@ class _OrdersStatCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 2),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.06),
+        color: AppTheme.primaryColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.22)),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.22)),
       ),
       child: Row(
         children: [
@@ -878,10 +881,10 @@ class _OrdersStatCard extends StatelessWidget {
               children: [
                 Text(
                   '$orders',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    color: AppTheme.primaryColor,
                     height: 1.1,
                   ),
                   maxLines: 1,

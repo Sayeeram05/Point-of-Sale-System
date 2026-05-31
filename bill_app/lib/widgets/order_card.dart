@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/order.dart';
 import '../services/app_colors.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 
 class OrderCard extends StatelessWidget {
   final Order order;
@@ -208,13 +209,11 @@ class OrderCard extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 6,
-                                ), // Add left space
+                                padding: const EdgeInsets.only(left: 6),
                                 child: Text(
                                   '#$index',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     color: order.completed
                                         ? Colors.grey[600]
@@ -227,6 +226,9 @@ class OrderCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(height: 4),
+                              // Payment Method Badge
+                              _buildPaymentMethodBadge(order, baseColor),
                             ],
                           ),
                         ),
@@ -508,6 +510,78 @@ class OrderCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Builds a highlighted payment method badge based on order payment details
+  Widget _buildPaymentMethodBadge(Order order, Color baseColor) {
+    // Determine payment method based on upi and cash amounts
+    String paymentMethod;
+    Color badgeColor;
+    IconData? icon;
+
+    final upiAmount = double.tryParse(order.upiAmount) ?? 0.0;
+    final cashAmount = double.tryParse(order.cashAmount) ?? 0.0;
+
+    if (upiAmount > 0 && cashAmount > 0) {
+      paymentMethod = 'MIXED';
+      badgeColor = AppTheme.primaryColor;
+      icon = Icons.sync_alt_rounded;
+    } else if (upiAmount > 0) {
+      paymentMethod = 'UPI';
+      badgeColor = Colors.purple[600]!;
+      icon = Icons.payment_rounded;
+    } else if (cashAmount > 0) {
+      paymentMethod = 'CASH';
+      badgeColor = Colors.green[600]!;
+      icon = Icons.money_rounded;
+    } else {
+      // Default for pending orders without payment info
+      paymentMethod = 'PENDING';
+      badgeColor = Colors.orange[600]!;
+      icon = Icons.schedule_rounded;
+    }
+
+    // For completed orders, use muted colors
+    if (order.completed) {
+      badgeColor = Colors.grey[500]!;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      margin: const EdgeInsets.only(left: 6),
+      decoration: BoxDecoration(
+        color: order.completed
+            ? Colors.grey[200]
+            : badgeColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: order.completed
+              ? Colors.grey[400]!
+              : badgeColor.withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 10,
+            color: order.completed ? Colors.grey[500] : badgeColor,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            paymentMethod,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: order.completed ? Colors.grey[500] : badgeColor,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -375,6 +375,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
               _buildStatusPill(),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _isLoading ? null : _loadDashboardData,
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: WaffleTheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: WaffleTheme.primary.withValues(alpha: 0.25)),
+                  ),
+                  child: _isLoading
+                      ? SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(WaffleTheme.primary),
+                          ),
+                        )
+                      : Icon(Icons.refresh_rounded, size: 16, color: WaffleTheme.primary),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),

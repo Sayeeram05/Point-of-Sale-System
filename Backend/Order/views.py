@@ -1,6 +1,7 @@
 from datetime import datetime, time, timedelta
 
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Window
+from django.db.models.functions import RowNumber
 from django.db.models.functions import (
     TruncHour,
     TruncDay,
@@ -34,7 +35,7 @@ class OrderList(APIView):
             return Response(serializer.data)
 
         date = request.query_params.get("date")
-        orders = Order.objects.filter(Completed=True)
+        orders = Order.objects.all()
 
         grouped_orders = None
 
@@ -302,6 +303,12 @@ class OrderList(APIView):
             .order_by("-CreatedAt")
         )
 
+        # Build sequential order numbers (oldest DB record = #1) using a separate query
+        seq_qs = Order.objects.order_by("ID").annotate(
+            order_seq=Window(expression=RowNumber(), order_by="ID")
+        ).values("ID", "order_seq")
+        order_seq_map = {row["ID"]: row["order_seq"] for row in seq_qs}
+
         orders_list = []
         for order in individual_orders:
             # Get order items with product names
@@ -322,13 +329,15 @@ class OrderList(APIView):
 
             orders_list.append(
                 {
-                    "id": f"#ORD-{order.ID}",
+                    "id": f"{order.ID}",
+                    "order_id": order.ID,
+                    "order_number": order_seq_map.get(order.ID, order.ID),
                     "date": order.CreatedAt.isoformat(),
                     "items": items,
                     "total_amount": float(order.UpiAmount + order.CashAmount),
                     "payment_method": payment_method,
                     "status": "Completed" if order.Completed else "Pending",
-                    "customer_name": f"Customer {order.ID}",  # Since there's no customer name in the model
+                    "customer_name": f"Customer {order.ID}",
                     "completed": bool(order.Completed),
                     "emoji": getattr(order.EmojiId, "Emoji", None)
                     if getattr(order, "EmojiId", None)
@@ -353,47 +362,71 @@ class OrderList(APIView):
         )
 
     def post(self, request):
-        serializer = OrderSerializer(data=request.data)
-        if serializer.is_valid():
-            order = serializer.save()
+        data = request.data.copy()
+        # Extract OrderItems before passing to serializer (it is read_only there)
+        raw_items = (
+            data.pop("OrderItems", None)
+            or data.pop("orderItems", None)
+            or data.pop("order_items", None)
+            or data.pop("items", None)
+            or []
+        )
 
-            # Build a mobile-friendly response so clients receive a usable order_id
-            items = []
-            item_total = Decimal("0.00")
-            for item in order.OrderItems.all():
-                items.append(
-                    {
-                        "ProductID": item.ProductID.ID,
-                        "ProductName": item.ProductID.Name,
-                        "Quantity": item.Quantity,
-                        "PriceAtPurchase": float(item.PriceAtPurchase),
-                    }
-                )
-                item_total += item.PriceAtPurchase * item.Quantity
+        serializer = OrderSerializer(data=data, partial=True)
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    order = serializer.save()
+
+                    item_total = Decimal("0.00")
+                    items_out = []
+                    for idx, raw in enumerate(raw_items):
+                        product_pk = (
+                            raw.get("ProductID")
+                            or raw.get("product_id")
+                            or raw.get("itemId")
+                        )
+                        quantity = raw.get("Quantity") or raw.get("quantity") or 1
+                        price = (
+                            raw.get("PriceAtPurchase")
+                            or raw.get("price")
+                            or raw.get("Price")
+                        )
+                        if product_pk is None or price is None:
+                            raise ValueError(f"Missing fields for OrderItems[{idx}]")
+                        try:
+                            quantity = int(quantity)
+                            price = Decimal(str(price))
+                        except (TypeError, ValueError, InvalidOperation) as exc:
+                            raise ValueError(f"Invalid data for OrderItems[{idx}]: {exc}")
+
+                        product = Product.objects.get(ID=int(product_pk))
+                        oi = OrderItem.objects.create(
+                            OrderId=order,
+                            ProductID=product,
+                            Quantity=quantity,
+                            PriceAtPurchase=price,
+                        )
+                        items_out.append({
+                            "ProductID": product.ID,
+                            "ProductName": product.Name,
+                            "Quantity": oi.Quantity,
+                            "PriceAtPurchase": float(oi.PriceAtPurchase),
+                        })
+                        item_total += price * quantity
+
+            except (ValueError, Product.DoesNotExist) as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             payload = {
                 "order_id": order.ID,
-                "id": f"#ORD-{order.ID}",
-                "items": items,
-                "price": str(item_total),
-                "total_amount": str(item_total),
-                "upi_amount": str(order.UpiAmount),
-                "cash_amount": str(order.CashAmount),
-                "payment_method": (
-                    "UPI" if order.UpiAmount > order.CashAmount else "Cash"
-                )
-                if not (order.UpiAmount and order.CashAmount)
-                else f"UPI {order.UpiAmount} + Cash {order.CashAmount}",
-                "customer_name": f"Customer {order.ID}",
+                "id": f"{order.ID}",
+                "items": items_out,
+                "total_amount": float(item_total),
+                "payment_method": "Cash",
                 "status": "Completed" if order.Completed else "Pending",
                 "completed": bool(order.Completed),
-                "order_date": order.CreatedAt.isoformat(),
-                "emoji": getattr(order.EmojiId, "Emoji", None)
-                if getattr(order, "EmojiId", None)
-                else None,
-                "color": getattr(order.ColorId, "HexCode", None)
-                if getattr(order, "ColorId", None)
-                else None,
+                "date": order.CreatedAt.isoformat(),
             }
 
             return Response(payload, status=status.HTTP_201_CREATED)
@@ -674,8 +707,15 @@ class OrdersListToday(OrderList):
             Allorders.select_related("ColorId", "EmojiId")
             .prefetch_related("OrderItems__ProductID")
             .order_by("-CreatedAt")
-        )  # Limit to 50 most recent orders
+        )
         print(individual_orders)
+
+        # Build sequential order numbers (oldest DB record = #1) using a separate query
+        seq_qs2 = Order.objects.order_by("ID").annotate(
+            order_seq=Window(expression=RowNumber(), order_by="ID")
+        ).values("ID", "order_seq")
+        order_seq_map2 = {row["ID"]: row["order_seq"] for row in seq_qs2}
+
         orders_list = []
         for order in individual_orders:
             # Get order items with product names
@@ -700,6 +740,7 @@ class OrdersListToday(OrderList):
                 {
                     "id": f"{order.ID}",
                     "order_id": order.ID,
+                    "order_number": order_seq_map2.get(order.ID, order.ID),
                     "date": order.CreatedAt.isoformat(),
                     "items": items,
                     "price": float(item_total),

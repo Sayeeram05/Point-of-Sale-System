@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/base_api_service.dart';
 import 'orders_screen.dart';
@@ -17,9 +18,12 @@ class _C {
 }
 
 class EditOrderScreen extends StatefulWidget {
-  final OrderItem order;
+  /// Pass an existing order to edit it, or null to create a new order.
+  final OrderItem? order;
 
-  const EditOrderScreen({super.key, required this.order});
+  const EditOrderScreen({super.key, this.order});
+
+  bool get isCreateMode => order == null;
 
   @override
   State<EditOrderScreen> createState() => _EditOrderScreenState();
@@ -36,6 +40,9 @@ class _EditOrderScreenState extends State<EditOrderScreen>
   bool _isSaving = false;
   String? _error;
 
+  // For create mode: holds the newly created order id after first save
+  int? _createdOrderId;
+
   // Totals
   double _totalPrice = 0.0;
   int _totalPieces = 0;
@@ -45,10 +52,27 @@ class _EditOrderScreenState extends State<EditOrderScreen>
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
+  // Debounce timer for auto-save on quantity change
+  Timer? _saveDebounce;
+
   int? get _orderId {
-    final m = RegExp(r'#?ORD-?(\d+)', caseSensitive: false)
-        .firstMatch(widget.order.id);
-    return m != null ? int.tryParse(m.group(1)!) : null;
+    if (_createdOrderId != null) return _createdOrderId;
+    if (widget.order == null) return null;
+    final rawId = widget.order!.id;
+    return int.tryParse(rawId) ??
+        int.tryParse(
+          RegExp(r'\d+').firstMatch(rawId)?.group(0) ?? '',
+        );
+  }
+
+  String get _displayTitle {
+    if (widget.isCreateMode) return 'New Order';
+    final num = widget.order!.orderNumber;
+    if (num != null && num.trim().isNotEmpty) {
+      final clean = num.trim();
+      return clean.startsWith('#') ? 'Order $clean' : 'Order #$clean';
+    }
+    return 'Order ${widget.order!.displayOrderNumber}';
   }
 
   @override
@@ -63,16 +87,25 @@ class _EditOrderScreenState extends State<EditOrderScreen>
 
   @override
   void dispose() {
+    _saveDebounce?.cancel();
     _fabAnimController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
   }
 
+  /// Called after every cart change in edit mode — debounced PUT.
+  void _scheduleAutoSave() {
+    if (widget.isCreateMode) return;
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 600), () async {
+      await _autoSaveExistingOrder();
+    });
+  }
+
   Future<void> _loadProducts() async {
     setState(() { _isLoading = true; _error = null; });
     try {
-      // /products/menu/ returns { "CategoryName": [ ...products... ], ... }
       final response = await BaseApiService.get('/products/menu/');
       if (response is Map<String, dynamic>) {
         final cats = <String>['All'];
@@ -93,7 +126,9 @@ class _EditOrderScreenState extends State<EditOrderScreen>
           _categories = cats;
           _isLoading = false;
         });
-        _populateCartFromOrder(allProducts);
+        if (!widget.isCreateMode) {
+          _populateCartFromOrder(allProducts);
+        }
         _fabAnimController.forward();
       }
     } catch (e) {
@@ -103,11 +138,11 @@ class _EditOrderScreenState extends State<EditOrderScreen>
 
   void _populateCartFromOrder(List<Map<String, dynamic>> products) {
     final entries = <_CartEntry>[];
-    for (final itemStr in widget.order.items) {
+    for (final itemStr in widget.order!.items) {
       final qtyMatch  = RegExp(r'Quantity:\s*(\d+)').firstMatch(itemStr);
-      final nameMatch = RegExp(r'ProductName:\s*([^,]+)').firstMatch(itemStr);
-      final priceMatch = RegExp(r'Price(?:AtPurchase)?:\s*([\d.]+)').firstMatch(itemStr);
-      final idMatch   = RegExp(r'ProductID?:\s*(\d+)').firstMatch(itemStr);
+      final nameMatch = RegExp(r'ProductName:\s*([^,}]+)').firstMatch(itemStr);
+      final priceMatch = RegExp(r'PriceAtPurchase:\s*([\d.]+)').firstMatch(itemStr);
+      final idMatch   = RegExp(r'ProductID:\s*(\d+)').firstMatch(itemStr);
 
       final qty   = int.tryParse(qtyMatch?.group(1) ?? '1') ?? 1;
       final name  = nameMatch?.group(1)?.trim() ?? itemStr;
@@ -116,8 +151,10 @@ class _EditOrderScreenState extends State<EditOrderScreen>
 
       Map<String, dynamic>? match;
       if (pid != null) {
+        final pidStr = pid.toString();
         match = products.cast<Map<String, dynamic>?>().firstWhere(
-          (p) => p != null && (p['ID'] == pid || p['id'] == pid),
+          (p) => p != null &&
+              (p['ID']?.toString() == pidStr || p['id']?.toString() == pidStr),
           orElse: () => null,
         );
       }
@@ -177,6 +214,7 @@ class _EditOrderScreenState extends State<EditOrderScreen>
       _updateTotals();
     });
     if (_totalPieces == 1) _fabAnimController.forward();
+    _scheduleAutoSave();
   }
 
   void _decreaseProduct(Map<String, dynamic> product) {
@@ -190,6 +228,86 @@ class _EditOrderScreenState extends State<EditOrderScreen>
       }
       _updateTotals();
     });
+    _scheduleAutoSave();
+  }
+
+  List<Map<String, dynamic>> get _cartPayload => _cart.map((e) => {
+    'ProductID': e.product['ID'],
+    'Quantity': e.qty,
+    'PriceAtPurchase': e.priceOverride ?? _toDouble(e.product['Price']),
+  }).toList();
+
+  /// Creates a new pending order via POST. Returns the new order id on success.
+  Future<int?> _createPendingOrder() async {
+    if (_cart.isEmpty) return null;
+    final totalQty = _cart.fold<int>(0, (s, e) => s + e.qty);
+    try {
+      final response = await BaseApiService.post('/orders/create/', {
+        'UpiAmount': 0,
+        'CashAmount': 0,
+        'TotalQuantity': totalQty,
+        'Completed': false,
+        'OrderItems': _cartPayload,
+      });
+      return (response['order_id'] as num?)?.toInt();
+    } catch (e) {
+      debugPrint('[EditOrderScreen] POST failed: $e');
+      return null;
+    }
+  }
+
+  /// Saves (PUT) changes to an existing order without completing it.
+  Future<void> _autoSaveExistingOrder() async {
+    final id = _orderId;
+    if (id == null || _cart.isEmpty) return;
+    final totalQty = _cart.fold<int>(0, (s, e) => s + e.qty);
+    try {
+      await BaseApiService.put('/orders/$id/update/', {
+        'UpiAmount': 0,
+        'CashAmount': 0,
+        'TotalQuantity': totalQty,
+        'Completed': false,
+        'OrderItems': _cartPayload,
+      });
+      debugPrint('[EditOrderScreen] Auto-saved order $id (${_cart.length} items)');
+    } catch (e) {
+      debugPrint('[EditOrderScreen] Auto-save PUT failed for order $id: $e');
+    }
+  }
+
+  /// Called when the back button is pressed.
+  Future<void> _handleBack() async {
+    // Cancel any pending debounced save — we do a synchronous save below
+    _saveDebounce?.cancel();
+    _saveDebounce = null;
+
+    if (_cart.isEmpty) {
+      Navigator.of(context).pop(false);
+      return;
+    }
+    if (widget.isCreateMode) {
+      // Create mode: POST a pending order then go back
+      setState(() => _isSaving = true);
+      final newId = await _createPendingOrder();
+      if (mounted) setState(() => _isSaving = false);
+      if (!mounted) return;
+      if (newId != null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Order saved as pending'),
+          backgroundColor: Color(0xFF4CAF50),
+        ));
+        Navigator.of(context).pop(true);
+      } else {
+        Navigator.of(context).pop(false);
+      }
+    } else {
+      // Edit mode: PUT to update the existing order as pending
+      setState(() => _isSaving = true);
+      await _autoSaveExistingOrder();
+      if (mounted) setState(() => _isSaving = false);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    }
   }
 
   Future<void> _saveOrder({bool completed = false, double upi = 0, double cash = 0}) async {
@@ -200,25 +318,31 @@ class _EditOrderScreenState extends State<EditOrderScreen>
       ));
       return;
     }
-    final id = _orderId;
-    if (id == null) return;
 
     setState(() => _isSaving = true);
     try {
       final totalQty = _cart.fold<int>(0, (s, e) => s + e.qty);
-      await BaseApiService.put('/orders/$id/update/', {
+      final payload = {
         'UpiAmount': upi,
         'CashAmount': cash,
         'TotalQuantity': totalQty,
         'Completed': completed,
-        'ColorId': 1,
-        'EmojiId': 1,
-        'OrderItems': _cart.map((e) => {
-          'ProductID': e.product['ID'],
-          'Quantity': e.qty,
-          'PriceAtPurchase': e.priceOverride ?? _toDouble(e.product['Price']),
-        }).toList(),
-      });
+        'OrderItems': _cartPayload,
+      };
+
+      if (widget.isCreateMode) {
+        // Create mode: POST
+        final response = await BaseApiService.post('/orders/create/', payload);
+        _createdOrderId = (response['order_id'] as num?)?.toInt();
+      } else {
+        // Edit mode: PUT — cancel debounce first to avoid double-save
+        _saveDebounce?.cancel();
+        _saveDebounce = null;
+        final id = _orderId;
+        if (id == null) return;
+        await BaseApiService.put('/orders/$id/update/', payload);
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(completed ? 'Order marked as complete!' : 'Order saved successfully'),
@@ -244,11 +368,13 @@ class _EditOrderScreenState extends State<EditOrderScreen>
       ));
       return;
     }
+    final orderId = widget.isCreateMode ? 'New Order' : widget.order!.displayOrderNumber;
+    final customerName = widget.isCreateMode ? '' : widget.order!.customerName;
     await showDialog(
       context: context,
       builder: (ctx) => _CompleteOrderDialog(
-        orderId: widget.order.id,
-        customerName: widget.order.customerName,
+        orderId: orderId,
+        customerName: customerName,
         cart: _cart,
         totalPrice: _totalPrice,
         onConfirm: (upi, cash) => _saveOrder(
@@ -264,35 +390,41 @@ class _EditOrderScreenState extends State<EditOrderScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _C.background,
-      body: Column(
-        children: [
-          _buildAppBar(),
-          Expanded(
-            child: _isLoading
-                ? _buildLoadingState()
-                : _error != null
-                    ? _buildErrorState()
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSearchBar(),
-                          _buildCategoryChips(),
-                          _buildSectionHeader(),
-                          Expanded(child: _buildProductsGrid()),
-                        ],
-                      ),
-          ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (!didPop) await _handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: _C.background,
+        body: Column(
+          children: [
+            _buildAppBar(),
+            Expanded(
+              child: _isLoading
+                  ? _buildLoadingState()
+                  : _error != null
+                      ? _buildErrorState()
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSearchBar(),
+                            _buildCategoryChips(),
+                            _buildSectionHeader(),
+                            Expanded(child: _buildProductsGrid()),
+                          ],
+                        ),
+            ),
+          ],
+        ),
+        floatingActionButton:
+            _totalPieces > 0 ? _buildFloatingCartSummary() : null,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
-      floatingActionButton:
-          _totalPieces > 0 ? _buildFloatingCartSummary() : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-  // ─── AppBar — exact match of woffle_menu_page ────────────────────────────
+  // ─── AppBar ──────────────────────────────────────────────────────────────
 
   Widget _buildAppBar() {
     return Container(
@@ -303,18 +435,27 @@ class _EditOrderScreenState extends State<EditOrderScreen>
           padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
           child: Row(
             children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.arrow_back_ios_new,
-                    color: _C.textDark, size: 20),
-              ),
+              _isSaving
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: _C.primary),
+                      ),
+                    )
+                  : IconButton(
+                      onPressed: _handleBack,
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: _C.textDark, size: 20),
+                    ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      widget.order.id,
+                      _displayTitle,
                       style: const TextStyle(
                         color: _C.textDark,
                         fontSize: 18,
@@ -336,13 +477,7 @@ class _EditOrderScreenState extends State<EditOrderScreen>
               ),
               ElevatedButton.icon(
                 onPressed: _isSaving ? null : _showCompleteDialog,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.check_circle_rounded, size: 16),
+                icon: const Icon(Icons.check_circle_rounded, size: 16),
                 label: const Text('Complete'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _C.primary,

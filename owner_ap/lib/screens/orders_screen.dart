@@ -1135,8 +1135,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
   /// PATCHes the order to Completed=false (Pending) and returns the updated OrderItem.
   /// Returns null on failure.
   Future<OrderItem?> _setOrderToPending(OrderItem order) async {
-    final idMatch = RegExp(r'#?ORD-?(\d+)', caseSensitive: false).firstMatch(order.id);
-    if (idMatch == null) {
+    final id = int.tryParse(order.id)?.toString() ??
+        RegExp(r'\d+').firstMatch(order.id)?.group(0);
+    if (id == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1147,8 +1148,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
       }
       return null;
     }
-
-    final id = idMatch.group(1);
     try {
       await BaseApiService.patch('/orders/$id/patch/', {'Completed': false});
 
@@ -1205,6 +1204,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
     return Material(
       color: Colors.transparent,
+      // Single tap on completed card opens details dialog
       child: InkWell(
         onDoubleTap: () => _navigateToEditOrderScreen(order),
         onLongPress: () => _navigateToEditOrderScreen(order),
@@ -1212,7 +1212,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: WaffleCard(
           padding: const EdgeInsets.all(0),
           child: isCompleted
-              ? _buildCompletedOrderCard(order)
+              ? GestureDetector(
+                  onTap: () => _showAllItemsDialog(order),
+                  child: _buildCompletedOrderCard(order),
+                )
               : _buildPendingOrderCard(order),
         ),
       ),
@@ -1257,23 +1260,65 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ),
 
-        // ── Order number + badges row ────────────────────────────────────
+        // ── Order number + badges ────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Large order number
-              Text(
-                order.displayOrderNumber,
-                style: TextStyle(
-                  color: WaffleTheme.textDark,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 22,
-                ),
+              // Row 1: order number · date · spacer · DONE · delete
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    order.displayOrderNumber,
+                    style: TextStyle(
+                      color: WaffleTheme.textDark,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatOrderDate(order.date),
+                    style: TextStyle(
+                      color: WaffleTheme.textLight,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: WaffleTheme.success.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'DONE',
+                      style: TextStyle(
+                        color: WaffleTheme.success,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => _showDeleteOrderDialog(order),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: WaffleTheme.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(Icons.delete_outline, size: 16, color: WaffleTheme.error),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              // Payment badge
+              const SizedBox(height: 5),
+              // Row 2: payment badge (truncated)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -1284,55 +1329,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.account_balance_wallet_outlined,
-                      size: 10,
-                      color: WaffleTheme.textLight,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      order.paymentMethod.toUpperCase(),
-                      style: TextStyle(
-                        color: WaffleTheme.textLight,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
+                    Icon(Icons.account_balance_wallet_outlined, size: 10, color: WaffleTheme.textLight),
+                    const SizedBox(width: 4),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 180),
+                      child: Text(
+                        order.paymentMethod,
+                        style: TextStyle(color: WaffleTheme.textLight, fontSize: 10, fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
-                ),
-              ),
-              const Spacer(),
-              // Status badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: WaffleTheme.success.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'DONE',
-                  style: TextStyle(
-                    color: WaffleTheme.success,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              // Delete button
-              GestureDetector(
-                onTap: () => _showDeleteOrderDialog(order),
-                child: Container(
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: WaffleTheme.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    Icons.delete_outline,
-                    size: 16,
-                    color: WaffleTheme.error,
-                  ),
                 ),
               ),
             ],
@@ -1345,52 +1353,27 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
-            children: order.items.take(4).map((item) {
-              // Parse item string - handle various formats
-              // Format: "ProductName: Cold Coffee, Quantity: 5, PriceAtPurchase: 110.0" or
-              //         "{ProductName: Cold Coffee, Quantity: 5, Price: 110}" etc.
+            children: order.items.take(3).map((item) {
               final nameMatch = RegExp(r'ProductName[:\s]+([^,}]+)', caseSensitive: false).firstMatch(item);
               final qtyMatch = RegExp(r'Quantity[:\s]+(\d+)', caseSensitive: false).firstMatch(item);
-              // Try multiple price field names
               final priceMatch = RegExp(r'(?:PriceAtPurchase|Price|UnitPrice)[:\s]+([\d.]+)', caseSensitive: false).firstMatch(item);
-
               final name = nameMatch != null ? nameMatch.group(1)!.trim() : item.replaceAll(RegExp(r'[{}]'), '');
               final qty = int.tryParse(qtyMatch?.group(1) ?? '1') ?? 1;
               final unitPrice = double.tryParse(priceMatch?.group(1) ?? '0') ?? 0.0;
               final lineTotal = (qty * unitPrice).toStringAsFixed(0);
-
               return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.only(bottom: 5),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
                         name,
-                        style: TextStyle(
-                          color: WaffleTheme.textDark,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: WaffleTheme.textDark, fontSize: 12, fontWeight: FontWeight.w500),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text(
-                      'x$qty',
-                      style: TextStyle(
-                        color: WaffleTheme.textLight,
-                        fontSize: 11,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '₹$lineTotal',
-                      style: TextStyle(
-                        color: WaffleTheme.textDark,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    Text('x$qty  ', style: TextStyle(color: WaffleTheme.textLight, fontSize: 11)),
+                    Text('₹$lineTotal', style: TextStyle(color: WaffleTheme.textDark, fontSize: 12, fontWeight: FontWeight.w600)),
                   ],
                 ),
               );
@@ -1398,31 +1381,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ),
 
-        if (order.items.length > 4)
+        if (order.items.length > 3)
           Padding(
-            padding: const EdgeInsets.only(left: 12, top: 4),
-            child: GestureDetector(
-              onTap: () => _showAllItemsDialog(order),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '+ ${order.items.length - 4} more items',
-                    style: TextStyle(
-                      color: WaffleTheme.primary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 14,
-                    color: WaffleTheme.primary,
-                  ),
-                ],
-              ),
+            padding: const EdgeInsets.only(left: 12, top: 2),
+            child: Text(
+              '+ ${order.items.length - 3} more items · tap to view all',
+              style: TextStyle(color: WaffleTheme.primary, fontSize: 10, fontWeight: FontWeight.w500),
             ),
           ),
 
@@ -1481,16 +1445,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
         children: [
-          // Header row with order ID and menu
+          // Header row with order number and menu
           Row(
             children: [
               Expanded(
                 child: Text(
-                  order.id,
+                  order.displayOrderNumber,
                   style: TextStyle(
                     color: WaffleTheme.textDark,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 14,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1575,116 +1539,95 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Customer name
-          Text(
-            order.customerName,
-            style: TextStyle(
-              color: WaffleTheme.textDark,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-          const SizedBox(height: 8),
-
-          // Items section
+          // Items section — show qty × unit price per item
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Items',
-                  style: TextStyle(
-                    color: WaffleTheme.textLight,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ...order.items
-                    .take(2)
-                    .map(
-                      (item) {
-                        final nameMatch = RegExp(r'ProductName:\s*([^,}]+)')
-                            .firstMatch(item);
-                        final displayName = nameMatch != null
-                            ? nameMatch.group(1)!.trim()
-                            : item;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 2),
+                ...order.items.take(3).map((item) {
+                  final nameMatch = RegExp(r'ProductName:\s*([^,}]+)').firstMatch(item);
+                  final qtyMatch = RegExp(r'Quantity:\s*(\d+)').firstMatch(item);
+                  final priceMatch = RegExp(r'PriceAtPurchase:\s*([\d.]+)').firstMatch(item);
+                  final name = nameMatch?.group(1)?.trim() ?? item;
+                  final qty = int.tryParse(qtyMatch?.group(1) ?? '1') ?? 1;
+                  final unitPrice = double.tryParse(priceMatch?.group(1) ?? '0') ?? 0.0;
+                  final lineTotal = (qty * unitPrice).toStringAsFixed(0);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            '• $displayName',
-                            style: TextStyle(
-                              color: WaffleTheme.textDark,
-                              fontSize: 10,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            name,
+                            style: TextStyle(color: WaffleTheme.textDark, fontSize: 10, fontWeight: FontWeight.w500),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
                           ),
-                        );
-                      },
+                        ),
+                        Text(
+                          '${qty}×₹${unitPrice.toStringAsFixed(0)}',
+                          style: TextStyle(color: WaffleTheme.textLight, fontSize: 9),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '₹$lineTotal',
+                          style: TextStyle(color: WaffleTheme.textDark, fontSize: 10, fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
-                if (order.items.length > 2)
+                  );
+                }),
+                if (order.items.length > 3)
                   Text(
-                    '+ ${order.items.length - 2} more',
-                    style: TextStyle(
-                      color: WaffleTheme.textLight,
-                      fontSize: 9,
-                      fontStyle: FontStyle.italic,
-                    ),
+                    '+ ${order.items.length - 3} more',
+                    style: TextStyle(color: WaffleTheme.textLight, fontSize: 9, fontStyle: FontStyle.italic),
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
-          // Footer: amount + payment
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Text(
+          // Footer divider + amount
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: WaffleTheme.border.withValues(alpha: 0.4))),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
                   '₹${order.totalAmount.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    color: WaffleTheme.textDark,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                  style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: WaffleTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    order.paymentMethod.length > 6 ? order.paymentMethod.substring(0, 6) + '..' : order.paymentMethod,
+                    style: TextStyle(color: WaffleTheme.primary, fontSize: 9, fontWeight: FontWeight.w700),
                   ),
                 ),
-              ),
-              WaffleBadge.status(
-                order.paymentMethod.length > 5
-                    ? order.paymentMethod.substring(0, 5) + '..'
-                    : order.paymentMethod,
-                isSmall: true,
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 6),
-          // Edit hint row
+          // Tap hint
           Row(
             children: [
               Icon(
-                order.status.toLowerCase() == 'pending'
-                    ? Icons.edit_rounded
-                    : Icons.lock_rounded,
+                order.status.toLowerCase() == 'pending' ? Icons.edit_rounded : Icons.lock_rounded,
                 size: 10,
-                color: order.status.toLowerCase() == 'pending'
-                    ? WaffleTheme.primary
-                    : WaffleTheme.textLight,
+                color: order.status.toLowerCase() == 'pending' ? WaffleTheme.primary : WaffleTheme.textLight,
               ),
               const SizedBox(width: 3),
               Text(
-                order.status.toLowerCase() == 'pending'
-                    ? 'Double-tap to edit'
-                    : 'Double-tap to unlock & edit',
+                order.status.toLowerCase() == 'pending' ? 'Double-tap to edit' : 'Double-tap to unlock',
                 style: TextStyle(
                   fontSize: 9,
-                  color: order.status.toLowerCase() == 'pending'
-                      ? WaffleTheme.primary
-                      : WaffleTheme.textLight,
+                  color: order.status.toLowerCase() == 'pending' ? WaffleTheme.primary : WaffleTheme.textLight,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -1695,39 +1638,47 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  // ─── Show All Items Dialog ───────────────────────────────────────────────
+  // ─── Order Details Dialog ────────────────────────────────────────────────
 
   void _showAllItemsDialog(OrderItem order) {
+    final isCompleted = order.status.toLowerCase() == 'completed' ||
+        order.status.toLowerCase() == 'done';
+    final accentColor = isCompleted ? WaffleTheme.success : WaffleTheme.primary;
+
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: WaffleTheme.cardBackground,
         child: Container(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(ctx).size.height * 0.7,
-            maxWidth: 400,
+            maxHeight: MediaQuery.of(ctx).size.height * 0.78,
+            maxWidth: 420,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
+              // ── Header ──────────────────────────────────────────────
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 12, 14),
                 decoration: BoxDecoration(
-                  color: WaffleTheme.success.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
+                  color: accentColor.withValues(alpha: 0.08),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.receipt_long_rounded,
-                          color: WaffleTheme.success,
-                          size: 24,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.receipt_long_rounded, color: accentColor, size: 20),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -1739,15 +1690,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 style: TextStyle(
                                   color: WaffleTheme.textDark,
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 18,
+                                  fontSize: 20,
                                 ),
                               ),
+                              const SizedBox(height: 2),
                               Text(
-                                '${order.items.length} items',
-                                style: TextStyle(
-                                  color: WaffleTheme.textLight,
-                                  fontSize: 12,
-                                ),
+                                '${order.items.length} item${order.items.length != 1 ? 's' : ''}  ·  ${_formatOrderDate(order.date)}',
+                                style: TextStyle(color: WaffleTheme.textLight, fontSize: 12),
                               ),
                             ],
                           ),
@@ -1760,12 +1709,28 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               color: WaffleTheme.background,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(
-                              Icons.close,
-                              size: 18,
-                              color: WaffleTheme.textLight,
-                            ),
+                            child: Icon(Icons.close, size: 18, color: WaffleTheme.textLight),
                           ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Status + payment chips
+                    Row(
+                      children: [
+                        _chip(
+                          icon: isCompleted ? Icons.check_circle_rounded : Icons.schedule_rounded,
+                          label: isCompleted ? 'Completed' : 'Pending',
+                          color: accentColor,
+                          bg: accentColor.withValues(alpha: 0.12),
+                        ),
+                        const SizedBox(width: 8),
+                        _chip(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: order.paymentMethod,
+                          color: WaffleTheme.textLight,
+                          bg: WaffleTheme.background,
+                          border: WaffleTheme.border,
                         ),
                       ],
                     ),
@@ -1773,89 +1738,69 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
               ),
 
-              // Items list
+              // ── Items list ───────────────────────────────────────────
               Flexible(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   child: Column(
                     children: order.items.asMap().entries.map((entry) {
                       final index = entry.key;
                       final item = entry.value;
-
-                      // Parse item
                       final nameMatch = RegExp(r'ProductName[:\s]+([^,}]+)', caseSensitive: false).firstMatch(item);
                       final qtyMatch = RegExp(r'Quantity[:\s]+(\d+)', caseSensitive: false).firstMatch(item);
                       final priceMatch = RegExp(r'(?:PriceAtPurchase|Price|UnitPrice)[:\s]+([\d.]+)', caseSensitive: false).firstMatch(item);
-
-                      final name = nameMatch != null ? nameMatch.group(1)!.trim() : item.replaceAll(RegExp(r'[{}]'), '');
+                      final name = nameMatch?.group(1)?.trim() ?? item.replaceAll(RegExp(r'[{}]'), '');
                       final qty = int.tryParse(qtyMatch?.group(1) ?? '1') ?? 1;
                       final unitPrice = double.tryParse(priceMatch?.group(1) ?? '0') ?? 0.0;
-                      final lineTotal = (qty * unitPrice).toStringAsFixed(0);
+                      final lineTotal = qty * unitPrice;
 
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: WaffleTheme.cardBackground,
+                          color: WaffleTheme.background,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: WaffleTheme.border.withValues(alpha: 0.5)),
+                          border: Border.all(color: WaffleTheme.border.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           children: [
-                            // Item number
+                            // Index badge
                             Container(
-                              width: 28,
-                              height: 28,
+                              width: 26, height: 26,
                               decoration: BoxDecoration(
-                                color: WaffleTheme.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
+                                color: accentColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(7),
                               ),
                               child: Center(
                                 child: Text(
                                   '${index + 1}',
-                                  style: TextStyle(
-                                    color: WaffleTheme.primary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
+                                  style: TextStyle(color: accentColor, fontWeight: FontWeight.w700, fontSize: 11),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            // Item details
+                            const SizedBox(width: 10),
+                            // Name + qty × price
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     name,
-                                    style: TextStyle(
-                                      color: WaffleTheme.textDark,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w600, fontSize: 13),
+                                    maxLines: 2, overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Qty: $qty × ₹${unitPrice.toStringAsFixed(0)}',
-                                    style: TextStyle(
-                                      color: WaffleTheme.textLight,
-                                      fontSize: 11,
-                                    ),
+                                    '$qty × ₹${unitPrice.toStringAsFixed(0)}',
+                                    style: TextStyle(color: WaffleTheme.textLight, fontSize: 11),
                                   ),
                                 ],
                               ),
                             ),
                             // Line total
                             Text(
-                              '₹$lineTotal',
-                              style: TextStyle(
-                                color: WaffleTheme.textDark,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                              ),
+                              '₹${lineTotal.toStringAsFixed(0)}',
+                              style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w800, fontSize: 14),
                             ),
                           ],
                         ),
@@ -1865,40 +1810,31 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
               ),
 
-              // Footer with total
+              // ── Footer ───────────────────────────────────────────────
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                 decoration: BoxDecoration(
-                  color: WaffleTheme.background.withValues(alpha: 0.5),
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(20),
-                  ),
+                  color: WaffleTheme.background.withValues(alpha: 0.6),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                  border: Border(top: BorderSide(color: WaffleTheme.border.withValues(alpha: 0.4))),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Total Amount',
-                      style: TextStyle(
-                        color: WaffleTheme.textDark,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w700, fontSize: 14),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: WaffleTheme.success.withValues(alpha: 0.15),
+                        color: accentColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         '₹${order.totalAmount.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          color: WaffleTheme.success,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: accentColor, fontWeight: FontWeight.w800, fontSize: 16),
                       ),
                     ),
                   ],
@@ -1907,6 +1843,31 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _chip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color bg,
+    Color? border,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: border != null ? Border.all(color: border) : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+        ],
       ),
     );
   }
@@ -1927,24 +1888,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
   }
 
-  // Dialog functions for order management
+  // Navigation functions for order management
   void _showCreateOrderDialog() {
-    showDialog(
-      context: context,
-      builder: (context) =>
-          _OrderDialog(title: 'Create New Order', onSave: _createOrder),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const EditOrderScreen()))
+        .then((result) { if (result == true) _loadOrdersData(); });
   }
 
   void _showEditOrderDialog(OrderItem order) {
-    showDialog(
-      context: context,
-      builder: (context) => _OrderDialog(
-        title: 'Edit Order',
-        order: order,
-        onSave: (orderData) => _updateOrder(order.id, orderData),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => EditOrderScreen(order: order)))
+        .then((result) { if (result == true) _loadOrdersData(); });
   }
 
   void _showDeleteOrderDialog(OrderItem order) {
@@ -2088,11 +2042,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
     Map<String, dynamic> orderData,
   ) async {
     try {
-      // Extract order ID number from string like "#ORD-123"
-      final idMatch = RegExp(r'#ORD-(\d+)').firstMatch(orderId);
-      if (idMatch == null) throw Exception('Invalid order ID format');
+      final id = int.tryParse(orderId)?.toString() ??
+          RegExp(r'\d+').firstMatch(orderId)?.group(0);
+      if (id == null) throw Exception('Invalid order ID format');
 
-      final id = idMatch.group(1);
       await BaseApiService.put('/orders/$id/update/', orderData);
 
       if (mounted) {
@@ -2124,11 +2077,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Future<void> _deleteOrder(String orderId) async {
     try {
-      // Extract order ID number from string like "#ORD-123"
-      final idMatch = RegExp(r'#ORD-(\d+)').firstMatch(orderId);
-      if (idMatch == null) throw Exception('Invalid order ID format');
+      final id = int.tryParse(orderId)?.toString() ??
+          RegExp(r'\d+').firstMatch(orderId)?.group(0);
+      if (id == null) throw Exception('Invalid order ID format');
 
-      final id = idMatch.group(1);
       await BaseApiService.delete('/orders/$id/delete/');
 
       if (mounted) {
@@ -2862,21 +2814,18 @@ class OrderItem {
     required this.customerName,
   });
 
-  /// Returns the display order number (e.g., "#2846")
+  /// Returns the display order number (e.g., "#1", "#2", "#3")
   String get displayOrderNumber {
     if (orderNumber != null && orderNumber!.trim().isNotEmpty) {
       final clean = orderNumber!.trim();
       return clean.startsWith('#') ? clean : '#$clean';
     }
-    // Fallback: extract numeric part from ID
-    // Handles: "#ORD-2846", "ORD-2846", "Order-2846", "2846", etc.
+    // Fallback: use the raw id
     final numericMatch = RegExp(r'(\d+)', caseSensitive: false).firstMatch(id);
     if (numericMatch != null) {
       return '#${numericMatch.group(1)}';
     }
-    // Last resort
-    final cleanId = id.replaceAll(RegExp(r'[^0-9]'), '');
-    return cleanId.isNotEmpty ? '#$cleanId' : '#$id';
+    return '#$id';
   }
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -2888,7 +2837,16 @@ class OrderItem {
       date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
       items:
           (json['items'] as List<dynamic>?)
-              ?.map((e) => e.toString())
+              ?.map((e) {
+                if (e is Map<String, dynamic>) {
+                  final pid   = e['ProductID'] ?? e['productID'] ?? '';
+                  final name  = e['ProductName'] ?? e['productName'] ?? '';
+                  final qty   = e['Quantity'] ?? e['quantity'] ?? 1;
+                  final price = e['Price'] ?? e['PriceAtPurchase'] ?? e['price'] ?? 0;
+                  return 'ProductID: $pid, ProductName: $name, Quantity: $qty, PriceAtPurchase: $price';
+                }
+                return e.toString();
+              })
               .toList() ??
           [],
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,

@@ -107,6 +107,8 @@ class ProductRequest {
   final String? description;
   final String? imageUrl;
   final bool isAvailable;
+  final List<int>? imageBytes;
+  final String? imageFileName;
 
   const ProductRequest({
     required this.name,
@@ -115,6 +117,8 @@ class ProductRequest {
     this.description,
     this.imageUrl,
     this.isAvailable = true,
+    this.imageBytes,
+    this.imageFileName,
   });
 
   /// Convert to JSON for API requests
@@ -137,6 +141,8 @@ class ProductRequest {
     String? description,
     String? imageUrl,
     bool isAvailable = true,
+    List<int>? imageBytes,
+    String? imageFileName,
   }) {
     return ProductRequest(
       name: name.trim(),
@@ -145,6 +151,8 @@ class ProductRequest {
       description: description?.trim(),
       imageUrl: imageUrl?.trim(),
       isAvailable: isAvailable,
+      imageBytes: imageBytes,
+      imageFileName: imageFileName,
     );
   }
 }

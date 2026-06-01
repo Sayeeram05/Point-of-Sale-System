@@ -11,35 +11,38 @@ from django.utils.decorators import method_decorator
 class ProductList(APIView):
     def get(self, request):
         products = Product.objects.filter(Deleted=False)
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         try:
-            # Get category ID from request data
             category_id = request.data.get('category') or request.data.get('ProductCategory')
             if not category_id:
                 return Response({'error': 'Category ID is required'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Find category by ID (using correct field name)
+
             try:
                 category = Category.objects.get(ID=category_id)
             except Category.DoesNotExist:
                 return Response({'error': 'Category not found'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Create product data with proper category reference
+
             product_data = request.data.copy()
             product_data['ProductCategory'] = category.ID
-            
-            serializer = ProductSerializer(data=product_data)
+
+            serializer = ProductSerializer(data=product_data, context={'request': request})
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                product = serializer.save()
+                if 'Image' in request.FILES:
+                    product.Image = request.FILES['Image']
+                    product.save()
+                return Response(
+                    ProductSerializer(product, context={'request': request}).data,
+                    status=status.HTTP_201_CREATED,
+                )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     def put(self, request, id):
         try:
             product = Product.objects.get(ID=id)
@@ -47,7 +50,6 @@ class ProductList(APIView):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            # Handle category update if provided
             category_id = request.data.get('ProductCategory') or request.data.get('category')
             if category_id:
                 try:
@@ -58,16 +60,22 @@ class ProductList(APIView):
                     return Response({'error': 'Category not found'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 product_data = request.data
-            
-            serializer = ProductSerializer(product, data=product_data)
+
+            serializer = ProductSerializer(product, data=product_data, context={'request': request})
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                updated = serializer.save()
+                if 'Image' in request.FILES:
+                    updated.Image = request.FILES['Image']
+                    updated.save()
+                return Response(
+                    ProductSerializer(updated, context={'request': request}).data,
+                    status=status.HTTP_200_OK,
+                )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     def delete(self, request, id):
         try:
             product = Product.objects.get(ID=id)
@@ -84,26 +92,24 @@ class ProductDetail(APIView):
     def get(self, request, id):
         try:
             product = Product.objects.get(ID=id, Deleted=False)
-            serializer = ProductSerializer(product)
+            serializer = ProductSerializer(product, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProductByCategory(APIView):
-    def get(self, request, category_id = None):
+    def get(self, request, category_id=None):
         if category_id is None:
             categories = Category.objects.all()
-            print(categories)
             menu = {}
             for category in categories:
                 products = Product.objects.filter(ProductCategory=category.ID, Deleted=False)
-                print(category.Name, products)
-                menu[category.Name] = ProductSerializer(products, many=True).data
+                menu[category.Name] = ProductSerializer(products, many=True, context={'request': request}).data
             return Response(menu, status=status.HTTP_200_OK)
         else:
             products = Product.objects.filter(ProductCategory=category_id, Deleted=False)
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

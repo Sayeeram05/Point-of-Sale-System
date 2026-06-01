@@ -91,11 +91,14 @@ class OrderList(APIView):
         elif date == "this_week":
             today = datetime.now().date()
 
-            start_of_week = today - timedelta(days=today.weekday())
+            # Use Sunday as week start: weekday() gives 0=Mon…6=Sun,
+            # so days since last Sunday = (weekday() + 1) % 7
+            start_of_week = today - timedelta(days=(today.weekday() + 1) % 7)
 
             start = datetime.combine(start_of_week, time.min)
+            end = datetime.combine(today + timedelta(days=1), time.min)
 
-            orders = orders.filter(CreatedAt__gte=start, CreatedAt__lt=datetime.now())
+            orders = orders.filter(CreatedAt__gte=start, CreatedAt__lt=end)
 
             grouped_orders = (
                 orders.annotate(period=TruncDay("CreatedAt"))
@@ -118,8 +121,9 @@ class OrderList(APIView):
             start_of_month = today.replace(day=1)
 
             start = datetime.combine(start_of_month, time.min)
+            end = datetime.combine(today + timedelta(days=1), time.min)
 
-            orders = orders.filter(CreatedAt__gte=start, CreatedAt__lt=datetime.now())
+            orders = orders.filter(CreatedAt__gte=start, CreatedAt__lt=end)
 
             grouped_orders = (
                 orders.annotate(period=TruncWeek("CreatedAt"))
@@ -142,8 +146,9 @@ class OrderList(APIView):
             start_of_year = today.replace(month=1, day=1)
 
             start = datetime.combine(start_of_year, time.min)
+            end = datetime.combine(today + timedelta(days=1), time.min)
 
-            orders = orders.filter(CreatedAt__gte=start, CreatedAt__lt=datetime.now())
+            orders = orders.filter(CreatedAt__gte=start, CreatedAt__lt=end)
 
             grouped_orders = (
                 orders.annotate(period=TruncMonth("CreatedAt"))
@@ -294,8 +299,8 @@ class OrderList(APIView):
         individual_orders = (
             orders.select_related("ColorId", "EmojiId")
             .prefetch_related("OrderItems__ProductID")
-            .order_by("-CreatedAt")[:50]
-        )  # Limit to 50 most recent orders
+            .order_by("-CreatedAt")
+        )
 
         orders_list = []
         for order in individual_orders:

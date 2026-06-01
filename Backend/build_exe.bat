@@ -42,9 +42,12 @@ echo [1/7] Activating virtual environment ...
 if exist "env\Scripts\activate.bat" (
     call env\Scripts\activate.bat
     echo       OK — env\ activated.
+) else if exist "..\env\Scripts\activate.bat" (
+    call ..\env\Scripts\activate.bat
+    echo       OK — parent env\ activated.
 ) else (
     echo [WARN] env\ not found — using system Python.
-    echo         Consider running:  python -m venv env
+    echo         Consider running from the parent folder:  python -m venv env
 )
 echo.
 

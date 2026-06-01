@@ -13,7 +13,6 @@ import os
 from PyInstaller.utils.hooks import (
     collect_data_files,
     collect_submodules,
-    collect_dynamic_libs,
 )
 
 # ---------------------------------------------------------------------------
@@ -69,16 +68,26 @@ app_hidden = [
     'Dashboard.admin', 'Dashboard.apps', 'Dashboard.urls',
 ]
 
+# PyMySQL — pure Python MySQL driver (no C extension needed)
+pymysql_hidden = collect_submodules('pymysql')
+
 db_hidden = [
+    'pymysql',
+    'pymysql.connections',
+    'pymysql.cursors',
+    'pymysql.converters',
+    'pymysql.constants',
+    'pymysql.constants.CLIENT',
+    'pymysql.constants.CR',
+    'pymysql.constants.ER',
+    'pymysql.constants.FIELD_TYPE',
+    'pymysql.constants.FLAG',
+    'pymysql.err',
+    'pymysql.protocol',
+    'pymysql.times',
+    'pymysql.charset',
+    # MySQLdb shim installed by pymysql.install_as_MySQLdb()
     'MySQLdb',
-    'MySQLdb._mysql',
-    'MySQLdb.connections',
-    'MySQLdb.cursors',
-    'MySQLdb.converters',
-    'MySQLdb.constants',
-    'MySQLdb.times',
-    'MySQLdb.charset',
-    'MySQLdb.release',
 ]
 
 misc_hidden = [
@@ -90,34 +99,17 @@ misc_hidden = [
 
 all_hidden = (
     django_hidden + drf_hidden + corsheaders_hidden +
-    pystray_hidden + pil_hidden +
+    pystray_hidden + pil_hidden + pymysql_hidden +
     app_hidden + db_hidden + misc_hidden
 )
 
 # ---------------------------------------------------------------------------
-# Binaries  (mysqlclient .pyd / .dll)
-# ---------------------------------------------------------------------------
-try:
-    mysql_binaries = collect_dynamic_libs('MySQLdb')
-except Exception:
-    mysql_binaries = []
-
-# Ensure the _mysql .pyd is included even if collect_dynamic_libs misses it
-import glob
-_site_pkg = os.path.join(os.path.dirname(os.path.abspath('.')), 'env', 'Lib', 'site-packages')
-_mysql_pyds = glob.glob(os.path.join(_site_pkg, 'MySQLdb', '_mysql*.pyd'))
-for _pyd in _mysql_pyds:
-    _dest = os.path.join('MySQLdb', os.path.basename(_pyd))
-    if (_pyd, _dest) not in mysql_binaries:
-        mysql_binaries.append((_pyd, 'MySQLdb'))
-
-# ---------------------------------------------------------------------------
-# Analysis
+# Analysis  (PyMySQL is pure Python — no binary extension files needed)
 # ---------------------------------------------------------------------------
 a = Analysis(
     ['django_app.py'],
     pathex=[],
-    binaries=mysql_binaries,
+    binaries=[],
     datas=(
         django_datas +
         drf_datas +

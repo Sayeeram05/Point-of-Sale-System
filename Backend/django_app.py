@@ -75,6 +75,10 @@ logger = logging.getLogger('billing')
 # ---------------------------------------------------------------------------
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Main.settings')
 
+# PyMySQL acts as a drop-in replacement for mysqlclient (pure Python, no C build needed)
+import pymysql  # noqa: E402
+pymysql.install_as_MySQLdb()
+
 import django  # noqa: E402
 from django.core.management import execute_from_command_line  # noqa: E402
 

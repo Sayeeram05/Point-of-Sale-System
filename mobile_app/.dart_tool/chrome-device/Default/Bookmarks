@@ -1,0 +1,221 @@
+{
+   "checksum": "1d3fa6527edd01a4ae825b7b1828cb83",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "children": [ {
+               "date_added": "13351148965774227",
+               "date_last_used": "0",
+               "guid": "f1928fff-c673-491a-be02-897e967e00c7",
+               "id": "8",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Google Fonts",
+               "type": "url",
+               "url": "https://fonts.google.com/"
+            }, {
+               "date_added": "13351149032504522",
+               "date_last_used": "0",
+               "guid": "f092d8cb-11f0-4bca-abcd-39be9dde84f7",
+               "id": "9",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Color Hunt",
+               "type": "url",
+               "url": "https://colorhunt.co/"
+            }, {
+               "date_added": "13351149106656335",
+               "date_last_used": "0",
+               "guid": "e9a89671-d141-4892-9acd-975a435d0cec",
+               "id": "10",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Pexels",
+               "type": "url",
+               "url": "https://www.pexels.com/"
+            }, {
+               "date_added": "13392060693478188",
+               "date_last_used": "13399837353582193",
+               "guid": "038b6657-2e84-4b03-9281-fad98ff5e65d",
+               "id": "11",
+               "name": "Boxicons : Premium web friendly icons for free",
+               "type": "url",
+               "url": "https://v2.boxicons.com/"
+            } ],
+            "date_added": "13351148996681864",
+            "date_last_used": "0",
+            "date_modified": "13392060693478188",
+            "guid": "d559db39-447f-4e01-8d0f-c5acbd303e30",
+            "id": "7",
+            "name": "Web Development",
+            "type": "folder"
+         }, {
+            "children": [ {
+               "date_added": "13353563597138256",
+               "date_last_used": "0",
+               "guid": "6ec16251-f9e3-4a8c-b991-fea913b67ae1",
+               "id": "13",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Find Open Datasets and Machine Learning Projects | Kaggle",
+               "type": "url",
+               "url": "https://www.kaggle.com/datasets"
+            } ],
+            "date_added": "13353563610591505",
+            "date_last_used": "0",
+            "date_modified": "13353563610591505",
+            "guid": "7afad162-e2ed-414e-8108-eba9230264df",
+            "id": "12",
+            "name": "ML",
+            "type": "folder"
+         }, {
+            "date_added": "13351578473192776",
+            "date_last_used": "13419281539583961",
+            "guid": "204c0b98-2cde-4182-ab75-df42b9e28e11",
+            "id": "14",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "YouTube",
+            "type": "url",
+            "url": "https://www.youtube.com/"
+         }, {
+            "date_added": "13351579267525409",
+            "date_last_used": "0",
+            "guid": "c9483128-30d2-4ecc-9cba-a53f32a57bae",
+            "id": "15",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "Spotify",
+            "type": "url",
+            "url": "https://open.spotify.com/download"
+         }, {
+            "date_added": "13353523630112900",
+            "date_last_used": "13358497438121337",
+            "guid": "6c6e15e3-3652-49b3-8503-e21953551390",
+            "id": "16",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "ELAB",
+            "type": "url",
+            "url": "https://dld.srmist.edu.in/ktretelab2022/#/ktretelab2022/student/home"
+         }, {
+            "date_added": "13355247660386599",
+            "date_last_used": "13424726203299695",
+            "guid": "c86afb38-f452-4131-95e9-1b4b0cc0ae5b",
+            "id": "17",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "GitHub",
+            "type": "url",
+            "url": "https://github.com/"
+         }, {
+            "date_added": "13366136584802079",
+            "date_last_used": "13386164057719302",
+            "guid": "2186662d-aee9-4722-8b23-cbe98cce78ae",
+            "id": "18",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "Network Login",
+            "type": "url",
+            "url": "https://iach.srmist.edu.in/Connect/PortalMain"
+         }, {
+            "date_added": "13383918854876385",
+            "date_last_used": "13412620468438575",
+            "guid": "05588a8d-79b4-4e65-b2cd-c6519bf98df3",
+            "id": "19",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "Classroom",
+            "type": "url",
+            "url": "https://classroom.google.com/u/2/"
+         }, {
+            "children": [ {
+               "date_added": "13392324244737633",
+               "date_last_used": "0",
+               "guid": "e3775bcf-216d-4147-abb7-97bec5704b66",
+               "id": "21",
+               "name": "UseCase -MARQUEE.pdf",
+               "type": "url",
+               "url": "https://drive.google.com/file/d/1SyUvFrF60k-BvUWT0WIHqaVRlaBF7rfD/view"
+            }, {
+               "date_added": "13392324429673897",
+               "date_last_used": "0",
+               "guid": "46bef89c-2305-4bc3-8d02-738a505e8ded",
+               "id": "22",
+               "name": "Placed Students Ref link - Google Sheets",
+               "type": "url",
+               "url": "https://docs.google.com/spreadsheets/d/1c2H5X2bvLYup1J7kYXaaDz1SY28WKqhNvPRpniRd4hE/edit?gid=0#gid=0"
+            }, {
+               "date_added": "13392324476961445",
+               "date_last_used": "0",
+               "guid": "66cbce51-07b4-409b-bc73-02a5938cfec0",
+               "id": "23",
+               "name": "Technical Aptitude Questions.pdf - Google Drive",
+               "type": "url",
+               "url": "https://drive.google.com/file/d/1NzieNEZNYcu3S2yQjirAxLC5M1zPk7AO/edit"
+            }, {
+               "date_added": "13392324594009789",
+               "date_last_used": "13393876299310849",
+               "guid": "9621de89-1be9-4205-b8fc-1007296c7809",
+               "id": "24",
+               "name": "Super Dream",
+               "type": "url",
+               "url": "https://drive.google.com/drive/folders/1dgtEWPUOZgxr2A_8NalSp2Jkpex4rgcZ"
+            } ],
+            "date_added": "13392324315337805",
+            "date_last_used": "0",
+            "date_modified": "13392324594009789",
+            "guid": "11a17dfd-9001-4aa9-bd1a-c14a5ecdf8d1",
+            "id": "20",
+            "name": "Placement",
+            "type": "folder"
+         }, {
+            "date_added": "13396987026515767",
+            "date_last_used": "13424550807185174",
+            "guid": "8c5331de-3e5b-4c48-87ab-703892e0af64",
+            "id": "25",
+            "name": "Mail",
+            "type": "url",
+            "url": "https://mail.google.com/mail/u/0/#inbox"
+         } ],
+         "date_added": "13424735962785839",
+         "date_last_used": "0",
+         "date_modified": "13396987026515767",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Bookmarks bar",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13424735962785839",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Other bookmarks",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13424735962785839",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Mobile bookmarks",
+         "type": "folder"
+      }
+   },
+   "version": 1
+}

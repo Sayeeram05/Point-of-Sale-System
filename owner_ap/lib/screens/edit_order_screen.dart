@@ -498,15 +498,15 @@ class _EditOrderScreenState extends State<EditOrderScreen>
     }
 
     final w = MediaQuery.of(context).size.width;
-    final crossAxisCount = w >= 1200 ? 6 : w >= 900 ? 5 : w >= 600 ? 4 : 2;
-    final cardHeight = w >= 900 ? 160.0 : 200.0;
+    final crossAxisCount = w >= 1200 ? 6 : w >= 900 ? 4 : w >= 600 ? 4 : 2;
+    const cardHeight = 195.0;
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 120),
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 120),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
         mainAxisExtent: cardHeight,
       ),
       itemCount: products.length,
@@ -526,7 +526,6 @@ class _EditOrderScreenState extends State<EditOrderScreen>
         );
     final quantity = entry?.qty ?? 0;
 
-    // Initials for image placeholder
     final initials = name
         .split(' ')
         .where((w) => w.isNotEmpty)
@@ -535,82 +534,66 @@ class _EditOrderScreenState extends State<EditOrderScreen>
         .join()
         .toUpperCase();
 
+    final imageUrl = product['image_url']?.toString();
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
     return Container(
       decoration: BoxDecoration(
         color: _C.cardBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image area (takes all remaining vertical space)
-          Expanded(
-            child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
-              child: Container(
-                color: _C.imageBg,
-                width: double.infinity,
-                child: Center(
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFFB66F1A),
-                    ),
-                  ),
-                ),
+          // ── Image ~65% ───────────────────────────────────────────────────
+          ClipRRect(
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(12)),
+            child: SizedBox(
+              height: 120,
+              width: double.infinity,
+              child: hasImage
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _initialsBox(initials),
+                      loadingBuilder: (_, child, progress) =>
+                          progress == null ? child : _initialsBox(initials),
+                    )
+                  : _initialsBox(initials),
+            ),
+          ),
+
+          // ── Name · Price (one compact line) ──────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+            child: Text(
+              '$name · ₹$priceStr',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _C.textDark,
               ),
             ),
           ),
 
-          // Footer: name + price + quantity pill
+          // ── Quantity pill (full width) ────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: _C.textDark,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '₹$priceStr',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: _C.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Quantity pill — exact same as woffle_menu_page
-                if (quantity == 0)
-                  GestureDetector(
+            padding: const EdgeInsets.fromLTRB(8, 5, 8, 8),
+            child: quantity == 0
+                ? GestureDetector(
                     onTap: () => _addProduct(product),
                     child: Container(
-                      height: 34,
+                      height: 30,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: _C.pillBg,
@@ -619,17 +602,14 @@ class _EditOrderScreenState extends State<EditOrderScreen>
                       child: const Text(
                         'Add',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: _C.primary,
                         ),
                       ),
                     ),
                   )
-                else
-                  _buildQuantityPill(quantity: quantity, product: product),
-              ],
-            ),
+                : _buildQuantityPill(quantity: quantity, product: product),
           ),
         ],
       ),
@@ -643,7 +623,7 @@ class _EditOrderScreenState extends State<EditOrderScreen>
     required Map<String, dynamic> product,
   }) {
     return SizedBox(
-      height: 34,
+      height: 30,
       child: Row(
         children: [
           // Left cream pill: minus + count
@@ -660,11 +640,11 @@ class _EditOrderScreenState extends State<EditOrderScreen>
                   GestureDetector(
                     onTap: () => _decreaseProduct(product),
                     child: Container(
-                      width: 34,
-                      height: 34,
+                      width: 30,
+                      height: 30,
                       alignment: Alignment.center,
                       child: const Icon(Icons.remove_rounded,
-                          size: 16, color: _C.textMid),
+                          size: 14, color: _C.textMid),
                     ),
                   ),
                   // Count
@@ -673,7 +653,7 @@ class _EditOrderScreenState extends State<EditOrderScreen>
                       child: Text(
                         '$quantity',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: _C.textDark,
                         ),
@@ -684,22 +664,42 @@ class _EditOrderScreenState extends State<EditOrderScreen>
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           // Right solid orange circle: plus only
           GestureDetector(
             onTap: () => _addProduct(product),
             child: Container(
-              width: 34,
-              height: 34,
+              width: 30,
+              height: 30,
               decoration: const BoxDecoration(
                 color: _C.primary,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.add_rounded,
-                  size: 18, color: Colors.white),
+                  size: 16, color: Colors.white),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ─── Initials placeholder (fallback when no product image) ──────────────
+
+  Widget _initialsBox(String initials) {
+    return Container(
+      color: _C.imageBg,
+      width: double.infinity,
+      height: double.infinity,
+      child: Center(
+        child: Text(
+          initials,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFFB66F1A),
+          ),
+        ),
       ),
     );
   }

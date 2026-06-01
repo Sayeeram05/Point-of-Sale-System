@@ -1074,14 +1074,127 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  void _navigateToEditOrderScreen(OrderItem order) async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EditOrderScreen(order: order),
-      ),
-    );
-    if (result == true) {
-      _loadOrdersData();
+  Future<void> _navigateToEditOrderScreen(OrderItem order) async {
+    final isPending = order.status.toLowerCase() == 'pending';
+
+    if (!isPending) {
+      // Ask the user to unlock the order first
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.lock_open_rounded, color: WaffleTheme.primary, size: 22),
+              const SizedBox(width: 8),
+              const Text('Unlock Order'),
+            ],
+          ),
+          content: Text(
+            'Order ${order.id} is currently "${order.status}".\n\n'
+            'To edit it, the status must first be set to Pending. '
+            'Do you want to change it to Pending now?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: WaffleTheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Set to Pending'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true || !mounted) return;
+
+      final updatedOrder = await _setOrderToPending(order);
+      if (updatedOrder == null || !mounted) return;
+
+      // Navigate with the freshly-pending order
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => EditOrderScreen(order: updatedOrder)),
+      );
+      if (result == true) _loadOrdersData();
+    } else {
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => EditOrderScreen(order: order)),
+      );
+      if (result == true) _loadOrdersData();
+    }
+  }
+
+  /// PATCHes the order to Completed=false (Pending) and returns the updated OrderItem.
+  /// Returns null on failure.
+  Future<OrderItem?> _setOrderToPending(OrderItem order) async {
+    final idMatch = RegExp(r'#?ORD-?(\d+)', caseSensitive: false).firstMatch(order.id);
+    if (idMatch == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not parse order ID: ${order.id}'),
+            backgroundColor: WaffleTheme.error,
+          ),
+        );
+      }
+      return null;
+    }
+
+    final id = idMatch.group(1);
+    try {
+      await BaseApiService.patch('/orders/$id/patch/', {'Completed': false});
+
+      // Rebuild locally — keep everything the same, just flip status
+      final updated = OrderItem(
+        id: order.id,
+        date: order.date,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        paymentMethod: order.paymentMethod,
+        status: 'Pending',
+        customerName: order.customerName,
+      );
+
+      // Update in the live list so the card reflects the change immediately
+      setState(() {
+        final idx = _orders.indexWhere((o) => o.id == order.id);
+        if (idx != -1) _orders[idx] = updated;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.lock_open_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text('${order.id} set to Pending'),
+              ],
+            ),
+            backgroundColor: WaffleTheme.success,
+          ),
+        );
+      }
+
+      return updated;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update order status: $e'),
+            backgroundColor: WaffleTheme.error,
+          ),
+        );
+      }
+      return null;
     }
   }
 
@@ -1090,6 +1203,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       color: Colors.transparent,
       child: InkWell(
         onDoubleTap: () => _navigateToEditOrderScreen(order),
+        onLongPress: () => _navigateToEditOrderScreen(order),
         borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
         child: WaffleCard(
           padding: const EdgeInsets.all(WaffleTheme.spacingS),
@@ -1256,7 +1370,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
               const SizedBox(height: 8),
 
-              // Footer with amount and payment method aligned to bottom
+              // Footer: amount + payment
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -1275,6 +1389,34 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ? order.paymentMethod.substring(0, 5) + '..'
                         : order.paymentMethod,
                     isSmall: true,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // Edit hint row
+              Row(
+                children: [
+                  Icon(
+                    order.status.toLowerCase() == 'pending'
+                        ? Icons.edit_rounded
+                        : Icons.lock_rounded,
+                    size: 10,
+                    color: order.status.toLowerCase() == 'pending'
+                        ? WaffleTheme.primary
+                        : WaffleTheme.textLight,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    order.status.toLowerCase() == 'pending'
+                        ? 'Double-tap to edit'
+                        : 'Double-tap to unlock & edit',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: order.status.toLowerCase() == 'pending'
+                          ? WaffleTheme.primary
+                          : WaffleTheme.textLight,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/base_api_service.dart';
 import '../theme/waffle_theme.dart';
 import '../widgets/widgets.dart';
+import 'edit_order_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -15,17 +16,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   DateTimeRange? _customRange;
-  
+
   // Summary data
   int _orderCount = 0;
   double _totalRevenue = 0;
   double _upiAmount = 0;
   double _cashAmount = 0;
-  
+
   // Orders list
   List<OrderItem> _orders = [];
   String _searchQuery = '';
   String _sortBy = 'newest';
+  int _currentPage = 0;
+  final int _ordersPerPage = 20;
 
   @override
   void initState() {
@@ -56,7 +59,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
           _totalRevenue = _toDouble(summary['total_amount']);
           _upiAmount = _toDouble(summary['total_upi']);
           _cashAmount = _toDouble(summary['total_cash']);
-          _orders = ordersData.map((order) => OrderItem.fromJson(order)).toList();
+          _orders = ordersData
+              .map((order) => OrderItem.fromJson(order))
+              .toList();
+          _currentPage = 0;
           _isLoading = false;
         });
 
@@ -68,7 +74,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 children: [
                   Icon(Icons.check_circle, color: Colors.white, size: 20),
                   const SizedBox(width: 8),
-                  Text('Orders loaded from backend - ${_orders.length} orders found'),
+                  Text(
+                    'Orders loaded from backend - ${_orders.length} orders found',
+                  ),
                 ],
               ),
               backgroundColor: WaffleTheme.success,
@@ -81,9 +89,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
       }
     } catch (e) {
       print('Orders API error: $e'); // Debug log
-      
+
       if (!mounted) return;
-      
+
       setState(() {
         _isLoading = false;
         _errorMessage = 'Failed to load orders: ${e.toString()}';
@@ -97,7 +105,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
               children: [
                 Icon(Icons.error, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Backend connection failed: ${e.toString()}')),
+                Expanded(
+                  child: Text('Backend connection failed: ${e.toString()}'),
+                ),
               ],
             ),
             backgroundColor: WaffleTheme.error,
@@ -132,22 +142,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Future<void> _pickCustomRange() async {
-    final picked = await showDateRangePicker(
+    final result = await showDialog<DateTimeRange>(
       context: context,
-      firstDate: DateTime(2024, 1, 1),
-      lastDate: DateTime.now(),
-      currentDate: DateTime.now(),
-      initialDateRange: _customRange,
-      helpText: 'Select order range',
+      barrierColor: Colors.black26,
+      builder: (ctx) => _CompactDateRangeDialog(
+        initial: _customRange,
+      ),
     );
-
-    if (!mounted || picked == null) return;
-
+    if (!mounted || result == null) return;
     setState(() {
-      _customRange = picked;
+      _customRange = result;
       _selectedRange = 'custom';
     });
-
     _loadOrdersData();
   }
 
@@ -193,8 +199,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
     var filtered = _orders.where((order) {
       if (_searchQuery.isEmpty) return true;
       return order.id.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             order.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             order.items.any((item) => item.toLowerCase().contains(_searchQuery.toLowerCase()));
+          order.customerName.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
+          order.items.any(
+            (item) => item.toLowerCase().contains(_searchQuery.toLowerCase()),
+          );
     }).toList();
 
     // Sort orders
@@ -215,18 +225,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
     return filtered;
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: WaffleTheme.background,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: WaffleTheme.backgroundGradient,
-        ),
+        decoration: BoxDecoration(gradient: WaffleTheme.backgroundGradient),
         child: _isLoading
             ? const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(WaffleTheme.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    WaffleTheme.primary,
+                  ),
                 ),
               )
             : _errorMessage != null
@@ -236,7 +247,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   builder: (context, constraints) {
                     final screenWidth = constraints.maxWidth;
                     final isCompact = screenWidth < 1000;
-                    
+
                     if (isCompact) {
                       return Padding(
                         padding: const EdgeInsets.all(WaffleTheme.spacingM),
@@ -254,7 +265,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ),
                       );
                     }
-                    
+
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -317,6 +328,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       ),
     );
   }
+
   Widget _buildHeader() {
     return WaffleCard(
       child: Column(
@@ -344,10 +356,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   children: [
                     Text(
                       'Order Management',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: WaffleTheme.textDark,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            color: WaffleTheme.textDark,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: WaffleTheme.spacingXS),
                     Text(
@@ -415,6 +428,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       ],
     );
   }
+
   Widget _buildDateChip(String label, String range) {
     final isActive = _selectedRange == range;
 
@@ -449,52 +463,62 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Widget _buildCustomRangeChip() {
     final isActive = _selectedRange == 'custom';
-
     return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _pickCustomRange,
-        borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: WaffleTheme.spacingM,
-            vertical: WaffleTheme.spacingS,
-          ),
-          decoration: BoxDecoration(
-            color: isActive ? WaffleTheme.primary : WaffleTheme.creamWhite,
-            borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
-            border: Border.all(
-              color: isActive ? WaffleTheme.primary : WaffleTheme.border,
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _pickCustomRange,
+          borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: WaffleTheme.spacingM,
+              vertical: WaffleTheme.spacingS,
+            ),
+            decoration: BoxDecoration(
+              color: isActive ? WaffleTheme.primary : WaffleTheme.creamWhite,
+              borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+              border: Border.all(
+                color: isActive ? WaffleTheme.primary : WaffleTheme.border,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: isActive ? WaffleTheme.creamWhite : WaffleTheme.primary,
+                  size: 16,
+                ),
+                const SizedBox(width: WaffleTheme.spacingS),
+                Text(
+                  isActive && _customRange != null
+                      ? '${_fmtD(_customRange!.start)} – ${_fmtD(_customRange!.end)}'
+                      : 'Custom',
+                  style: TextStyle(
+                    color: isActive ? WaffleTheme.creamWhite : WaffleTheme.textDark,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.calendar_today,
-                color: isActive ? WaffleTheme.creamWhite : WaffleTheme.primary,
-                size: 16,
-              ),
-              const SizedBox(width: WaffleTheme.spacingS),
-              Text(
-                'Custom',
-                style: TextStyle(
-                  color: isActive ? WaffleTheme.creamWhite : WaffleTheme.textDark,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
         ),
-      ),
-    );
+      );
   }
+
+  String _fmtD(DateTime d) =>
+      '${d.day} ${const ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.month - 1]}';
+
   Widget _buildSummaryCards() {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
         final spacing = WaffleTheme.spacingS;
-        final columns = screenWidth < 600 ? 1 : screenWidth < 1000 ? 2 : 4;
+        final columns = screenWidth < 600
+            ? 1
+            : screenWidth < 1000
+            ? 2
+            : 4;
         final cardWidth = (screenWidth - (columns - 1) * spacing) / columns;
 
         final cards = [
@@ -540,7 +564,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _buildSummaryCard(IconData icon, String label, String value, Color color) {
+  Widget _buildSummaryCard(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return WaffleCard(
       padding: const EdgeInsets.symmetric(
         horizontal: WaffleTheme.spacingS,
@@ -593,6 +622,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       ),
     );
   }
+
   Widget _buildSidebar(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -628,7 +658,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
         final isCompact = screenWidth < 600;
-        
+
         if (isCompact) {
           return Column(
             children: [
@@ -637,10 +667,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
+                    _currentPage = 0;
                   });
                 },
                 decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search_rounded, color: WaffleTheme.textLight),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: WaffleTheme.textLight,
+                  ),
                   hintText: 'Search orders, customers, or items...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -652,7 +686,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: WaffleTheme.primary, width: 2),
+                    borderSide: BorderSide(
+                      color: WaffleTheme.primary,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 12,
@@ -682,13 +719,26 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       onSelected: (value) {
                         setState(() {
                           _sortBy = value;
+                          _currentPage = 0;
                         });
                       },
                       itemBuilder: (context) => [
-                        const PopupMenuItem(value: 'newest', child: Text('Newest First')),
-                        const PopupMenuItem(value: 'oldest', child: Text('Oldest First')),
-                        const PopupMenuItem(value: 'amount_high', child: Text('Highest Amount')),
-                        const PopupMenuItem(value: 'amount_low', child: Text('Lowest Amount')),
+                        const PopupMenuItem(
+                          value: 'newest',
+                          child: Text('Newest First'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'oldest',
+                          child: Text('Oldest First'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'amount_high',
+                          child: Text('Highest Amount'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'amount_low',
+                          child: Text('Lowest Amount'),
+                        ),
                       ],
                       child: WaffleCard(
                         padding: const EdgeInsets.symmetric(
@@ -702,7 +752,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               child: Text(
                                 _getSortLabel(),
                                 style: TextStyle(
-                                  color: WaffleTheme.textDark, 
+                                  color: WaffleTheme.textDark,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
                                 ),
@@ -710,8 +760,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            Icon(Icons.keyboard_arrow_down_rounded, 
-                                 color: WaffleTheme.textLight, size: 16),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: WaffleTheme.textLight,
+                              size: 16,
+                            ),
                           ],
                         ),
                       ),
@@ -722,7 +775,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ],
           );
         }
-        
+
         return Row(
           children: [
             Expanded(
@@ -730,10 +783,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
+                    _currentPage = 0;
                   });
                 },
                 decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search_rounded, color: WaffleTheme.textLight),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: WaffleTheme.textLight,
+                  ),
                   hintText: 'Search orders, customers, or items...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -745,7 +802,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: WaffleTheme.primary, width: 2),
+                    borderSide: BorderSide(
+                      color: WaffleTheme.primary,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 12,
@@ -770,13 +830,26 @@ class _OrdersScreenState extends State<OrdersScreen> {
               onSelected: (value) {
                 setState(() {
                   _sortBy = value;
+                  _currentPage = 0;
                 });
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(value: 'newest', child: Text('Newest First')),
-                const PopupMenuItem(value: 'oldest', child: Text('Oldest First')),
-                const PopupMenuItem(value: 'amount_high', child: Text('Highest Amount')),
-                const PopupMenuItem(value: 'amount_low', child: Text('Lowest Amount')),
+                const PopupMenuItem(
+                  value: 'newest',
+                  child: Text('Newest First'),
+                ),
+                const PopupMenuItem(
+                  value: 'oldest',
+                  child: Text('Oldest First'),
+                ),
+                const PopupMenuItem(
+                  value: 'amount_high',
+                  child: Text('Highest Amount'),
+                ),
+                const PopupMenuItem(
+                  value: 'amount_low',
+                  child: Text('Lowest Amount'),
+                ),
               ],
               child: WaffleCard(
                 padding: const EdgeInsets.symmetric(
@@ -788,10 +861,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   children: [
                     Text(
                       _getSortLabel(),
-                      style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: WaffleTheme.textDark,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(width: WaffleTheme.spacingS),
-                    Icon(Icons.keyboard_arrow_down_rounded, color: WaffleTheme.textLight),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: WaffleTheme.textLight,
+                    ),
                   ],
                 ),
               ),
@@ -816,6 +895,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         return 'Newest First';
     }
   }
+
   Widget _buildOrdersList() {
     final filteredOrders = _filteredOrders;
 
@@ -856,35 +936,160 @@ class _OrdersScreenState extends State<OrdersScreen> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenWidth = constraints.maxWidth;
-        final maxCardWidth = screenWidth < 500 ? screenWidth : 420.0;
-        final childAspectRatio = screenWidth < 600 ? 1.05 : 1.2;
-
-        return GridView.builder(
-          padding: const EdgeInsets.only(top: WaffleTheme.spacingS),
-          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: maxCardWidth,
-            crossAxisSpacing: WaffleTheme.spacingS,
-            mainAxisSpacing: WaffleTheme.spacingS,
-            childAspectRatio: childAspectRatio,
-          ),
-          itemCount: filteredOrders.length,
-          itemBuilder: (context, index) {
-            final order = filteredOrders[index];
-            return _buildOrderCard(order);
-          },
-        );
-      },
+    final pageCount = (filteredOrders.length / _ordersPerPage).ceil();
+    final currentPage = _currentPage.clamp(
+      0,
+      pageCount > 0 ? pageCount - 1 : 0,
     );
+    final pageOrders = filteredOrders
+        .skip(currentPage * _ordersPerPage)
+        .take(_ordersPerPage)
+        .toList();
+
+    if (pageOrders.isEmpty) {
+      return Center(
+        child: WaffleCard(
+          child: Padding(
+            padding: const EdgeInsets.all(WaffleTheme.spacingL),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  color: WaffleTheme.textLight,
+                  size: 48,
+                ),
+                const SizedBox(height: WaffleTheme.spacingM),
+                Text(
+                  'No orders found on this page',
+                  style: TextStyle(
+                    color: WaffleTheme.textDark,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: WaffleTheme.spacingS),
+                Text(
+                  'Try switching pages or adjusting your filters.',
+                  style: TextStyle(color: WaffleTheme.textLight),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final screenWidth = constraints.maxWidth;
+              final maxCardWidth = screenWidth < 500 ? screenWidth : 420.0;
+              final childAspectRatio = screenWidth < 600 ? 1.05 : 1.2;
+
+              return GridView.builder(
+                padding: const EdgeInsets.only(top: WaffleTheme.spacingS),
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: maxCardWidth,
+                  crossAxisSpacing: WaffleTheme.spacingS,
+                  mainAxisSpacing: WaffleTheme.spacingS,
+                  childAspectRatio: childAspectRatio,
+                ),
+                itemCount: pageOrders.length,
+                itemBuilder: (context, index) {
+                  final order = pageOrders[index];
+                  return _buildOrderCard(order);
+                },
+              );
+            },
+          ),
+        ),
+        if (pageCount > 1)
+          Padding(
+            padding: const EdgeInsets.only(
+              top: WaffleTheme.spacingS,
+              left: WaffleTheme.spacingS,
+              right: WaffleTheme.spacingS,
+              bottom: WaffleTheme.spacingM,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Page ${currentPage + 1} of $pageCount',
+                      style: TextStyle(
+                        color: WaffleTheme.textLight,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: WaffleTheme.spacingS),
+                    Text(
+                      'Showing ${pageOrders.length} of ${filteredOrders.length} orders',
+                      style: TextStyle(color: WaffleTheme.textLight),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    OutlinedButton(
+                      onPressed: currentPage > 0
+                          ? () => setState(() => _currentPage = currentPage - 1)
+                          : null,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: WaffleTheme.primary,
+                        side: BorderSide(color: WaffleTheme.primary, width: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius)),
+                      ),
+                      child: const Text('Previous',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    ),
+                    const SizedBox(width: WaffleTheme.spacingS),
+                    OutlinedButton(
+                      onPressed: currentPage < pageCount - 1
+                          ? () => setState(() => _currentPage = currentPage + 1)
+                          : null,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: WaffleTheme.primary,
+                        side: BorderSide(color: WaffleTheme.primary, width: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius)),
+                      ),
+                      child: const Text('Next',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _navigateToEditOrderScreen(OrderItem order) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EditOrderScreen(order: order),
+      ),
+    );
+    if (result == true) {
+      _loadOrdersData();
+    }
   }
 
   Widget _buildOrderCard(OrderItem order) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _showEditOrderDialog(order),
+        onDoubleTap: () => _navigateToEditOrderScreen(order),
         borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
         child: WaffleCard(
           padding: const EdgeInsets.all(WaffleTheme.spacingS),
@@ -920,7 +1125,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.edit, size: 12, color: WaffleTheme.primary),
+                            Icon(
+                              Icons.edit,
+                              size: 12,
+                              color: WaffleTheme.primary,
+                            ),
                             const SizedBox(width: 4),
                             Text('Edit', style: TextStyle(fontSize: 11)),
                           ],
@@ -931,7 +1140,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.delete, size: 12, color: WaffleTheme.error),
+                            Icon(
+                              Icons.delete,
+                              size: 12,
+                              color: WaffleTheme.error,
+                            ),
                             const SizedBox(width: 4),
                             Text('Delete', style: TextStyle(fontSize: 11)),
                           ],
@@ -954,7 +1167,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              
+
               // Status and date row
               Row(
                 children: [
@@ -977,7 +1190,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              
+
               // Customer name
               Text(
                 order.customerName,
@@ -990,7 +1203,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 maxLines: 1,
               ),
               const SizedBox(height: 8),
-              
+
               // Items section
               Expanded(
                 child: Column(
@@ -1006,20 +1219,29 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    ...order.items.take(2).map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Text(
-                          '• $item',
-                          style: TextStyle(
-                            color: WaffleTheme.textDark,
-                            fontSize: 10,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                    ...order.items
+                        .take(2)
+                        .map(
+                          (item) {
+                            final nameMatch = RegExp(r'ProductName:\s*([^,}]+)')
+                                .firstMatch(item);
+                            final displayName = nameMatch != null
+                                ? nameMatch.group(1)!.trim()
+                                : item;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                '• $displayName',
+                                style: TextStyle(
+                                  color: WaffleTheme.textDark,
+                                  fontSize: 10,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    ),
                     if (order.items.length > 2)
                       Text(
                         '+ ${order.items.length - 2} more',
@@ -1033,7 +1255,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              
+
               // Footer with amount and payment method aligned to bottom
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -1083,10 +1305,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
   void _showCreateOrderDialog() {
     showDialog(
       context: context,
-      builder: (context) => _OrderDialog(
-        title: 'Create New Order',
-        onSave: _createOrder,
-      ),
+      builder: (context) =>
+          _OrderDialog(title: 'Create New Order', onSave: _createOrder),
     );
   }
 
@@ -1144,10 +1364,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             const SizedBox(height: WaffleTheme.spacingS),
             Text(
               'This action cannot be undone.',
-              style: TextStyle(
-                color: WaffleTheme.textLight,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: WaffleTheme.textLight, fontSize: 12),
             ),
           ],
         ),
@@ -1185,15 +1402,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Future<void> _createOrder(Map<String, dynamic> orderData) async {
     try {
       // Extract OrderItems for separate creation
-      final orderItems = orderData.remove('OrderItems') as List<Map<String, dynamic>>? ?? [];
-      
+      final orderItems =
+          orderData.remove('OrderItems') as List<Map<String, dynamic>>? ?? [];
+
       // Create the order first
       final response = await BaseApiService.post('/orders/create/', orderData);
-      
+
       // If order creation successful and we have items, create them
       if (orderItems.isNotEmpty) {
         final orderId = response['ID'];
-        
+
         // Create each order item
         for (final itemData in orderItems) {
           itemData['OrderId'] = orderId;
@@ -1211,7 +1429,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           }
         }
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1239,15 +1457,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
   }
 
-  Future<void> _updateOrder(String orderId, Map<String, dynamic> orderData) async {
+  Future<void> _updateOrder(
+    String orderId,
+    Map<String, dynamic> orderData,
+  ) async {
     try {
       // Extract order ID number from string like "#ORD-123"
       final idMatch = RegExp(r'#ORD-(\d+)').firstMatch(orderId);
       if (idMatch == null) throw Exception('Invalid order ID format');
-      
+
       final id = idMatch.group(1);
       await BaseApiService.put('/orders/$id/update/', orderData);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1280,10 +1501,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
       // Extract order ID number from string like "#ORD-123"
       final idMatch = RegExp(r'#ORD-(\d+)').firstMatch(orderId);
       if (idMatch == null) throw Exception('Invalid order ID format');
-      
+
       final id = idMatch.group(1);
       await BaseApiService.delete('/orders/$id/delete/');
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1318,11 +1539,7 @@ class _OrderDialog extends StatefulWidget {
   final OrderItem? order;
   final Function(Map<String, dynamic>) onSave;
 
-  const _OrderDialog({
-    required this.title,
-    required this.onSave,
-    this.order,
-  });
+  const _OrderDialog({required this.title, required this.onSave, this.order});
 
   @override
   State<_OrderDialog> createState() => _OrderDialogState();
@@ -1332,7 +1549,7 @@ class _OrderDialogState extends State<_OrderDialog> {
   final _formKey = GlobalKey<FormState>();
   final _upiAmountController = TextEditingController();
   final _cashAmountController = TextEditingController();
-  
+
   String _selectedStatus = 'Completed';
   bool _isLoading = false;
   List<Map<String, dynamic>> _products = [];
@@ -1344,12 +1561,17 @@ class _OrderDialogState extends State<_OrderDialog> {
     _loadProducts();
     if (widget.order != null) {
       _selectedStatus = widget.order!.status;
-      
+
       // Parse payment amounts from payment method
-      if (widget.order!.paymentMethod.contains('UPI') && widget.order!.paymentMethod.contains('Cash')) {
+      if (widget.order!.paymentMethod.contains('UPI') &&
+          widget.order!.paymentMethod.contains('Cash')) {
         // Mixed payment - extract amounts
-        final upiMatch = RegExp(r'UPI ₹(\d+(?:\.\d+)?)').firstMatch(widget.order!.paymentMethod);
-        final cashMatch = RegExp(r'Cash ₹(\d+(?:\.\d+)?)').firstMatch(widget.order!.paymentMethod);
+        final upiMatch = RegExp(
+          r'UPI ₹(\d+(?:\.\d+)?)',
+        ).firstMatch(widget.order!.paymentMethod);
+        final cashMatch = RegExp(
+          r'Cash ₹(\d+(?:\.\d+)?)',
+        ).firstMatch(widget.order!.paymentMethod);
         _upiAmountController.text = upiMatch?.group(1) ?? '0';
         _cashAmountController.text = cashMatch?.group(1) ?? '0';
       } else if (widget.order!.paymentMethod == 'UPI') {
@@ -1360,7 +1582,7 @@ class _OrderDialogState extends State<_OrderDialog> {
         _cashAmountController.text = widget.order!.totalAmount.toString();
       }
 
-      // Parse items - for editing, we'll start with empty selection since we don't have product IDs
+      // We'll populate selected products after products list loads
       _selectedProducts = [];
     }
   }
@@ -1372,9 +1594,44 @@ class _OrderDialogState extends State<_OrderDialog> {
         setState(() {
           _products = response.cast<Map<String, dynamic>>();
         });
+        // If editing an existing order, try to map its item strings to product objects
+        if (widget.order != null && _selectedProducts.isEmpty) {
+          _populateSelectedProductsFromOrder();
+        }
       }
     } catch (e) {
       // Handle error silently, user can still create orders
+    }
+  }
+
+  void _populateSelectedProductsFromOrder() {
+    final order = widget.order!;
+    final List<Map<String, dynamic>> populated = [];
+
+    for (final itemStr in order.items) {
+      // Attempt to parse quantity from trailing " (n)" style
+      final qtyMatch = RegExp(r"\((\d+)\)\s*").firstMatch(itemStr);
+      int qty = 1;
+      String name = itemStr;
+      if (qtyMatch != null) {
+        qty = int.tryParse(qtyMatch.group(1) ?? '1') ?? 1;
+        name = itemStr.replaceAll(RegExp(r"\s*\(\d+\)\s*$"), '').trim();
+      }
+
+      final match = _products.cast<Map<String, dynamic>?>().firstWhere(
+        (p) => p != null && p['Name']?.toString().trim() == name,
+        orElse: () => null,
+      );
+
+      if (match != null) {
+        populated.add({'product': match, 'quantity': qty});
+      }
+    }
+
+    if (populated.isNotEmpty) {
+      setState(() {
+        _selectedProducts = populated;
+      });
     }
   }
 
@@ -1387,12 +1644,9 @@ class _OrderDialogState extends State<_OrderDialog> {
 
   void _addProduct() {
     if (_products.isEmpty) return;
-    
+
     setState(() {
-      _selectedProducts.add({
-        'product': _products.first,
-        'quantity': 1,
-      });
+      _selectedProducts.add({'product': _products.first, 'quantity': 1});
     });
   }
 
@@ -1420,10 +1674,10 @@ class _OrderDialogState extends State<_OrderDialog> {
 
     final upiAmount = double.tryParse(_upiAmountController.text) ?? 0;
     final cashAmount = double.tryParse(_cashAmountController.text) ?? 0;
-    
+
     // Calculate total quantity
     final totalQuantity = _selectedProducts.fold<int>(
-      0, 
+      0,
       (sum, item) => sum + (item['quantity'] as int),
     );
 
@@ -1434,11 +1688,15 @@ class _OrderDialogState extends State<_OrderDialog> {
       'Completed': _selectedStatus == 'Completed',
       'ColorId': 1, // Default color
       'EmojiId': 1, // Default emoji
-      'OrderItems': _selectedProducts.map((item) => {
-        'ProductID': item['product']['ID'],
-        'Quantity': item['quantity'],
-        'PriceAtPurchase': item['product']['Price'],
-      }).toList(),
+      'OrderItems': _selectedProducts
+          .map(
+            (item) => {
+              'ProductID': item['product']['ID'],
+              'Quantity': item['quantity'],
+              'PriceAtPurchase': item['product']['Price'],
+            },
+          )
+          .toList(),
     };
 
     try {
@@ -1468,7 +1726,7 @@ class _OrderDialogState extends State<_OrderDialog> {
           final screenWidth = MediaQuery.of(context).size.width;
           final screenHeight = MediaQuery.of(context).size.height;
           final isCompact = screenWidth < 600;
-          
+
           return Container(
             width: isCompact ? screenWidth * 0.95 : 600,
             constraints: BoxConstraints(
@@ -1491,7 +1749,9 @@ class _OrderDialogState extends State<_OrderDialog> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
-                          widget.order == null ? Icons.add_shopping_cart : Icons.edit,
+                          widget.order == null
+                              ? Icons.add_shopping_cart
+                              : Icons.edit,
                           color: WaffleTheme.creamWhite,
                           size: 20,
                         ),
@@ -1500,10 +1760,11 @@ class _OrderDialogState extends State<_OrderDialog> {
                       Expanded(
                         child: Text(
                           widget.title,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: WaffleTheme.textDark,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: WaffleTheme.textDark,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                       IconButton(
@@ -1513,11 +1774,13 @@ class _OrderDialogState extends State<_OrderDialog> {
                     ],
                   ),
                 ),
-                
+
                 // Content
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: WaffleTheme.spacingL),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: WaffleTheme.spacingL,
+                    ),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -1540,13 +1803,17 @@ class _OrderDialogState extends State<_OrderDialog> {
                                 child: SizedBox(
                                   height: 36,
                                   child: ElevatedButton.icon(
-                                    onPressed: _products.isEmpty ? null : _addProduct,
+                                    onPressed: _products.isEmpty
+                                        ? null
+                                        : _addProduct,
                                     icon: Icon(Icons.add, size: 16),
                                     label: Text('Add'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: WaffleTheme.primary,
                                       foregroundColor: WaffleTheme.creamWhite,
-                                      padding: EdgeInsets.symmetric(horizontal: 12),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1559,7 +1826,9 @@ class _OrderDialogState extends State<_OrderDialog> {
                           if (_selectedProducts.isEmpty)
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(WaffleTheme.spacingL),
+                              padding: const EdgeInsets.all(
+                                WaffleTheme.spacingL,
+                              ),
                               decoration: BoxDecoration(
                                 color: WaffleTheme.background,
                                 borderRadius: BorderRadius.circular(12),
@@ -1568,18 +1837,25 @@ class _OrderDialogState extends State<_OrderDialog> {
                               child: Center(
                                 child: Text(
                                   'No products added yet',
-                                  style: TextStyle(color: WaffleTheme.textLight),
+                                  style: TextStyle(
+                                    color: WaffleTheme.textLight,
+                                  ),
                                 ),
                               ),
                             )
                           else
                             ...List.generate(_selectedProducts.length, (index) {
                               final item = _selectedProducts[index];
-                              final product = item['product'] as Map<String, dynamic>;
-                              
+                              final product =
+                                  item['product'] as Map<String, dynamic>;
+
                               return Container(
-                                margin: const EdgeInsets.only(bottom: WaffleTheme.spacingM),
-                                padding: const EdgeInsets.all(WaffleTheme.spacingM),
+                                margin: const EdgeInsets.only(
+                                  bottom: WaffleTheme.spacingM,
+                                ),
+                                padding: const EdgeInsets.all(
+                                  WaffleTheme.spacingM,
+                                ),
                                 decoration: BoxDecoration(
                                   color: WaffleTheme.creamWhite,
                                   borderRadius: BorderRadius.circular(12),
@@ -1588,17 +1864,22 @@ class _OrderDialogState extends State<_OrderDialog> {
                                 child: Column(
                                   children: [
                                     // Product dropdown - full width
-                                    DropdownButtonFormField<Map<String, dynamic>>(
+                                    DropdownButtonFormField<
+                                      Map<String, dynamic>
+                                    >(
                                       value: product,
                                       decoration: InputDecoration(
                                         labelText: 'Product',
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
-                                        contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
-                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
                                       ),
                                       isExpanded: true,
                                       items: _products.map((prod) {
@@ -1612,43 +1893,58 @@ class _OrderDialogState extends State<_OrderDialog> {
                                       }).toList(),
                                       onChanged: (value) {
                                         setState(() {
-                                          _selectedProducts[index]['product'] = value!;
+                                          _selectedProducts[index]['product'] =
+                                              value!;
                                         });
                                       },
                                     ),
-                                    const SizedBox(height: WaffleTheme.spacingM),
-                                    
+                                    const SizedBox(
+                                      height: WaffleTheme.spacingM,
+                                    ),
+
                                     // Quantity and delete row
                                     Row(
                                       children: [
                                         Expanded(
                                           child: TextFormField(
-                                            initialValue: item['quantity'].toString(),
+                                            initialValue: item['quantity']
+                                                .toString(),
                                             decoration: InputDecoration(
                                               labelText: 'Quantity',
                                               border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(8),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
-                                              contentPadding: const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 8,
-                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
                                             ),
                                             keyboardType: TextInputType.number,
                                             onChanged: (value) {
-                                              final qty = int.tryParse(value) ?? 1;
+                                              final qty =
+                                                  int.tryParse(value) ?? 1;
                                               setState(() {
-                                                _selectedProducts[index]['quantity'] = qty;
+                                                _selectedProducts[index]['quantity'] =
+                                                    qty;
                                               });
                                             },
                                           ),
                                         ),
-                                        const SizedBox(width: WaffleTheme.spacingM),
+                                        const SizedBox(
+                                          width: WaffleTheme.spacingM,
+                                        ),
                                         IconButton(
-                                          onPressed: () => _removeProduct(index),
-                                          icon: Icon(Icons.delete, color: WaffleTheme.error),
+                                          onPressed: () =>
+                                              _removeProduct(index),
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color: WaffleTheme.error,
+                                          ),
                                           style: IconButton.styleFrom(
-                                            backgroundColor: WaffleTheme.error.withValues(alpha: 0.1),
+                                            backgroundColor: WaffleTheme.error
+                                                .withValues(alpha: 0.1),
                                           ),
                                         ),
                                       ],
@@ -1671,7 +1967,10 @@ class _OrderDialogState extends State<_OrderDialog> {
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    prefixIcon: Icon(Icons.qr_code, color: WaffleTheme.primary),
+                                    prefixIcon: Icon(
+                                      Icons.qr_code,
+                                      color: WaffleTheme.primary,
+                                    ),
                                     prefixText: '₹',
                                   ),
                                   keyboardType: TextInputType.number,
@@ -1691,7 +1990,10 @@ class _OrderDialogState extends State<_OrderDialog> {
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    prefixIcon: Icon(Icons.payments, color: WaffleTheme.primary),
+                                    prefixIcon: Icon(
+                                      Icons.payments,
+                                      color: WaffleTheme.primary,
+                                    ),
                                     prefixText: '₹',
                                   ),
                                   keyboardType: TextInputType.number,
@@ -1716,12 +2018,17 @@ class _OrderDialogState extends State<_OrderDialog> {
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      prefixIcon: Icon(Icons.qr_code, color: WaffleTheme.primary),
+                                      prefixIcon: Icon(
+                                        Icons.qr_code,
+                                        color: WaffleTheme.primary,
+                                      ),
                                       prefixText: '₹',
                                     ),
                                     keyboardType: TextInputType.number,
                                     validator: (value) {
-                                      final amount = double.tryParse(value ?? '');
+                                      final amount = double.tryParse(
+                                        value ?? '',
+                                      );
                                       if (amount == null || amount < 0) {
                                         return 'Invalid amount';
                                       }
@@ -1738,12 +2045,17 @@ class _OrderDialogState extends State<_OrderDialog> {
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      prefixIcon: Icon(Icons.payments, color: WaffleTheme.primary),
+                                      prefixIcon: Icon(
+                                        Icons.payments,
+                                        color: WaffleTheme.primary,
+                                      ),
                                       prefixText: '₹',
                                     ),
                                     keyboardType: TextInputType.number,
                                     validator: (value) {
-                                      final amount = double.tryParse(value ?? '');
+                                      final amount = double.tryParse(
+                                        value ?? '',
+                                      );
                                       if (amount == null || amount < 0) {
                                         return 'Invalid amount';
                                       }
@@ -1763,7 +2075,10 @@ class _OrderDialogState extends State<_OrderDialog> {
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              prefixIcon: Icon(Icons.check_circle, color: WaffleTheme.primary),
+                              prefixIcon: Icon(
+                                Icons.check_circle,
+                                color: WaffleTheme.primary,
+                              ),
                             ),
                             isExpanded: true,
                             items: ['Completed', 'Pending'].map((status) {
@@ -1806,11 +2121,15 @@ class _OrderDialogState extends State<_OrderDialog> {
                                         height: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(WaffleTheme.creamWhite),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                WaffleTheme.creamWhite,
+                                              ),
                                         ),
                                       )
                                     : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(Icons.save, size: 20),
                                           const SizedBox(width: 8),
@@ -1865,11 +2184,15 @@ class _OrderDialogState extends State<_OrderDialog> {
                                           height: 20,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(WaffleTheme.creamWhite),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  WaffleTheme.creamWhite,
+                                                ),
                                           ),
                                         )
                                       : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Icon(Icons.save, size: 20),
                                             const SizedBox(width: 8),
@@ -1915,11 +2238,372 @@ class OrderItem {
     return OrderItem(
       id: json['id']?.toString() ?? '',
       date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
-      items: (json['items'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,
       paymentMethod: json['payment_method']?.toString() ?? 'Cash',
       status: json['status']?.toString() ?? 'Completed',
       customerName: json['customer_name']?.toString() ?? 'Guest',
+    );
+  }
+}
+
+// ─── Compact Date Range Popup ──────────────────────────────────────────────
+
+class _CompactDateRangeDialog extends StatefulWidget {
+  final DateTimeRange? initial;
+
+  const _CompactDateRangeDialog({this.initial});
+
+  @override
+  State<_CompactDateRangeDialog> createState() =>
+      _CompactDateRangeDialogState();
+}
+
+class _CompactDateRangeDialogState extends State<_CompactDateRangeDialog> {
+  late DateTime _viewMonth;
+  DateTime? _start;
+  DateTime? _end;
+
+  static const _months = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+  static const _shortMonths = [
+    'Jan','Feb','Mar','Apr','May','Jun',
+    'Jul','Aug','Sep','Oct','Nov','Dec'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _start = widget.initial?.start;
+    _end = widget.initial?.end;
+    _viewMonth = DateTime(
+      (_start ?? DateTime.now()).year,
+      (_start ?? DateTime.now()).month,
+    );
+  }
+
+  String _fmt(DateTime d) => '${d.day.toString().padLeft(2, '0')} ${_shortMonths[d.month - 1]} ${d.year}';
+
+  void _onDayTap(DateTime day) {
+    setState(() {
+      if (_start == null || (_start != null && _end != null)) {
+        _start = day;
+        _end = null;
+      } else {
+        if (day.isBefore(_start!)) {
+          _end = _start;
+          _start = day;
+        } else {
+          _end = day;
+        }
+      }
+    });
+  }
+
+  void _applyShortcut(DateTime start, DateTime end) {
+    setState(() {
+      _start = start;
+      _end = end;
+      _viewMonth = DateTime(start.year, start.month);
+    });
+  }
+
+  void _prevMonth() => setState(() =>
+      _viewMonth = DateTime(_viewMonth.year, _viewMonth.month - 1));
+
+  void _nextMonth() => setState(() =>
+      _viewMonth = DateTime(_viewMonth.year, _viewMonth.month + 1));
+
+  bool _inRange(DateTime d) {
+    if (_start == null || _end == null) return false;
+    return d.isAfter(_start!.subtract(const Duration(days: 1))) &&
+        d.isBefore(_end!.add(const Duration(days: 1)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Build calendar days
+    final firstOfMonth = DateTime(_viewMonth.year, _viewMonth.month, 1);
+    final daysInMonth =
+        DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
+    // Monday = 0 offset
+    int startWeekday = firstOfMonth.weekday - 1; // Mon=0
+
+    final calRows = <List<DateTime?>>[];
+    List<DateTime?> row = List.filled(7, null);
+    int col = startWeekday;
+    for (int d = 1; d <= daysInMonth; d++) {
+      row[col] = DateTime(_viewMonth.year, _viewMonth.month, d);
+      col++;
+      if (col == 7) {
+        calRows.add(row);
+        row = List.filled(7, null);
+        col = 0;
+      }
+    }
+    if (col > 0) calRows.add(row);
+
+    final primaryColor = WaffleTheme.primary;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 8,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+                    // ── Selected range display ──
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                              color: Colors.grey.shade200, width: 1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_month_rounded,
+                              size: 16, color: primaryColor),
+                          const SizedBox(width: 8),
+                          Text(
+                            _start == null
+                                ? 'Select start date'
+                                : _end == null
+                                    ? '${_fmt(_start!)} – End date'
+                                    : '${_fmt(_start!)} – ${_fmt(_end!)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _start == null
+                                  ? Colors.grey
+                                  : WaffleTheme.textDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Shortcuts ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          _shortcut('Last week', () {
+                            final mon = today
+                                .subtract(Duration(days: today.weekday - 1 + 7));
+                            _applyShortcut(mon,
+                                mon.add(const Duration(days: 6)));
+                          }),
+                          const SizedBox(width: 8),
+                          _shortcut('Last month', () {
+                            final first = DateTime(now.year, now.month - 1, 1);
+                            final last =
+                                DateTime(now.year, now.month, 0);
+                            _applyShortcut(first, last);
+                          }),
+                          const SizedBox(width: 8),
+                          _shortcut('Last year', () {
+                            _applyShortcut(
+                              DateTime(now.year - 1, 1, 1),
+                              DateTime(now.year - 1, 12, 31),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+
+                    // ── Month nav ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left, size: 18),
+                            onPressed: _prevMonth,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${_months[_viewMonth.month - 1]} ${_viewMonth.year}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right, size: 18),
+                            onPressed: _nextMonth,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Day-of-week headers ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: const ['Mo','Tu','We','Th','Fr','Sa','Su']
+                            .map((d) => Expanded(
+                                  child: Center(
+                                    child: Text(
+                                      d,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade500,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // ── Calendar grid ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Column(
+                        children: calRows.map((week) {
+                          return Row(
+                            children: week.map((day) {
+                              if (day == null) {
+                                return const Expanded(child: SizedBox(height: 36));
+                              }
+                              final isStart = _start != null &&
+                                  day.isAtSameMomentAs(_start!);
+                              final isEnd =
+                                  _end != null && day.isAtSameMomentAs(_end!);
+                              final inRange = _inRange(day);
+                              final isToday = day.isAtSameMomentAs(today);
+                              final isFuture = day.isAfter(today);
+
+                              return Expanded(
+                                child: GestureDetector(
+                                  onTap: isFuture ? null : () => _onDayTap(day),
+                                  child: Container(
+                                    height: 36,
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: (isStart || isEnd)
+                                          ? primaryColor
+                                          : inRange
+                                              ? primaryColor
+                                                    .withValues(alpha: 0.12)
+                                              : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${day.day}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: (isStart || isEnd)
+                                              ? FontWeight.w700
+                                              : FontWeight.w400,
+                                          color: (isStart || isEnd)
+                                              ? Colors.white
+                                              : isFuture
+                                                  ? Colors.grey.shade300
+                                                  : isToday
+                                                      ? primaryColor
+                                                      : WaffleTheme.textDark,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // ── Cancel / Apply ──
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                              color: Colors.grey.shade200, width: 1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: WaffleTheme.textDark,
+                                side: BorderSide(color: Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: (_start != null && _end != null)
+                                  ? () => Navigator.of(context).pop(
+                                        DateTimeRange(
+                                            start: _start!, end: _end!),
+                                      )
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('Apply'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shortcut(String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: WaffleTheme.primary,
+          fontWeight: FontWeight.w600,
+          decoration: TextDecoration.underline,
+          decorationColor: WaffleTheme.primary,
+        ),
+      ),
     );
   }
 }

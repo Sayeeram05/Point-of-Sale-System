@@ -134,6 +134,9 @@ USE_TZ = False
 
 STATIC_URL = 'static/'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # CORS settings for Flutter web app
 # Allow Flutter web development server to access Django API via HTTP and HTTPS
 CORS_ALLOWED_ORIGINS = [

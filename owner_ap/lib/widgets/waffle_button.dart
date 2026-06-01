@@ -38,14 +38,10 @@ class _WaffleButtonState extends State<WaffleButton>
       duration: WaffleTheme.fastAnimation,
       vsync: this,
     );
-    
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.98,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -58,7 +54,7 @@ class _WaffleButtonState extends State<WaffleButton>
     setState(() {
       _isHovered = isHovered;
     });
-    
+
     if (isHovered) {
       _animationController.forward();
     } else {
@@ -137,15 +133,13 @@ class _WaffleButtonState extends State<WaffleButton>
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(_textColor),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                _textColor,
+                              ),
                             ),
                           )
                         else if (widget.icon != null) ...[
-                          Icon(
-                            widget.icon,
-                            color: _textColor,
-                            size: 18,
-                          ),
+                          Icon(widget.icon, color: _textColor, size: 18),
                           const SizedBox(width: WaffleTheme.spacingS),
                         ],
                         Text(
@@ -169,8 +163,4 @@ class _WaffleButtonState extends State<WaffleButton>
   }
 }
 
-enum WaffleButtonType {
-  primary,
-  secondary,
-  outline,
-}
+enum WaffleButtonType { primary, secondary, outline }

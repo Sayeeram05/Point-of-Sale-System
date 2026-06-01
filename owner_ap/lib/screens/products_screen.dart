@@ -1,4 +1,6 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../theme/waffle_theme.dart';
 import '../widgets/widgets.dart';
@@ -480,6 +482,33 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
           ),
           WaffleBadge.price(product.price, isSmall: true),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: WaffleTheme.textLight, size: 16),
+            padding: EdgeInsets.zero,
+            onSelected: (value) => _handleProductAction(value, product),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 16),
+                    SizedBox(width: 8),
+                    Text('Edit Product'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, size: 16, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -523,6 +552,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
     showDialog(
       context: context,
       builder: (context) => _AddProductDialog(category: category),
+    );
+  }
+
+  void _handleProductAction(String action, Product product) {
+    switch (action) {
+      case 'edit':
+        _showEditProductDialog(product);
+        break;
+      case 'delete':
+        _showDeleteProductDialog(product);
+        break;
+    }
+  }
+
+  void _showEditProductDialog(Product product) {
+    showDialog(
+      context: context,
+      builder: (context) => _EditProductDialog(product: product),
+    );
+  }
+
+  void _showDeleteProductDialog(Product product) {
+    showDialog(
+      context: context,
+      builder: (context) => _DeleteProductDialog(product: product),
     );
   }
 
@@ -820,6 +874,8 @@ class _AddProductDialogState extends State<_AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
+  Uint8List? _imageBytes;
+  String? _imageFileName;
   bool _isLoading = false;
 
   @override
@@ -829,48 +885,87 @@ class _AddProductDialogState extends State<_AddProductDialog> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    setState(() {
+      _imageBytes = bytes;
+      _imageFileName = picked.name;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Add Product to ${widget.category.name}'),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Product Name',
-                hintText: 'e.g., Belgian Classic',
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Product Name',
+                  hintText: 'e.g., Belgian Classic',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a product name';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a product name';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _priceController,
-              decoration: const InputDecoration(
-                labelText: 'Price (₹)',
-                hintText: 'e.g., 120.00',
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Price (₹)',
+                  hintText: 'e.g., 120.00',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a price';
+                  }
+                  final price = double.tryParse(value);
+                  if (price == null || price <= 0) {
+                    return 'Please enter a valid price';
+                  }
+                  return null;
+                },
               ),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a price';
-                }
-                final price = double.tryParse(value);
-                if (price == null || price <= 0) {
-                  return 'Please enter a valid price';
-                }
-                return null;
-              },
-            ),
-          ],
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: _imageBytes != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_photo_alternate_outlined, size: 36, color: Colors.grey[400]),
+                            const SizedBox(height: 8),
+                            Text('Tap to upload image', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                          ],
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -881,11 +976,7 @@ class _AddProductDialogState extends State<_AddProductDialog> {
         ElevatedButton(
           onPressed: _isLoading ? null : _createProduct,
           child: _isLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
               : const Text('Create'),
         ),
       ],
@@ -902,13 +993,15 @@ class _AddProductDialogState extends State<_AddProductDialog> {
       price: double.parse(_priceController.text.trim()),
       categoryId: widget.category.id,
       isAvailable: true,
+      imageBytes: _imageBytes,
+      imageFileName: _imageFileName,
     );
 
     final success = await context.read<ProductProvider>().createProduct(request);
 
     if (mounted) {
       setState(() => _isLoading = false);
-      
+
       if (success) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -916,6 +1009,268 @@ class _AddProductDialogState extends State<_AddProductDialog> {
         );
       } else {
         final error = context.read<ProductProvider>().error ?? 'Failed to create product';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      }
+    }
+  }
+}
+
+class _EditProductDialog extends StatefulWidget {
+  final Product product;
+
+  const _EditProductDialog({required this.product});
+
+  @override
+  State<_EditProductDialog> createState() => _EditProductDialogState();
+}
+
+class _EditProductDialogState extends State<_EditProductDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _priceController;
+  late bool _isAvailable;
+  Uint8List? _imageBytes;
+  String? _imageFileName;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.product.name);
+    _priceController = TextEditingController(text: widget.product.price.toStringAsFixed(0));
+    _isAvailable = widget.product.isAvailable;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    setState(() {
+      _imageBytes = bytes;
+      _imageFileName = picked.name;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final existingImageUrl = widget.product.imageUrl;
+    return AlertDialog(
+      title: const Text('Edit Product'),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Product Name'),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a product name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _priceController,
+                decoration: const InputDecoration(labelText: 'Price (₹)'),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a price';
+                  }
+                  final price = double.tryParse(value);
+                  if (price == null || price <= 0) {
+                    return 'Please enter a valid price';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Text('Available'),
+                  const Spacer(),
+                  Switch(
+                    value: _isAvailable,
+                    onChanged: (v) => setState(() => _isAvailable = v),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: _imageBytes != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                        )
+                      : existingImageUrl != null
+                          ? Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(existingImageUrl, fit: BoxFit.cover),
+                                ),
+                                Positioned(
+                                  bottom: 6,
+                                  right: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text('Tap to change', style: TextStyle(color: Colors.white, fontSize: 11)),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate_outlined, size: 36, color: Colors.grey[400]),
+                                const SizedBox(height: 8),
+                                Text('Tap to upload image', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                              ],
+                            ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _updateProduct,
+          child: _isLoading
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Update'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _updateProduct() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final request = ProductRequest(
+      name: _nameController.text.trim(),
+      price: double.parse(_priceController.text.trim()),
+      categoryId: widget.product.categoryId,
+      description: widget.product.description,
+      imageUrl: widget.product.imageUrl,
+      isAvailable: _isAvailable,
+      imageBytes: _imageBytes,
+      imageFileName: _imageFileName,
+    );
+
+    final success = await context.read<ProductProvider>().updateProduct(widget.product.id, request);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      if (success) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Product updated successfully!')),
+        );
+      } else {
+        final error = context.read<ProductProvider>().error ?? 'Failed to update product';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      }
+    }
+  }
+}
+
+class _DeleteProductDialog extends StatefulWidget {
+  final Product product;
+
+  const _DeleteProductDialog({required this.product});
+
+  @override
+  State<_DeleteProductDialog> createState() => _DeleteProductDialogState();
+}
+
+class _DeleteProductDialogState extends State<_DeleteProductDialog> {
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Delete Product'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Are you sure you want to delete "${widget.product.name}"?'),
+          const SizedBox(height: 8),
+          const Text(
+            'This action cannot be undone.',
+            style: TextStyle(color: Colors.red, fontSize: 12),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _deleteProduct,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          child: _isLoading
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Delete', style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _deleteProduct() async {
+    setState(() => _isLoading = true);
+
+    final success = await context.read<ProductProvider>().deleteProduct(widget.product.id);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      if (success) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Product deleted successfully!')),
+        );
+      } else {
+        final error = context.read<ProductProvider>().error ?? 'Failed to delete product';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error)),
         );

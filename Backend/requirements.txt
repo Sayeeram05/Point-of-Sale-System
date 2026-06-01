@@ -1,0 +1,11 @@
+Django>=5.2,<6.1
+djangorestframework==3.16.1
+django-cors-headers==4.9.0
+mysqlclient==2.2.7
+pillow==12.0.0
+pystray==0.19.5
+asgiref==3.10.0
+sqlparse==0.5.3
+tzdata==2025.2
+# --- Build tools (build machine only, not required on target machine) ---
+pyinstaller==6.16.0

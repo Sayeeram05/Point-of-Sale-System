@@ -148,54 +148,60 @@ class OrderCard extends StatelessWidget {
   /// Layout: [Emoji+Dot] [Order# + PaymentBadge] [ItemCount] [DeleteBtn]
   /// All elements are vertically centered and flex properly to prevent overflow
   Widget _buildHeaderRow(BuildContext context, Color baseColor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Emoji and color indicator - compact, fixed size
-        _buildEmojiColorIndicator(baseColor),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 180;
+        final numFontSize = isNarrow ? 15.0 : 18.0;
+        final numHeight = isNarrow ? 20.0 : 24.0;
 
-        const SizedBox(width: 6),
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Emoji and color indicator - compact, fixed size
+            _buildEmojiColorIndicator(baseColor),
 
-        // Order number and payment badge - flexible width
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Order number with constrained height for vertical centering
-              Container(
-                height: 24,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '#$displayNumber',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: order.completed ? Colors.grey[600] : baseColor,
-                    height: 1.0,
-                    decoration: order.completed ? TextDecoration.lineThrough : null,
-                    decorationColor: Colors.grey[400],
+            const SizedBox(width: 4),
+
+            // Order number and payment badge - flexible width
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: numHeight,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '#$displayNumber',
+                      style: TextStyle(
+                        fontSize: numFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: order.completed ? Colors.grey[600] : baseColor,
+                        height: 1.0,
+                        decoration: order.completed ? TextDecoration.lineThrough : null,
+                        decorationColor: Colors.grey[400],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(height: 2),
+                  _buildPaymentMethodBadge(baseColor),
+                ],
               ),
-              const SizedBox(height: 2),
-              // Modern pill-style payment badge
-              _buildPaymentMethodBadge(baseColor),
-            ],
-          ),
-        ),
+            ),
 
-        const SizedBox(width: 6),
+            const SizedBox(width: 4),
 
-        // Items count indicator - compact vertical layout
-        _buildItemsCountIndicator(),
+            // Items count indicator
+            _buildItemsCountIndicator(),
 
-        const SizedBox(width: 4),
+            const SizedBox(width: 2),
 
-        // Delete button - constrained size
-        _buildDeleteButton(context),
-      ],
+            // Delete button - constrained size
+            _buildDeleteButton(context),
+          ],
+        );
+      },
     );
   }
 
@@ -230,7 +236,7 @@ class OrderCard extends StatelessWidget {
               Text(
                 order.completed
                     ? '✅'
-                    : (order.emoji.isNotEmpty ? order.emoji : '🍦'),
+                    : ((order.emoji.isNotEmpty && order.emoji != '??') ? order.emoji : '🍦'),
                 style: TextStyle(
                   fontSize: 16,
                   height: 1.0,
@@ -274,50 +280,18 @@ class OrderCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Item count row with icon
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.shopping_bag_outlined,
-                size: 10,
-                color: order.completed ? Colors.grey[500] : Colors.grey[600],
-              ),
-              const SizedBox(width: 2),
-              Text(
-                '${order.items.length}',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: order.completed ? Colors.grey[500] : Colors.grey[700],
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Icon(
+            Icons.shopping_bag_outlined,
+            size: 10,
+            color: order.completed ? Colors.grey[500] : Colors.grey[600],
           ),
           const SizedBox(height: 2),
-          // Status pill (DONE/PENDING)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: order.completed
-                  ? Colors.green.withValues(alpha: 0.12)
-                  : Colors.orange.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
-                color: order.completed
-                    ? Colors.green.withValues(alpha: 0.3)
-                    : Colors.orange.withValues(alpha: 0.3),
-                width: 0.5,
-              ),
-            ),
-            child: Text(
-              order.completed ? 'DONE' : 'PENDING',
-              style: TextStyle(
-                fontSize: 7,
-                fontWeight: FontWeight.w700,
-                color: order.completed ? Colors.green.shade700 : Colors.orange.shade700,
-                letterSpacing: 0.2,
-              ),
+          Text(
+            '${order.items.length}',
+            style: TextStyle(
+              fontSize: 10,
+              color: order.completed ? Colors.grey[500] : Colors.grey[700],
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -439,17 +413,20 @@ class OrderCard extends StatelessWidget {
         border: Border.all(color: borderColor, width: 0.5),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 9, color: effectiveColor),
           const SizedBox(width: 3),
-          Text(
-            paymentMethod,
-            style: TextStyle(
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              color: effectiveColor,
-              letterSpacing: 0.3,
+          Flexible(
+            child: Text(
+              paymentMethod,
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                color: effectiveColor,
+                letterSpacing: 0.3,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],
@@ -461,19 +438,31 @@ class OrderCard extends StatelessWidget {
   // ITEMS & TOTAL COMPONENTS
   // ===========================================================================
 
-  /// Builds the scrollable items list section
+  /// Builds the scrollable items list section – capped at 120 px with inner scroll
   Widget _buildItemsList() {
+    final itemWidgets = order.items.map((item) => _buildItemRow(item)).toList();
+    final needsScroll = order.items.length > 4;
     return Container(
+      constraints: needsScroll ? const BoxConstraints(maxHeight: 120) : null,
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
       decoration: BoxDecoration(
         color: order.completed ? Colors.grey[100] : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: order.items.map((item) => _buildItemRow(item)).toList(),
-      ),
+      child: needsScroll
+          ? SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: itemWidgets,
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: itemWidgets,
+            ),
     );
   }
 

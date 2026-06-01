@@ -69,6 +69,26 @@ class BaseApiService {
     }
   }
 
+  /// PATCH request with error handling
+  static Future<dynamic> patch(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final uri = Uri.parse('$baseUrl$endpoint');
+      final response = await http.patch(
+        uri,
+        headers: _getHeaders(),
+        body: jsonEncode(data),
+      ).timeout(timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Network error: ${e.toString()}');
+    }
+  }
+
   /// DELETE request with error handling
   static Future<void> delete(String endpoint) async {
     try {

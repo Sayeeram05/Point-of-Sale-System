@@ -10,7 +10,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String _selectedRange = 'today';
   bool _isLoading = true;
   String? _errorMessage;
@@ -21,11 +21,32 @@ class _HomeScreenState extends State<HomeScreen> {
   double _upiAmount = 0;
   double _cashAmount = 0;
   List<_TrendPoint> _trendPoints = [];
+  DateTime? _lastLoadedDate;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadDashboardData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final today = DateTime.now();
+      if (_lastLoadedDate == null ||
+          _lastLoadedDate!.day != today.day ||
+          _lastLoadedDate!.month != today.month ||
+          _lastLoadedDate!.year != today.year) {
+        _loadDashboardData();
+      }
+    }
   }
 
   Future<void> _loadDashboardData() async {
@@ -67,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _trendPoints = trend;
           _isLoading = false;
           _isConnectedToBackend = true;
+          _lastLoadedDate = DateTime.now();
         });
 
         if (mounted) {
@@ -196,11 +218,30 @@ class _HomeScreenState extends State<HomeScreen> {
     if (raw.isEmpty) return '–';
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return raw;
-    final local = parsed.toLocal();
-    if (local.hour == 0 && local.minute == 0 && local.second == 0) {
-      return '${local.day} ${_monthName(local.month)}';
+    // Backend USE_TZ=False: periods are naive IST — treat as local, no UTC shift
+    final dt = parsed.isUtc ? parsed.toLocal() : parsed;
+    switch (_selectedRange) {
+      case 'today':
+        final h = dt.hour;
+        final suffix = h < 12 ? 'AM' : 'PM';
+        final display = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+        return '$display $suffix';
+      case 'this_week':
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        return days[dt.weekday - 1];
+      case 'this_month':
+        return '${dt.day} ${_monthName(dt.month)}';
+      case 'this_year':
+        return _monthName(dt.month);
+      default:
+        if (dt.hour == 0 && dt.minute == 0) {
+          return '${dt.day} ${_monthName(dt.month)}';
+        }
+        final h = dt.hour;
+        final suffix = h < 12 ? 'AM' : 'PM';
+        final display = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+        return '$display $suffix';
     }
-    return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 
   double _toDouble(dynamic v) {
@@ -232,7 +273,11 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           : _errorMessage != null
           ? _buildErrorState()
-          : SingleChildScrollView(
+          : RefreshIndicator(
+              onRefresh: _loadDashboardData,
+              color: WaffleTheme.primary,
+              child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,6 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildInsightRow(),
                 ],
               ),
+            ),
             ),
     );
   }
@@ -783,7 +829,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                         ? WaffleTheme.primary
                                                         : WaffleTheme.primary
                                                               .withValues(
-                                                                alpha: 0.15,
+                                                                alpha: 0.55,
                                                               ),
                                                     borderRadius:
                                                         const BorderRadius.vertical(

@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import '../config/app_config.dart';
 import '../models/product.dart';
 import 'base_api_service.dart';
 import 'product_service.dart';
@@ -60,14 +64,26 @@ class DjangoProductService implements ProductService {
   @override
   Future<Product> createProduct(ProductRequest request) async {
     try {
-      final djangoData = {
-        'Name': request.name,
-        'Price': request.price,
-        'category': request.categoryId, // Django expects 'category' field
-      };
-      
-      final response = await BaseApiService.post('/products/create/', djangoData);
-      return _mapDjangoProduct(response);
+      final uri = Uri.parse('${AppConfig.djangoBaseUrl}/products/create/');
+      final multipart = http.MultipartRequest('POST', uri);
+      multipart.fields['Name'] = request.name;
+      multipart.fields['Price'] = request.price.toString();
+      multipart.fields['category'] = request.categoryId;
+      if (request.imageBytes != null && request.imageFileName != null) {
+        multipart.files.add(http.MultipartFile.fromBytes(
+          'Image',
+          request.imageBytes!,
+          filename: request.imageFileName!,
+          contentType: MediaType('image', _ext(request.imageFileName!)),
+        ));
+      }
+      final streamed = await multipart.send();
+      final body = await http.Response.fromStream(streamed);
+      if (streamed.statusCode == 201) {
+        final json = jsonDecode(body.body) as Map<String, dynamic>;
+        return _mapDjangoProduct(json);
+      }
+      throw ApiException('Failed to create product: ${body.body}');
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException('Failed to create product: ${e.toString()}');
@@ -77,18 +93,36 @@ class DjangoProductService implements ProductService {
   @override
   Future<Product> updateProduct(String id, ProductRequest request) async {
     try {
-      final djangoData = {
-        'Name': request.name,
-        'Price': request.price,
-        'ProductCategory': request.categoryId, // Django expects 'ProductCategory' for updates
-      };
-      
-      final response = await BaseApiService.put('/products/$id/update/', djangoData);
-      return _mapDjangoProduct(response);
+      final uri = Uri.parse('${AppConfig.djangoBaseUrl}/products/$id/update/');
+      final multipart = http.MultipartRequest('PUT', uri);
+      multipart.fields['Name'] = request.name;
+      multipart.fields['Price'] = request.price.toString();
+      multipart.fields['ProductCategory'] = request.categoryId;
+      multipart.fields['Deleted'] = (!request.isAvailable).toString();
+      if (request.imageBytes != null && request.imageFileName != null) {
+        multipart.files.add(http.MultipartFile.fromBytes(
+          'Image',
+          request.imageBytes!,
+          filename: request.imageFileName!,
+          contentType: MediaType('image', _ext(request.imageFileName!)),
+        ));
+      }
+      final streamed = await multipart.send();
+      final body = await http.Response.fromStream(streamed);
+      if (streamed.statusCode == 200) {
+        final json = jsonDecode(body.body) as Map<String, dynamic>;
+        return _mapDjangoProduct(json);
+      }
+      throw ApiException('Failed to update product: ${body.body}');
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException('Failed to update product: ${e.toString()}');
     }
+  }
+
+  String _ext(String filename) {
+    final parts = filename.split('.');
+    return parts.length > 1 ? parts.last.toLowerCase() : 'jpeg';
   }
 
   @override
@@ -109,7 +143,7 @@ class DjangoProductService implements ProductService {
       price: _parsePrice(json['Price']),
       categoryId: json['ProductCategory']?.toString() ?? '',
       description: null, // Django model doesn't have description
-      imageUrl: null, // Django model doesn't have image
+      imageUrl: json['image_url']?.toString(),
       isAvailable: !(json['Deleted'] ?? false), // Invert Deleted flag
       createdAt: DateTime.now(), // Django model doesn't have timestamps
       updatedAt: DateTime.now(),

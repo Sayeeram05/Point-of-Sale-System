@@ -43,6 +43,9 @@ dependencies:
   
   # Icons
   flutter_svg: ^2.0.9
+  
+  # Image picking for product images
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

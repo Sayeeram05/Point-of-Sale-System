@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/base_api_service.dart';
 import '../theme/waffle_theme.dart';
 import '../widgets/widgets.dart';
+import 'edit_order_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -27,7 +28,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   String _searchQuery = '';
   String _sortBy = 'newest';
   int _currentPage = 0;
-  final int _ordersPerPage = 6;
+  final int _ordersPerPage = 20;
 
   @override
   void initState() {
@@ -141,22 +142,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Future<void> _pickCustomRange() async {
-    final picked = await showDateRangePicker(
+    final result = await showDialog<DateTimeRange>(
       context: context,
-      firstDate: DateTime(2024, 1, 1),
-      lastDate: DateTime.now(),
-      currentDate: DateTime.now(),
-      initialDateRange: _customRange,
-      helpText: 'Select order range',
+      barrierColor: Colors.black26,
+      builder: (ctx) => _CompactDateRangeDialog(
+        initial: _customRange,
+      ),
     );
-
-    if (!mounted || picked == null) return;
-
+    if (!mounted || result == null) return;
     setState(() {
-      _customRange = picked;
+      _customRange = result;
       _selectedRange = 'custom';
     });
-
     _loadOrdersData();
   }
 
@@ -466,48 +463,51 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Widget _buildCustomRangeChip() {
     final isActive = _selectedRange == 'custom';
-
     return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _pickCustomRange,
-        borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: WaffleTheme.spacingM,
-            vertical: WaffleTheme.spacingS,
-          ),
-          decoration: BoxDecoration(
-            color: isActive ? WaffleTheme.primary : WaffleTheme.creamWhite,
-            borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
-            border: Border.all(
-              color: isActive ? WaffleTheme.primary : WaffleTheme.border,
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _pickCustomRange,
+          borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: WaffleTheme.spacingM,
+              vertical: WaffleTheme.spacingS,
+            ),
+            decoration: BoxDecoration(
+              color: isActive ? WaffleTheme.primary : WaffleTheme.creamWhite,
+              borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+              border: Border.all(
+                color: isActive ? WaffleTheme.primary : WaffleTheme.border,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: isActive ? WaffleTheme.creamWhite : WaffleTheme.primary,
+                  size: 16,
+                ),
+                const SizedBox(width: WaffleTheme.spacingS),
+                Text(
+                  isActive && _customRange != null
+                      ? '${_fmtD(_customRange!.start)} – ${_fmtD(_customRange!.end)}'
+                      : 'Custom',
+                  style: TextStyle(
+                    color: isActive ? WaffleTheme.creamWhite : WaffleTheme.textDark,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.calendar_today,
-                color: isActive ? WaffleTheme.creamWhite : WaffleTheme.primary,
-                size: 16,
-              ),
-              const SizedBox(width: WaffleTheme.spacingS),
-              Text(
-                'Custom',
-                style: TextStyle(
-                  color: isActive
-                      ? WaffleTheme.creamWhite
-                      : WaffleTheme.textDark,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
         ),
-      ),
-    );
+      );
   }
+
+  String _fmtD(DateTime d) =>
+      '${d.day} ${const ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.month - 1]}';
 
   Widget _buildSummaryCards() {
     return LayoutBuilder(
@@ -1036,34 +1036,34 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
                 Row(
                   children: [
-                    SizedBox(
-                      height: 40,
-                      child: WaffleButton(
-                        text: 'Previous',
-                        type: WaffleButtonType.outline,
-                        onPressed: currentPage > 0
-                            ? () {
-                                setState(() {
-                                  _currentPage = currentPage - 1;
-                                });
-                              }
-                            : null,
+                    OutlinedButton(
+                      onPressed: currentPage > 0
+                          ? () => setState(() => _currentPage = currentPage - 1)
+                          : null,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: WaffleTheme.primary,
+                        side: BorderSide(color: WaffleTheme.primary, width: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius)),
                       ),
+                      child: const Text('Previous',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                     const SizedBox(width: WaffleTheme.spacingS),
-                    SizedBox(
-                      height: 40,
-                      child: WaffleButton(
-                        text: 'Next',
-                        type: WaffleButtonType.outline,
-                        onPressed: currentPage < pageCount - 1
-                            ? () {
-                                setState(() {
-                                  _currentPage = currentPage + 1;
-                                });
-                              }
-                            : null,
+                    OutlinedButton(
+                      onPressed: currentPage < pageCount - 1
+                          ? () => setState(() => _currentPage = currentPage + 1)
+                          : null,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: WaffleTheme.primary,
+                        side: BorderSide(color: WaffleTheme.primary, width: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius)),
                       ),
+                      child: const Text('Next',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                   ],
                 ),
@@ -1074,11 +1074,22 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
+  void _navigateToEditOrderScreen(OrderItem order) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EditOrderScreen(order: order),
+      ),
+    );
+    if (result == true) {
+      _loadOrdersData();
+    }
+  }
+
   Widget _buildOrderCard(OrderItem order) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _showEditOrderDialog(order),
+        onDoubleTap: () => _navigateToEditOrderScreen(order),
         borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
         child: WaffleCard(
           padding: const EdgeInsets.all(WaffleTheme.spacingS),
@@ -1211,18 +1222,25 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ...order.items
                         .take(2)
                         .map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 2),
-                            child: Text(
-                              '• $item',
-                              style: TextStyle(
-                                color: WaffleTheme.textDark,
-                                fontSize: 10,
+                          (item) {
+                            final nameMatch = RegExp(r'ProductName:\s*([^,}]+)')
+                                .firstMatch(item);
+                            final displayName = nameMatch != null
+                                ? nameMatch.group(1)!.trim()
+                                : item;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                '• $displayName',
+                                style: TextStyle(
+                                  color: WaffleTheme.textDark,
+                                  fontSize: 10,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
+                            );
+                          },
                         ),
                     if (order.items.length > 2)
                       Text(
@@ -2229,6 +2247,363 @@ class OrderItem {
       paymentMethod: json['payment_method']?.toString() ?? 'Cash',
       status: json['status']?.toString() ?? 'Completed',
       customerName: json['customer_name']?.toString() ?? 'Guest',
+    );
+  }
+}
+
+// ─── Compact Date Range Popup ──────────────────────────────────────────────
+
+class _CompactDateRangeDialog extends StatefulWidget {
+  final DateTimeRange? initial;
+
+  const _CompactDateRangeDialog({this.initial});
+
+  @override
+  State<_CompactDateRangeDialog> createState() =>
+      _CompactDateRangeDialogState();
+}
+
+class _CompactDateRangeDialogState extends State<_CompactDateRangeDialog> {
+  late DateTime _viewMonth;
+  DateTime? _start;
+  DateTime? _end;
+
+  static const _months = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+  static const _shortMonths = [
+    'Jan','Feb','Mar','Apr','May','Jun',
+    'Jul','Aug','Sep','Oct','Nov','Dec'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _start = widget.initial?.start;
+    _end = widget.initial?.end;
+    _viewMonth = DateTime(
+      (_start ?? DateTime.now()).year,
+      (_start ?? DateTime.now()).month,
+    );
+  }
+
+  String _fmt(DateTime d) => '${d.day.toString().padLeft(2, '0')} ${_shortMonths[d.month - 1]} ${d.year}';
+
+  void _onDayTap(DateTime day) {
+    setState(() {
+      if (_start == null || (_start != null && _end != null)) {
+        _start = day;
+        _end = null;
+      } else {
+        if (day.isBefore(_start!)) {
+          _end = _start;
+          _start = day;
+        } else {
+          _end = day;
+        }
+      }
+    });
+  }
+
+  void _applyShortcut(DateTime start, DateTime end) {
+    setState(() {
+      _start = start;
+      _end = end;
+      _viewMonth = DateTime(start.year, start.month);
+    });
+  }
+
+  void _prevMonth() => setState(() =>
+      _viewMonth = DateTime(_viewMonth.year, _viewMonth.month - 1));
+
+  void _nextMonth() => setState(() =>
+      _viewMonth = DateTime(_viewMonth.year, _viewMonth.month + 1));
+
+  bool _inRange(DateTime d) {
+    if (_start == null || _end == null) return false;
+    return d.isAfter(_start!.subtract(const Duration(days: 1))) &&
+        d.isBefore(_end!.add(const Duration(days: 1)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Build calendar days
+    final firstOfMonth = DateTime(_viewMonth.year, _viewMonth.month, 1);
+    final daysInMonth =
+        DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
+    // Monday = 0 offset
+    int startWeekday = firstOfMonth.weekday - 1; // Mon=0
+
+    final calRows = <List<DateTime?>>[];
+    List<DateTime?> row = List.filled(7, null);
+    int col = startWeekday;
+    for (int d = 1; d <= daysInMonth; d++) {
+      row[col] = DateTime(_viewMonth.year, _viewMonth.month, d);
+      col++;
+      if (col == 7) {
+        calRows.add(row);
+        row = List.filled(7, null);
+        col = 0;
+      }
+    }
+    if (col > 0) calRows.add(row);
+
+    final primaryColor = WaffleTheme.primary;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 8,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+                    // ── Selected range display ──
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                              color: Colors.grey.shade200, width: 1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_month_rounded,
+                              size: 16, color: primaryColor),
+                          const SizedBox(width: 8),
+                          Text(
+                            _start == null
+                                ? 'Select start date'
+                                : _end == null
+                                    ? '${_fmt(_start!)} – End date'
+                                    : '${_fmt(_start!)} – ${_fmt(_end!)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _start == null
+                                  ? Colors.grey
+                                  : WaffleTheme.textDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Shortcuts ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          _shortcut('Last week', () {
+                            final mon = today
+                                .subtract(Duration(days: today.weekday - 1 + 7));
+                            _applyShortcut(mon,
+                                mon.add(const Duration(days: 6)));
+                          }),
+                          const SizedBox(width: 8),
+                          _shortcut('Last month', () {
+                            final first = DateTime(now.year, now.month - 1, 1);
+                            final last =
+                                DateTime(now.year, now.month, 0);
+                            _applyShortcut(first, last);
+                          }),
+                          const SizedBox(width: 8),
+                          _shortcut('Last year', () {
+                            _applyShortcut(
+                              DateTime(now.year - 1, 1, 1),
+                              DateTime(now.year - 1, 12, 31),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+
+                    // ── Month nav ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left, size: 18),
+                            onPressed: _prevMonth,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${_months[_viewMonth.month - 1]} ${_viewMonth.year}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right, size: 18),
+                            onPressed: _nextMonth,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Day-of-week headers ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: const ['Mo','Tu','We','Th','Fr','Sa','Su']
+                            .map((d) => Expanded(
+                                  child: Center(
+                                    child: Text(
+                                      d,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade500,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // ── Calendar grid ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Column(
+                        children: calRows.map((week) {
+                          return Row(
+                            children: week.map((day) {
+                              if (day == null) {
+                                return const Expanded(child: SizedBox(height: 36));
+                              }
+                              final isStart = _start != null &&
+                                  day.isAtSameMomentAs(_start!);
+                              final isEnd =
+                                  _end != null && day.isAtSameMomentAs(_end!);
+                              final inRange = _inRange(day);
+                              final isToday = day.isAtSameMomentAs(today);
+                              final isFuture = day.isAfter(today);
+
+                              return Expanded(
+                                child: GestureDetector(
+                                  onTap: isFuture ? null : () => _onDayTap(day),
+                                  child: Container(
+                                    height: 36,
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: (isStart || isEnd)
+                                          ? primaryColor
+                                          : inRange
+                                              ? primaryColor
+                                                    .withValues(alpha: 0.12)
+                                              : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${day.day}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: (isStart || isEnd)
+                                              ? FontWeight.w700
+                                              : FontWeight.w400,
+                                          color: (isStart || isEnd)
+                                              ? Colors.white
+                                              : isFuture
+                                                  ? Colors.grey.shade300
+                                                  : isToday
+                                                      ? primaryColor
+                                                      : WaffleTheme.textDark,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // ── Cancel / Apply ──
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                              color: Colors.grey.shade200, width: 1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: WaffleTheme.textDark,
+                                side: BorderSide(color: Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: (_start != null && _end != null)
+                                  ? () => Navigator.of(context).pop(
+                                        DateTimeRange(
+                                            start: _start!, end: _end!),
+                                      )
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('Apply'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shortcut(String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: WaffleTheme.primary,
+          fontWeight: FontWeight.w600,
+          decoration: TextDecoration.underline,
+          decorationColor: WaffleTheme.primary,
+        ),
+      ),
     );
   }
 }

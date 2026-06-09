@@ -1074,213 +1074,800 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  void _navigateToEditOrderScreen(OrderItem order) async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EditOrderScreen(order: order),
-      ),
-    );
-    if (result == true) {
-      _loadOrdersData();
+  Future<void> _navigateToEditOrderScreen(OrderItem order) async {
+    final isPending = order.status.toLowerCase() == 'pending';
+
+    if (!isPending) {
+      // Ask the user to unlock the order first
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.lock_open_rounded, color: WaffleTheme.primary, size: 22),
+              const SizedBox(width: 8),
+              const Text('Unlock Order'),
+            ],
+          ),
+          content: Text(
+            'Order ${order.id} is currently "${order.status}".\n\n'
+            'To edit it, the status must first be set to Pending. '
+            'Do you want to change it to Pending now?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: WaffleTheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Set to Pending'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true || !mounted) return;
+
+      final updatedOrder = await _setOrderToPending(order);
+      if (updatedOrder == null || !mounted) return;
+
+      // Navigate with the freshly-pending order
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => EditOrderScreen(order: updatedOrder)),
+      );
+      if (result == true) _loadOrdersData();
+    } else {
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => EditOrderScreen(order: order)),
+      );
+      if (result == true) _loadOrdersData();
+    }
+  }
+
+  /// PATCHes the order to Completed=false (Pending) and returns the updated OrderItem.
+  /// Returns null on failure.
+  Future<OrderItem?> _setOrderToPending(OrderItem order) async {
+    final id = int.tryParse(order.id)?.toString() ??
+        RegExp(r'\d+').firstMatch(order.id)?.group(0);
+    if (id == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not parse order ID: ${order.id}'),
+            backgroundColor: WaffleTheme.error,
+          ),
+        );
+      }
+      return null;
+    }
+    try {
+      await BaseApiService.patch('/orders/$id/patch/', {'Completed': false});
+
+      // Rebuild locally — keep everything the same, just flip status
+      final updated = OrderItem(
+        id: order.id,
+        orderNumber: order.orderNumber,
+        date: order.date,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        paymentMethod: order.paymentMethod,
+        status: 'Pending',
+        customerName: order.customerName,
+      );
+
+      // Update in the live list so the card reflects the change immediately
+      setState(() {
+        final idx = _orders.indexWhere((o) => o.id == order.id);
+        if (idx != -1) _orders[idx] = updated;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.lock_open_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text('${order.displayOrderNumber} set to Pending'),
+              ],
+            ),
+            backgroundColor: WaffleTheme.success,
+          ),
+        );
+      }
+
+      return updated;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update order status: $e'),
+            backgroundColor: WaffleTheme.error,
+          ),
+        );
+      }
+      return null;
     }
   }
 
   Widget _buildOrderCard(OrderItem order) {
+    final isCompleted = order.status.toLowerCase() == 'completed' ||
+        order.status.toLowerCase() == 'done';
+
     return Material(
       color: Colors.transparent,
+      // Single tap on completed card opens details dialog
       child: InkWell(
         onDoubleTap: () => _navigateToEditOrderScreen(order),
+        onLongPress: () => _navigateToEditOrderScreen(order),
         borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
         child: WaffleCard(
-          padding: const EdgeInsets.all(WaffleTheme.spacingS),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
+          padding: const EdgeInsets.all(0),
+          child: isCompleted
+              ? GestureDetector(
+                  onTap: () => _showAllItemsDialog(order),
+                  child: _buildCompletedOrderCard(order),
+                )
+              : _buildPendingOrderCard(order),
+        ),
+      ),
+    );
+  }
+
+  // ─── COMPLETED ORDER CARD (Reference Design) ───────────────────────────────
+
+  Widget _buildCompletedOrderCard(OrderItem order) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── Green header banner ─────────────────────────────────────────
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: WaffleTheme.success.withValues(alpha: 0.15),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(WaffleTheme.cardRadius),
+            ),
+          ),
+          child: Row(
             children: [
-              // Header row with order ID and menu
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      order.id,
-                      style: TextStyle(
-                        color: WaffleTheme.textDark,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _showEditOrderDialog(order);
-                      } else if (value == 'delete') {
-                        _showDeleteOrderDialog(order);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.edit,
-                              size: 12,
-                              color: WaffleTheme.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text('Edit', style: TextStyle(fontSize: 11)),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.delete,
-                              size: 12,
-                              color: WaffleTheme.error,
-                            ),
-                            const SizedBox(width: 4),
-                            Text('Delete', style: TextStyle(fontSize: 11)),
-                          ],
-                        ),
-                      ),
-                    ],
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: WaffleTheme.background,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Icon(
-                        Icons.more_vert,
-                        size: 16,
-                        color: WaffleTheme.textLight,
-                      ),
-                    ),
-                  ),
-                ],
+              Icon(
+                Icons.check_circle_rounded,
+                color: WaffleTheme.success,
+                size: 16,
               ),
-              const SizedBox(height: 6),
-
-              // Status and date row
-              Row(
-                children: [
-                  WaffleBadge.status(
-                    order.status,
-                    icon: Icons.check_circle_rounded,
-                    isSmall: true,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      _formatOrderDate(order.date),
-                      style: TextStyle(
-                        color: WaffleTheme.textLight,
-                        fontSize: 10,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Customer name
+              const SizedBox(width: 6),
               Text(
-                order.customerName,
+                'ORDER COMPLETED',
                 style: TextStyle(
-                  color: WaffleTheme.textDark,
+                  color: WaffleTheme.success,
                   fontWeight: FontWeight.w700,
-                  fontSize: 12,
+                  fontSize: 11,
+                  letterSpacing: 0.5,
                 ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-              const SizedBox(height: 8),
-
-              // Items section
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Items',
-                      style: TextStyle(
-                        color: WaffleTheme.textLight,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    ...order.items
-                        .take(2)
-                        .map(
-                          (item) {
-                            final nameMatch = RegExp(r'ProductName:\s*([^,}]+)')
-                                .firstMatch(item);
-                            final displayName = nameMatch != null
-                                ? nameMatch.group(1)!.trim()
-                                : item;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 2),
-                              child: Text(
-                                '• $displayName',
-                                style: TextStyle(
-                                  color: WaffleTheme.textDark,
-                                  fontSize: 10,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          },
-                        ),
-                    if (order.items.length > 2)
-                      Text(
-                        '+ ${order.items.length - 2} more',
-                        style: TextStyle(
-                          color: WaffleTheme.textLight,
-                          fontSize: 9,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Footer with amount and payment method aligned to bottom
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '₹${order.totalAmount.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        color: WaffleTheme.textDark,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                  WaffleBadge.status(
-                    order.paymentMethod.length > 5
-                        ? order.paymentMethod.substring(0, 5) + '..'
-                        : order.paymentMethod,
-                    isSmall: true,
-                  ),
-                ],
               ),
             ],
           ),
         ),
+
+        // ── Order number + badges ────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: order number · date · spacer · DONE · delete
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    order.displayOrderNumber,
+                    style: TextStyle(
+                      color: WaffleTheme.textDark,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatOrderDate(order.date),
+                    style: TextStyle(
+                      color: WaffleTheme.textLight,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: WaffleTheme.success.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'DONE',
+                      style: TextStyle(
+                        color: WaffleTheme.success,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => _showDeleteOrderDialog(order),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: WaffleTheme.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(Icons.delete_outline, size: 16, color: WaffleTheme.error),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              // Row 2: payment badge (truncated)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: WaffleTheme.background,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: WaffleTheme.border),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.account_balance_wallet_outlined, size: 10, color: WaffleTheme.textLight),
+                    const SizedBox(width: 4),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 180),
+                      child: Text(
+                        order.paymentMethod,
+                        style: TextStyle(color: WaffleTheme.textLight, fontSize: 10, fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Items list ─────────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: order.items.take(3).map((item) {
+              final nameMatch = RegExp(r'ProductName[:\s]+([^,}]+)', caseSensitive: false).firstMatch(item);
+              final qtyMatch = RegExp(r'Quantity[:\s]+(\d+)', caseSensitive: false).firstMatch(item);
+              final priceMatch = RegExp(r'(?:PriceAtPurchase|Price|UnitPrice)[:\s]+([\d.]+)', caseSensitive: false).firstMatch(item);
+              final name = nameMatch != null ? nameMatch.group(1)!.trim() : item.replaceAll(RegExp(r'[{}]'), '');
+              final qty = int.tryParse(qtyMatch?.group(1) ?? '1') ?? 1;
+              final unitPrice = double.tryParse(priceMatch?.group(1) ?? '0') ?? 0.0;
+              final lineTotal = (qty * unitPrice).toStringAsFixed(0);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: TextStyle(color: WaffleTheme.textDark, fontSize: 12, fontWeight: FontWeight.w500),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text('x$qty  ', style: TextStyle(color: WaffleTheme.textLight, fontSize: 11)),
+                    Text('₹$lineTotal', style: TextStyle(color: WaffleTheme.textDark, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+
+        if (order.items.length > 3)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, top: 2),
+            child: Text(
+              '+ ${order.items.length - 3} more items · tap to view all',
+              style: TextStyle(color: WaffleTheme.primary, fontSize: 10, fontWeight: FontWeight.w500),
+            ),
+          ),
+
+        const Spacer(),
+
+        // ── Total Amount row ───────────────────────────────────────────────
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+          decoration: BoxDecoration(
+            color: WaffleTheme.background.withValues(alpha: 0.5),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(WaffleTheme.cardRadius),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total Amount',
+                style: TextStyle(
+                  color: WaffleTheme.textDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: WaffleTheme.cardBackground,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: WaffleTheme.border),
+                ),
+                child: Text(
+                  '₹${order.totalAmount.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    color: WaffleTheme.textDark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── PENDING ORDER CARD (Compact Design) ─────────────────────────────────
+
+  Widget _buildPendingOrderCard(OrderItem order) {
+    return Padding(
+      padding: const EdgeInsets.all(WaffleTheme.spacingS),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          // Header row with order number and menu
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  order.displayOrderNumber,
+                  style: TextStyle(
+                    color: WaffleTheme.textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _showEditOrderDialog(order);
+                  } else if (value == 'delete') {
+                    _showDeleteOrderDialog(order);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.edit,
+                          size: 12,
+                          color: WaffleTheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text('Edit', style: TextStyle(fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.delete,
+                          size: 12,
+                          color: WaffleTheme.error,
+                        ),
+                        const SizedBox(width: 4),
+                        Text('Delete', style: TextStyle(fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                ],
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: WaffleTheme.background,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    Icons.more_vert,
+                    size: 16,
+                    color: WaffleTheme.textLight,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Status and date row
+          Row(
+            children: [
+              WaffleBadge.status(
+                order.status,
+                icon: Icons.check_circle_rounded,
+                isSmall: true,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _formatOrderDate(order.date),
+                  style: TextStyle(
+                    color: WaffleTheme.textLight,
+                    fontSize: 10,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Items section — show qty × unit price per item
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ...order.items.take(3).map((item) {
+                  final nameMatch = RegExp(r'ProductName:\s*([^,}]+)').firstMatch(item);
+                  final qtyMatch = RegExp(r'Quantity:\s*(\d+)').firstMatch(item);
+                  final priceMatch = RegExp(r'PriceAtPurchase:\s*([\d.]+)').firstMatch(item);
+                  final name = nameMatch?.group(1)?.trim() ?? item;
+                  final qty = int.tryParse(qtyMatch?.group(1) ?? '1') ?? 1;
+                  final unitPrice = double.tryParse(priceMatch?.group(1) ?? '0') ?? 0.0;
+                  final lineTotal = (qty * unitPrice).toStringAsFixed(0);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: TextStyle(color: WaffleTheme.textDark, fontSize: 10, fontWeight: FontWeight.w500),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '${qty}×₹${unitPrice.toStringAsFixed(0)}',
+                          style: TextStyle(color: WaffleTheme.textLight, fontSize: 9),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '₹$lineTotal',
+                          style: TextStyle(color: WaffleTheme.textDark, fontSize: 10, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                if (order.items.length > 3)
+                  Text(
+                    '+ ${order.items.length - 3} more',
+                    style: TextStyle(color: WaffleTheme.textLight, fontSize: 9, fontStyle: FontStyle.italic),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Footer divider + amount
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: WaffleTheme.border.withValues(alpha: 0.4))),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '₹${order.totalAmount.toStringAsFixed(0)}',
+                  style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: WaffleTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    order.paymentMethod.length > 6 ? order.paymentMethod.substring(0, 6) + '..' : order.paymentMethod,
+                    style: TextStyle(color: WaffleTheme.primary, fontSize: 9, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Tap hint
+          Row(
+            children: [
+              Icon(
+                order.status.toLowerCase() == 'pending' ? Icons.edit_rounded : Icons.lock_rounded,
+                size: 10,
+                color: order.status.toLowerCase() == 'pending' ? WaffleTheme.primary : WaffleTheme.textLight,
+              ),
+              const SizedBox(width: 3),
+              Text(
+                order.status.toLowerCase() == 'pending' ? 'Double-tap to edit' : 'Double-tap to unlock',
+                style: TextStyle(
+                  fontSize: 9,
+                  color: order.status.toLowerCase() == 'pending' ? WaffleTheme.primary : WaffleTheme.textLight,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Order Details Dialog ────────────────────────────────────────────────
+
+  void _showAllItemsDialog(OrderItem order) {
+    final isCompleted = order.status.toLowerCase() == 'completed' ||
+        order.status.toLowerCase() == 'done';
+    final accentColor = isCompleted ? WaffleTheme.success : WaffleTheme.primary;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: WaffleTheme.cardBackground,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.78,
+            maxWidth: 420,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Header ──────────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 16, 12, 14),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.08),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.receipt_long_rounded, color: accentColor, size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Order ${order.displayOrderNumber}',
+                                style: TextStyle(
+                                  color: WaffleTheme.textDark,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${order.items.length} item${order.items.length != 1 ? 's' : ''}  ·  ${_formatOrderDate(order.date)}',
+                                style: TextStyle(color: WaffleTheme.textLight, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.of(ctx).pop(),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: WaffleTheme.background,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(Icons.close, size: 18, color: WaffleTheme.textLight),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Status + payment chips
+                    Row(
+                      children: [
+                        _chip(
+                          icon: isCompleted ? Icons.check_circle_rounded : Icons.schedule_rounded,
+                          label: isCompleted ? 'Completed' : 'Pending',
+                          color: accentColor,
+                          bg: accentColor.withValues(alpha: 0.12),
+                        ),
+                        const SizedBox(width: 8),
+                        _chip(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: order.paymentMethod,
+                          color: WaffleTheme.textLight,
+                          bg: WaffleTheme.background,
+                          border: WaffleTheme.border,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Items list ───────────────────────────────────────────
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Column(
+                    children: order.items.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      final nameMatch = RegExp(r'ProductName[:\s]+([^,}]+)', caseSensitive: false).firstMatch(item);
+                      final qtyMatch = RegExp(r'Quantity[:\s]+(\d+)', caseSensitive: false).firstMatch(item);
+                      final priceMatch = RegExp(r'(?:PriceAtPurchase|Price|UnitPrice)[:\s]+([\d.]+)', caseSensitive: false).firstMatch(item);
+                      final name = nameMatch?.group(1)?.trim() ?? item.replaceAll(RegExp(r'[{}]'), '');
+                      final qty = int.tryParse(qtyMatch?.group(1) ?? '1') ?? 1;
+                      final unitPrice = double.tryParse(priceMatch?.group(1) ?? '0') ?? 0.0;
+                      final lineTotal = qty * unitPrice;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: WaffleTheme.background,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: WaffleTheme.border.withValues(alpha: 0.6)),
+                        ),
+                        child: Row(
+                          children: [
+                            // Index badge
+                            Container(
+                              width: 26, height: 26,
+                              decoration: BoxDecoration(
+                                color: accentColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${index + 1}',
+                                  style: TextStyle(color: accentColor, fontWeight: FontWeight.w700, fontSize: 11),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            // Name + qty × price
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w600, fontSize: 13),
+                                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '$qty × ₹${unitPrice.toStringAsFixed(0)}',
+                                    style: TextStyle(color: WaffleTheme.textLight, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Line total
+                            Text(
+                              '₹${lineTotal.toStringAsFixed(0)}',
+                              style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w800, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+
+              // ── Footer ───────────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                decoration: BoxDecoration(
+                  color: WaffleTheme.background.withValues(alpha: 0.6),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                  border: Border(top: BorderSide(color: WaffleTheme.border.withValues(alpha: 0.4))),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total Amount',
+                      style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w700, fontSize: 14),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '₹${order.totalAmount.toStringAsFixed(0)}',
+                        style: TextStyle(color: accentColor, fontWeight: FontWeight.w800, fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _chip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color bg,
+    Color? border,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: border != null ? Border.all(color: border) : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+        ],
       ),
     );
   }
@@ -1301,24 +1888,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
   }
 
-  // Dialog functions for order management
+  // Navigation functions for order management
   void _showCreateOrderDialog() {
-    showDialog(
-      context: context,
-      builder: (context) =>
-          _OrderDialog(title: 'Create New Order', onSave: _createOrder),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const EditOrderScreen()))
+        .then((result) { if (result == true) _loadOrdersData(); });
   }
 
   void _showEditOrderDialog(OrderItem order) {
-    showDialog(
-      context: context,
-      builder: (context) => _OrderDialog(
-        title: 'Edit Order',
-        order: order,
-        onSave: (orderData) => _updateOrder(order.id, orderData),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => EditOrderScreen(order: order)))
+        .then((result) { if (result == true) _loadOrdersData(); });
   }
 
   void _showDeleteOrderDialog(OrderItem order) {
@@ -1462,11 +2042,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
     Map<String, dynamic> orderData,
   ) async {
     try {
-      // Extract order ID number from string like "#ORD-123"
-      final idMatch = RegExp(r'#ORD-(\d+)').firstMatch(orderId);
-      if (idMatch == null) throw Exception('Invalid order ID format');
+      final id = int.tryParse(orderId)?.toString() ??
+          RegExp(r'\d+').firstMatch(orderId)?.group(0);
+      if (id == null) throw Exception('Invalid order ID format');
 
-      final id = idMatch.group(1);
       await BaseApiService.put('/orders/$id/update/', orderData);
 
       if (mounted) {
@@ -1498,11 +2077,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Future<void> _deleteOrder(String orderId) async {
     try {
-      // Extract order ID number from string like "#ORD-123"
-      final idMatch = RegExp(r'#ORD-(\d+)').firstMatch(orderId);
-      if (idMatch == null) throw Exception('Invalid order ID format');
+      final id = int.tryParse(orderId)?.toString() ??
+          RegExp(r'\d+').firstMatch(orderId)?.group(0);
+      if (id == null) throw Exception('Invalid order ID format');
 
-      final id = idMatch.group(1);
       await BaseApiService.delete('/orders/$id/delete/');
 
       if (mounted) {
@@ -2217,6 +2795,7 @@ class _OrderDialogState extends State<_OrderDialog> {
 // Order Item Model
 class OrderItem {
   final String id;
+  final String? orderNumber;
   final DateTime date;
   final List<String> items;
   final double totalAmount;
@@ -2226,6 +2805,7 @@ class OrderItem {
 
   OrderItem({
     required this.id,
+    this.orderNumber,
     required this.date,
     required this.items,
     required this.totalAmount,
@@ -2234,13 +2814,39 @@ class OrderItem {
     required this.customerName,
   });
 
+  /// Returns the display order number (e.g., "#1", "#2", "#3")
+  String get displayOrderNumber {
+    if (orderNumber != null && orderNumber!.trim().isNotEmpty) {
+      final clean = orderNumber!.trim();
+      return clean.startsWith('#') ? clean : '#$clean';
+    }
+    // Fallback: use the raw id
+    final numericMatch = RegExp(r'(\d+)', caseSensitive: false).firstMatch(id);
+    if (numericMatch != null) {
+      return '#${numericMatch.group(1)}';
+    }
+    return '#$id';
+  }
+
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
       id: json['id']?.toString() ?? '',
+      orderNumber: json['order_number']?.toString() ??
+          json['OrderNumber']?.toString() ??
+          json['orderNumber']?.toString(),
       date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
       items:
           (json['items'] as List<dynamic>?)
-              ?.map((e) => e.toString())
+              ?.map((e) {
+                if (e is Map<String, dynamic>) {
+                  final pid   = e['ProductID'] ?? e['productID'] ?? '';
+                  final name  = e['ProductName'] ?? e['productName'] ?? '';
+                  final qty   = e['Quantity'] ?? e['quantity'] ?? 1;
+                  final price = e['Price'] ?? e['PriceAtPurchase'] ?? e['price'] ?? 0;
+                  return 'ProductID: $pid, ProductName: $name, Quantity: $qty, PriceAtPurchase: $price';
+                }
+                return e.toString();
+              })
               .toList() ??
           [],
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,

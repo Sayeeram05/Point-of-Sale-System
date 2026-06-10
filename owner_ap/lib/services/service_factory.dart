@@ -1,6 +1,8 @@
 import '../config/app_config.dart';
 import 'category_service.dart';
 import 'product_service.dart';
+import 'materials_service.dart';
+import 'material_versions_service.dart';
 import 'django_category_service.dart';
 import 'django_product_service.dart';
 
@@ -22,6 +24,24 @@ class ServiceFactory {
       return MockProductService();
     } else {
       return DjangoProductService();
+    }
+  }
+
+  /// Create MaterialsService instance
+  static MaterialsService createMaterialsService() {
+    if (AppConfig.useMockServices) {
+      return MockMaterialsService();
+    } else {
+      return MaterialsServiceImpl();
+    }
+  }
+
+  /// Create MaterialVersionsService instance
+  static MaterialVersionsService createMaterialVersionsService() {
+    if (AppConfig.useMockServices) {
+      return MockMaterialVersionsService();
+    } else {
+      return MaterialVersionsServiceImpl();
     }
   }
 }

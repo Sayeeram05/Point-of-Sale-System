@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'Order',
     "Auxiliary",
     "Dashboard",
+    "Materials",
 
 ]
 
@@ -91,7 +92,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pos_db',
         'USER': 'root',
-        'PASSWORD': '7418022289',
+        'PASSWORD': 'Kavi@1976',
         'HOST': 'localhost',
         'PORT': '3306',
     }

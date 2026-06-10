@@ -4,6 +4,8 @@
 export 'base_api_service.dart';
 export 'category_service.dart';
 export 'product_service.dart';
+export 'materials_service.dart';
+export 'material_versions_service.dart';
 export 'django_category_service.dart';
 export 'django_product_service.dart';
 export 'service_factory.dart';

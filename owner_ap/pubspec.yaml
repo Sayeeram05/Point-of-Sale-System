@@ -46,6 +46,10 @@ dependencies:
   
   # Image picking for product images
   image_picker: ^1.1.2
+  
+  # PDF generation and printing
+  pdf: ^3.11.1
+  printing: ^5.13.1
 
 dev_dependencies:
   flutter_test:

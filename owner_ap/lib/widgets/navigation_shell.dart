@@ -153,6 +153,12 @@ class _NavigationShellState extends State<NavigationShell> {
         activeIcon: Icons.receipt_long_rounded,
         index: 2,
       ),
+      NavigationItem(
+        label: 'Materials',
+        icon: Icons.inventory_2_outlined,
+        activeIcon: Icons.inventory_2_rounded,
+        index: 3,
+      ),
     ];
 
     return Row(
@@ -304,6 +310,7 @@ class _NavigationShellState extends State<NavigationShell> {
             _buildMobileNavItem('Home', Icons.home_rounded, 0),
             _buildMobileNavItem('Products', Icons.restaurant_menu_rounded, 1),
             _buildMobileNavItem('Orders', Icons.receipt_long_rounded, 2),
+            _buildMobileNavItem('Materials', Icons.inventory_2_rounded, 3),
             const SizedBox(height: WaffleTheme.spacingL),
           ],
         ),

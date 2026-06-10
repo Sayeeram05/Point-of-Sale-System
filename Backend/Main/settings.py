@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'Order',
     "Auxiliary",
     "Dashboard",
+    "Materials",
 
 ]
 

@@ -5,6 +5,7 @@ import 'widgets/navigation_shell.dart';
 import 'screens/home_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/orders_screen.dart';
+import 'screens/materials_screen.dart';
 import 'providers/providers.dart';
 
 void main() {
@@ -21,6 +22,7 @@ class WaffleShopAdminApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => MaterialsProvider()),
       ],
       child: MaterialApp(
         title: 'Waffle Shop Admin',
@@ -47,6 +49,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const ProductsScreen(),
     const OrdersScreen(),
+    const MaterialsScreen(),
   ];
 
   void _onNavigationChanged(int index) {

@@ -7,3 +7,4 @@ export 'product_service.dart';
 export 'django_category_service.dart';
 export 'django_product_service.dart';
 export 'service_factory.dart';
+export 'materials_service.dart';

@@ -3,3 +3,4 @@
 
 export 'category.dart';
 export 'product.dart';
+export 'materials_models.dart';

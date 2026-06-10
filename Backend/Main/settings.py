@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-*+2@%=haufqxr#j52z&%+g%om)l(y$bul8&r1_ah^e4khju%6m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+
+# HTTPS Configuration
+SECURE_SSL_REDIRECT = False  # Set to True in production
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_TLS = True  # Enable TLS support for development
 
 
 # Application definition
@@ -37,9 +42,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',  # Added for Flutter web app CORS support
+    'Category',
+    'Product',
+    'Order',
+    "Auxiliary",
+    "Dashboard",
+    "Materials",
+
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Added for Flutter web app CORS support
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,8 +89,12 @@ WSGI_APPLICATION = 'Main.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pos_db',
+        'USER': 'root',
+        'PASSWORD': '7418022289',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
 
@@ -104,14 +123,57 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# CORS settings for Flutter web app
+# Allow Flutter web development server to access Django API via HTTP and HTTPS
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",  # Flutter web dev server default port
+    "http://localhost:8081",  # Alternative Flutter web port
+    "http://localhost:8082",  # Previous Flutter web port
+    "http://localhost:8083",  # Current Flutter web port
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8081",
+    "http://127.0.0.1:8082",
+    "http://127.0.0.1:8083",
+    "https://localhost:8080",  # HTTPS versions for secure connections
+    "https://localhost:8081",
+    "https://localhost:8082", 
+    "https://localhost:8083",
+    "https://127.0.0.1:8080",
+    "https://127.0.0.1:8081",
+    "https://127.0.0.1:8082",
+    "https://127.0.0.1:8083",
+]
+
+# For development only - allows all origins (less secure but easier for development)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Allow credentials to be included in CORS requests
+CORS_ALLOW_CREDENTIALS = True
+
+# Allowed headers for CORS requests
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]

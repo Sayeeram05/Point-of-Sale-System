@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'theme/waffle_theme.dart';
+import 'widgets/navigation_shell.dart';
+import 'screens/home_screen.dart';
+import 'screens/products_screen.dart';
+import 'screens/orders_screen.dart';
+import 'providers/providers.dart';
+
+void main() {
+  runApp(const WaffleShopAdminApp());
+}
+
+/// Main application widget for Waffle Shop Admin UI
+class WaffleShopAdminApp extends StatelessWidget {
+  const WaffleShopAdminApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Waffle Shop Admin',
+        theme: WaffleTheme.theme,
+        home: const MainScreen(),
+        debugShowCheckedModeBanner: false,
+      ),
+    );
+  }
+}
+
+/// Main screen with navigation shell and page management
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = [
+    const HomeScreen(),
+    const ProductsScreen(),
+    const OrdersScreen(),
+  ];
+
+  void _onNavigationChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationShell(
+      currentIndex: _currentIndex,
+      onNavigationChanged: _onNavigationChanged,
+      child: AnimatedSwitcher(
+        duration: WaffleTheme.animationDuration,
+        child: _pages[_currentIndex],
+      ),
+    );
+  }
+}

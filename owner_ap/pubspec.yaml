@@ -1,5 +1,5 @@
 name: owner_ap
-description: "A new Flutter project."
+description: "Waffle Shop POS Admin UI - A modern Flutter web dashboard for managing waffle shop operations."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -34,6 +34,22 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  
+  # HTTP client for API communication
+  http: ^1.1.0
+  
+  # State management
+  provider: ^6.1.1
+  
+  # Icons
+  flutter_svg: ^2.0.9
+  
+  # Image picking for product images
+  image_picker: ^1.1.2
+  
+  # PDF generation and printing
+  pdf: ^3.11.1
+  printing: ^5.13.1
 
 dev_dependencies:
   flutter_test:

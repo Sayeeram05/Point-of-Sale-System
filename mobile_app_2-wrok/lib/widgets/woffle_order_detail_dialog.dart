@@ -217,8 +217,12 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       elevation: 8,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 40.0 : 8.0,
+        vertical: 24.0,
+      ),
       child: Container(
-        width: isTablet ? 850 : 420,
+        width: isTablet ? 850 : double.infinity,
         constraints: BoxConstraints(
           maxHeight:
               MediaQuery.of(context).size.height * (isTablet ? 0.92 : 0.95),
@@ -299,7 +303,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              order.emoji.isEmpty ? '🍦' : order.emoji,
+              (order.emoji.isEmpty || order.emoji == '??') ? '🍦' : order.emoji,
               style: TextStyle(fontSize: isTablet ? 28 : 22),
             ),
           ),
@@ -309,7 +313,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  order.orderLabel,
+                  'Order #${order.displayIndex ?? order.orderId}',
                   style: TextStyle(
                     fontSize: isTablet ? 24 : 18,
                     fontWeight: FontWeight.bold,
@@ -403,7 +407,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
           child: Row(
             children: [
               SizedBox(
-                width: isTablet ? 36 : 28,
+                width: isTablet ? 36 : 22,
                 child: Text(
                   '#',
                   style: TextStyle(
@@ -414,7 +418,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                 ),
               ),
               Expanded(
-                flex: 4,
+                flex: 5,
                 child: Text(
                   'Item',
                   style: TextStyle(
@@ -425,7 +429,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                 ),
               ),
               SizedBox(
-                width: isTablet ? 50 : 36,
+                width: isTablet ? 50 : 30,
                 child: Text(
                   'Qty',
                   textAlign: TextAlign.center,
@@ -437,7 +441,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                 ),
               ),
               SizedBox(
-                width: isTablet ? 80 : 65,
+                width: isTablet ? 80 : 54,
                 child: Text(
                   'Price',
                   textAlign: TextAlign.right,
@@ -449,7 +453,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                 ),
               ),
               SizedBox(
-                width: isTablet ? 90 : 75,
+                width: isTablet ? 90 : 62,
                 child: Text(
                   'Amount',
                   textAlign: TextAlign.right,
@@ -492,9 +496,10 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                     ),
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
-                        width: isTablet ? 36 : 28,
+                        width: isTablet ? 36 : 22,
                         child: Text(
                           '${idx + 1}',
                           style: TextStyle(
@@ -504,19 +509,20 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                         ),
                       ),
                       Expanded(
-                        flex: 4,
+                        flex: 5,
                         child: Text(
                           item.product,
                           style: TextStyle(
-                            fontSize: isTablet ? 15 : 13,
+                            fontSize: isTablet ? 15 : 12,
                             fontWeight: FontWeight.w500,
                             color: AppTheme.textPrimary,
                           ),
-                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          overflow: TextOverflow.clip,
                         ),
                       ),
                       SizedBox(
-                        width: isTablet ? 50 : 36,
+                        width: isTablet ? 50 : 30,
                         child: Text(
                           '${item.pieces}',
                           textAlign: TextAlign.center,
@@ -527,7 +533,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                         ),
                       ),
                       SizedBox(
-                        width: isTablet ? 80 : 65,
+                        width: isTablet ? 80 : 54,
                         child: Text(
                           '\u20B9${item.priceDouble.toStringAsFixed(2)}',
                           textAlign: TextAlign.right,
@@ -538,7 +544,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                         ),
                       ),
                       SizedBox(
-                        width: isTablet ? 90 : 75,
+                        width: isTablet ? 90 : 62,
                         child: Text(
                           '\u20B9${item.totalPrice.toStringAsFixed(2)}',
                           textAlign: TextAlign.right,

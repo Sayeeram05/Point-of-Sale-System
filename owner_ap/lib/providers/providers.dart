@@ -3,3 +3,5 @@
 
 export 'category_provider.dart';
 export 'product_provider.dart';
+export 'materials_provider.dart';
+export 'material_versions_provider.dart';

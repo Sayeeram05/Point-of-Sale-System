@@ -9,6 +9,7 @@ __pycache__/
 dist/
 build/
 *.spec
+!django_app.spec
 
 # Virtual environment
 env/

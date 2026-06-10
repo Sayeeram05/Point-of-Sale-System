@@ -51,8 +51,9 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Future<void> _loadDashboardData({bool forceRefresh = false}) async {
+    final bool isFirstLoad = _dailySummary == null;
     setState(() {
-      _isLoading = true;
+      if (isFirstLoad) _isLoading = true;
       _error = '';
     });
 
@@ -105,6 +106,9 @@ class _DashboardPageState extends State<DashboardPage>
       }
 
       _animationController.forward();
+      if (isFirstLoad) {
+        _staggerController.reset();
+      }
       _staggerController.forward();
     } catch (e) {
       setState(() {
@@ -184,7 +188,6 @@ class _DashboardPageState extends State<DashboardPage>
                 MenuPage(orderId: order.orderId, orderIndex: displayNumber),
           ),
         );
-        _staggerController.reset();
         _loadDashboardData(forceRefresh: true);
       }
     } catch (e) {
@@ -519,63 +522,23 @@ class _DashboardPageState extends State<DashboardPage>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (_dailySummary != null) ...[
-                            if (isTablet)
-                              IntrinsicHeight(
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(flex: 1, child: cards[0]),
-                                    const SizedBox(width: 8),
-                                    Expanded(flex: 1, child: cards[1]),
-                                    const SizedBox(width: 8),
-                                    Expanded(flex: 1, child: cards[2]),
-                                    const SizedBox(width: 8),
-                                    Expanded(flex: 1, child: cards[3]),
-                                  ],
-                                ),
-                              )
-                            else if (isMobile)
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(child: cards[0]),
-                                      const SizedBox(width: 4),
-                                      Expanded(child: cards[1]),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Expanded(child: cards[2]),
-                                      const SizedBox(width: 4),
-                                      Expanded(child: cards[3]),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            else
-                              IntrinsicHeight(
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(child: cards[0]),
-                                    const SizedBox(width: 8),
-                                    Expanded(child: cards[1]),
-                                    const SizedBox(width: 8),
-                                    Expanded(child: cards[2]),
-                                    const SizedBox(width: 8),
-                                    Expanded(child: cards[3]),
-                                  ],
-                                ),
-                              ),
-                          ],
+                          if (_dailySummary != null)
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final cols = isTablet ? 4 : 2;
+                                final spacing = isTablet ? 8.0 : 4.0;
+                                final cardWidth =
+                                    (constraints.maxWidth - (cols - 1) * spacing) / cols;
+                                return Wrap(
+                                  spacing: spacing,
+                                  runSpacing: 4.0,
+                                  children: cards
+                                      .map((card) =>
+                                          SizedBox(width: cardWidth, child: card))
+                                      .toList(),
+                                );
+                              },
+                            ),
                         ],
                       ),
                     ),
@@ -637,131 +600,111 @@ class _DashboardPageState extends State<DashboardPage>
                             ),
                           ),
                         )
-                      : SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppTheme.responsiveValue(
-                                context,
-                                mobile: 4,
-                                tablet: 8,
-                                desktop: 18,
-                              ),
+                      : SliverPadding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppTheme.responsiveValue(
+                              context,
+                              mobile: 4,
+                              tablet: 8,
+                              desktop: 18,
                             ),
-                            child: StaggeredGrid.count(
-                              crossAxisCount: AppTheme.responsiveValue(
-                                context,
-                                mobile: orientation == Orientation.landscape
-                                    ? 3
-                                    : 2,
-                                tablet: orientation == Orientation.landscape
-                                    ? 4
-                                    : 3,
-                                desktop: orientation == Orientation.landscape
-                                    ? 6
-                                    : 6,
-                              ).round(),
-                              mainAxisSpacing: AppTheme.responsiveValue(
-                                context,
-                                mobile: 4,
-                                tablet: 8,
-                                desktop: 16,
-                              ),
-                              crossAxisSpacing: AppTheme.responsiveValue(
-                                context,
-                                mobile: 4,
-                                tablet: 8,
-                                desktop: 16,
-                              ),
-                              children: sortedOrders.asMap().entries.map((entry) {
-                                final listIndex = entry.key;
-                                final order = entry.value;
-                                // Get the proper display number based on creation order
-                                final displayNumber = displayNumbers[order.orderId] ?? (listIndex + 1);
-                                final rawDelay = listIndex * 0.1;
-                                final animationDelay = rawDelay.clamp(0.0, 1.0);
-                                final animation =
-                                    Tween<double>(begin: 0.0, end: 1.0).animate(
-                                      CurvedAnimation(
-                                        parent: _staggerController,
-                                        curve: Interval(
-                                          animationDelay,
-                                          (animationDelay + 0.3).clamp(
-                                            0.0,
-                                            1.0,
-                                          ),
-                                          curve: Curves.easeOutCubic,
-                                        ),
+                          ),
+                          sliver: SliverMasonryGrid.count(
+                            crossAxisCount: AppTheme.responsiveValue(
+                              context,
+                              mobile: orientation == Orientation.landscape
+                                  ? 3
+                                  : 2,
+                              tablet: orientation == Orientation.landscape
+                                  ? 3
+                                  : 2,
+                              desktop: orientation == Orientation.landscape
+                                  ? 4
+                                  : 3,
+                            ).round(),
+                            mainAxisSpacing: AppTheme.responsiveValue(
+                              context,
+                              mobile: 4,
+                              tablet: 8,
+                              desktop: 16,
+                            ),
+                            crossAxisSpacing: AppTheme.responsiveValue(
+                              context,
+                              mobile: 4,
+                              tablet: 8,
+                              desktop: 16,
+                            ),
+                            childCount: sortedOrders.length,
+                            itemBuilder: (context, listIndex) {
+                              final order = sortedOrders[listIndex];
+                              final displayNumber = displayNumbers[order.orderId] ?? (listIndex + 1);
+                              final rawDelay = listIndex * 0.1;
+                              final animationDelay = rawDelay.clamp(0.0, 1.0);
+                              final animation =
+                                  Tween<double>(begin: 0.0, end: 1.0).animate(
+                                    CurvedAnimation(
+                                      parent: _staggerController,
+                                      curve: Interval(
+                                        animationDelay,
+                                        (animationDelay + 0.3).clamp(0.0, 1.0),
+                                        curve: Curves.easeOutCubic,
                                       ),
-                                    );
-                                return AnimatedBuilder(
-                                  animation: animation,
-                                  builder: (context, child) {
-                                    return Transform.translate(
-                                      offset: Offset(
-                                        0,
-                                        50 * (1 - animation.value),
-                                      ),
-                                      child: Opacity(
-                                        opacity: animation.value,
-                                        child: Transform.scale(
-                                          scale: 0.8 + (0.2 * animation.value),
-                                          child: RepaintBoundary(
-                                            child: OrderCard(
-                                              order: order,
-                                              displayNumber: displayNumber,
-                                              onTap: () => _showOrderDetail(order),
-                                              onDoubleTap: order.completed
-                                                  ? null
-                                                  : () => _showOrderOptions(
-                                                      order,
-                                                    ),
-                                              onLongPress: order.completed
-                                                  ? null
-                                                  : () => _showOrderOptions(
-                                                      order,
-                                                    ),
-                                              onEmojiColorTap: () async {
-                                                final prevEmoji = order.emoji;
-                                                final prevColor = order.color;
-                                                await showDialog(
-                                                  context: context,
-                                                  builder: (context) =>
-                                                      EmojiColorDialog(
-                                                        order: order,
-                                                        onChanged: () {},
-                                                      ),
-                                                );
-                                                if (order.emoji != prevEmoji ||
-                                                    order.color != prevColor) {
-                                                  try {
-                                                    await ApiService.updateOrderAppearance(
-                                                      order.orderId,
-                                                      emoji: order.emoji,
-                                                      color: order.color,
-                                                    );
-                                                    _loadDashboardData(
-                                                      forceRefresh: true,
-                                                    );
-                                                  } catch (e) {
-                                                    debugPrint(
-                                                      'Error updating order appearance: $e',
-                                                    );
-                                                  }
+                                    ),
+                                  );
+                              return AnimatedBuilder(
+                                animation: animation,
+                                builder: (context, child) {
+                                  return Transform.translate(
+                                    offset: Offset(0, 50 * (1 - animation.value)),
+                                    child: Opacity(
+                                      opacity: animation.value,
+                                      child: Transform.scale(
+                                        scale: 0.8 + (0.2 * animation.value),
+                                        child: RepaintBoundary(
+                                          child: OrderCard(
+                                            order: order,
+                                            displayNumber: displayNumber,
+                                            onTap: () => _showOrderDetail(order),
+                                            onDoubleTap: order.completed
+                                                ? null
+                                                : () => _showOrderOptions(order),
+                                            onLongPress: order.completed
+                                                ? null
+                                                : () => _showOrderOptions(order),
+                                            onEmojiColorTap: () async {
+                                              final prevEmoji = order.emoji;
+                                              final prevColor = order.color;
+                                              await showDialog(
+                                                context: context,
+                                                builder: (context) => EmojiColorDialog(
+                                                  order: order,
+                                                  onChanged: () {},
+                                                ),
+                                              );
+                                              if (order.emoji != prevEmoji ||
+                                                  order.color != prevColor) {
+                                                try {
+                                                  await ApiService.updateOrderAppearance(
+                                                    order.orderId,
+                                                    emoji: order.emoji,
+                                                    color: order.color,
+                                                  );
+                                                  _loadDashboardData(forceRefresh: true);
+                                                } catch (e) {
+                                                  debugPrint('Error updating order appearance: $e');
                                                 }
-                                              },
-                                              onOrderDeleted: () =>
-                                                  _loadDashboardData(
-                                                    forceRefresh: true,
-                                                  ),
-                                            ),
+                                              }
+                                            },
+                                            onOrderDeleted: () =>
+                                                _loadDashboardData(forceRefresh: true),
                                           ),
                                         ),
                                       ),
-                                    );
-                                  },
-                                );
-                              }).toList(),
-                            ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ),
 
@@ -861,7 +804,6 @@ class _DashboardPageState extends State<DashboardPage>
       ),
     ).then((result) {
       // Always refresh dashboard when returning from menu page
-      _staggerController.reset();
       _loadDashboardData(forceRefresh: true);
     });
   }

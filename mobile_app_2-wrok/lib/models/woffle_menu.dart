@@ -27,7 +27,7 @@ class Product {
       productId: productId,
       name: name,
       price: price,
-      image: json['image']?.toString(),
+      image: (json['image_url'] ?? json['image'])?.toString(),
       active: json.containsKey('active')
           ? (json['active'] is bool ? json['active'] : json['active'] == 1)
           : (deleted == null ? true : deleted == false),

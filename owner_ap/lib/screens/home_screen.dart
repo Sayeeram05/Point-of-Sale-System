@@ -264,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WaffleTheme.background,
+      backgroundColor: const Color(0xFFF5F7FA),
       body: _isLoading
           ? Center(
               child: CircularProgressIndicator(
@@ -277,26 +277,323 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               onRefresh: _loadDashboardData,
               color: WaffleTheme.primary,
               child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 10),
-                  _buildKpiGrid(),
-                  const SizedBox(height: 10),
-                  _buildMiddleRow(),
-                  const SizedBox(height: 10),
-                  _buildInsightRow(),
-                ],
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left Section - Selected Materials (Dashboard Data)
+                    Expanded(
+                      flex: 1,
+                      child: _buildSelectedMaterials(),
+                    ),
+                    const SizedBox(width: 24),
+                    // Right Section - Available Materials (Additional Insights)
+                    Expanded(
+                      flex: 1,
+                      child: _buildAvailableMaterials(),
+                    ),
+                  ],
+                ),
               ),
-            ),
             ),
     );
   }
 
-  // ─── Error ─────────────────────────────────────────────
+  // ─── Selected Materials Section ───────────────────────
+
+  Widget _buildSelectedMaterials() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE5E5E5), width: 1)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B35),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.inventory, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dashboard Analytics',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    Text(
+                      'Analytics for ${_rangeTitle().toLowerCase()}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                _buildStatusPillNew(),
+              ],
+            ),
+          ),
+          
+          // Filter Chips
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE5E5E5), width: 1)),
+            ),
+            child: Row(
+              children: [
+                _filterChipNew('Today', 'today'),
+                const SizedBox(width: 8),
+                _filterChipNew('Week', 'this_week'),
+                const SizedBox(width: 8),
+                _filterChipNew('Month', 'this_month'),
+                const SizedBox(width: 8),
+                _filterChipNew('Year', 'this_year'),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _isLoading ? null : _loadDashboardData,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3)),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 16, height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh, size: 16, color: Color(0xFF6366F1)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Table Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF9FAFB),
+              border: Border(bottom: BorderSide(color: Color(0xFFE5E5E5), width: 1)),
+            ),
+            child: const Row(
+              children: [
+                SizedBox(width: 40, child: Text('S.No', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
+                SizedBox(width: 120, child: Text('Metric Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
+                SizedBox(width: 80, child: Text('Value', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
+                Expanded(child: Text('Trend', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
+                SizedBox(width: 80, child: Text('Actions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
+              ],
+            ),
+          ),
+
+          // Table Rows
+          _buildMetricRow(1, 'Total Revenue', '₹${_totalRevenue.toStringAsFixed(0)}', '↗'),
+          _buildMetricRow(2, 'Orders', '$_orderCount', '↗'),
+          _buildMetricRow(3, 'Avg Order', '₹${_avgOrderValue().toStringAsFixed(0)}', '→'),
+
+          // Footer
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.analytics, color: Colors.white, size: 16),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Total Analytics Cost',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF064E3B),
+                      ),
+                    ),
+                    Text(
+                      '(3 metrics)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: const Color(0xFF10B981).withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  '₹${_totalRevenue.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF10B981),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricRow(int sNo, String name, String value, String trend) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E5E5), width: 1)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 40,
+            child: Text(
+              '$sNo',
+              style: const TextStyle(fontSize: 14, color: Color(0xFF374151)),
+            ),
+          ),
+          SizedBox(
+            width: 120,
+            child: Text(
+              name,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 80,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              trend,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFF10B981),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 80,
+            child: IconButton(
+              icon: const Icon(Icons.remove_circle, color: Color(0xFFEF4444), size: 20),
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusPillNew() {
+    final isLive = _isConnectedToBackend;
+    final color = isLive ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isLive ? 'Live' : 'Demo',
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChipNew(String label, String value) {
+    final active = _selectedRange == value;
+    return GestureDetector(
+      onTap: () => _changeRange(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF6366F1) : Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: active ? const Color(0xFF6366F1) : const Color(0xFFD1D5DB),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? Colors.white : const Color(0xFF6B7280),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildErrorState() {
     return Center(

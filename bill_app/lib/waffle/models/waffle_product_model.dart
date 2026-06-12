@@ -1,25 +1,25 @@
-class WaffleCategory {
+class WOFLCategory {
   final int id;
   final String name;
 
-  WaffleCategory({required this.id, required this.name});
+  WOFLCategory({required this.id, required this.name});
 
-  factory WaffleCategory.fromJson(Map<String, dynamic> json) {
-    return WaffleCategory(
+  factory WOFLCategory.fromJson(Map<String, dynamic> json) {
+    return WOFLCategory(
       id: json['ID'] as int,
       name: json['Name']?.toString() ?? '',
     );
   }
 }
 
-class WaffleProduct {
+class WOFLProduct {
   final int id;
   final String name;
   final double price;
   final int categoryId;
   final bool deleted;
 
-  WaffleProduct({
+  WOFLProduct({
     required this.id,
     required this.name,
     required this.price,
@@ -27,8 +27,8 @@ class WaffleProduct {
     required this.deleted,
   });
 
-  factory WaffleProduct.fromJson(Map<String, dynamic> json) {
-    return WaffleProduct(
+  factory WOFLProduct.fromJson(Map<String, dynamic> json) {
+    return WOFLProduct(
       id: json['ID'] as int,
       name: json['Name']?.toString() ?? '',
       price: (json['Price'] is num)

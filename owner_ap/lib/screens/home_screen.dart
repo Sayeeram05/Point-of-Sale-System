@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/base_api_service.dart';
-import '../theme/waffle_theme.dart';
-import '../widgets/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../providers/dashboard_provider.dart';
+import '../theme/WOFL_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,23 +12,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  String _selectedRange = 'today';
-  bool _isLoading = true;
-  String? _errorMessage;
-  bool _isConnectedToBackend = false;
-
-  double _totalRevenue = 0;
-  int _orderCount = 0;
-  double _upiAmount = 0;
-  double _cashAmount = 0;
-  List<_TrendPoint> _trendPoints = [];
   DateTime? _lastLoadedDate;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadDashboardData();
+    _lastLoadedDate = DateTime.now();
   }
 
   @override
@@ -38,159 +29,198 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed && mounted) {
       final today = DateTime.now();
       if (_lastLoadedDate == null ||
           _lastLoadedDate!.day != today.day ||
           _lastLoadedDate!.month != today.month ||
           _lastLoadedDate!.year != today.year) {
-        _loadDashboardData();
+        context.read<DashboardProvider>().fetchDashboard();
+        _lastLoadedDate = today;
       }
     }
   }
 
-  Future<void> _loadDashboardData() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final response = await BaseApiService.get(
-        '/orders/?date=$_selectedRange',
-      );
-
-      if (response is Map<String, dynamic>) {
-        final summary = response['summary'] as Map<String, dynamic>? ?? {};
-        final analytics = response['analytics'] as List<dynamic>? ?? [];
-
-        final revenue = _toDouble(summary['total_amount']);
-        final upi = _toDouble(summary['total_upi']);
-        final cash = _toDouble(summary['total_cash']);
-        final orders = _toInt(summary['orders_count']);
-
-        final trend = analytics
-            .map((item) {
-              if (item is! Map<String, dynamic>) return null;
-              final total =
-                  _toDouble(item['total_upi']) + _toDouble(item['total_cash']);
-              return _TrendPoint(_formatTrendLabel(item['period']), total);
-            })
-            .whereType<_TrendPoint>()
-            .toList();
-
-        if (!mounted) return;
-        setState(() {
-          _totalRevenue = revenue;
-          _upiAmount = upi;
-          _cashAmount = cash;
-          _orderCount = orders;
-          _trendPoints = trend;
-          _isLoading = false;
-          _isConnectedToBackend = true;
-          _lastLoadedDate = DateTime.now();
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white, size: 16),
-                  SizedBox(width: 8),
-                  Text('Live data loaded'),
-                ],
-              ),
-              backgroundColor: WaffleTheme.success,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      } else {
-        throw ApiException('Invalid response format');
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _totalRevenue = 2450.0;
-        _upiAmount = 1680.0;
-        _cashAmount = 770.0;
-        _orderCount = 12;
-        _trendPoints = _generateMockTrend();
-        _isLoading = false;
-        _isConnectedToBackend = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(
-                  Icons.warning_amber_rounded,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                SizedBox(width: 8),
-                Text('Backend unavailable – showing demo data'),
-              ],
-            ),
-            backgroundColor: WaffleTheme.accent,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  List<_TrendPoint> _generateMockTrend() {
-    switch (_selectedRange) {
-      case 'today':
-        return [
-          const _TrendPoint('9 AM', 120),
-          const _TrendPoint('10 AM', 280),
-          const _TrendPoint('11 AM', 450),
-          const _TrendPoint('12 PM', 680),
-          const _TrendPoint('1 PM', 520),
-          const _TrendPoint('2 PM', 400),
-        ];
-      case 'this_week':
-        return [
-          const _TrendPoint('Mon', 1200),
-          const _TrendPoint('Tue', 1450),
-          const _TrendPoint('Wed', 1680),
-          const _TrendPoint('Thu', 2100),
-          const _TrendPoint('Fri', 2450),
-          const _TrendPoint('Sat', 1890),
-          const _TrendPoint('Sun', 1560),
-        ];
-      default:
-        return [
-          const _TrendPoint('Wk 1', 8500),
-          const _TrendPoint('Wk 2', 9200),
-          const _TrendPoint('Wk 3', 10100),
-          const _TrendPoint('Wk 4', 11200),
-        ];
-    }
-  }
-
-  void _changeRange(String range) {
-    if (_selectedRange == range) return;
-    setState(() => _selectedRange = range);
-    _loadDashboardData();
-  }
-
-  String _rangeTitle() {
-    switch (_selectedRange) {
+  String _rangeTitle(String range) {
+    switch (range) {
       case 'this_week':
         return 'This Week';
       case 'this_month':
         return 'This Month';
       case 'this_year':
         return 'This Year';
+      case 'custom':
+        return 'Custom';
       default:
         return 'Today';
     }
+  }
+
+  Future<void> _pickCustomRange(BuildContext context, DashboardProvider provider) async {
+    final now = DateTime.now();
+    DateTime tempStart = provider.customStart ?? now.subtract(const Duration(days: 6));
+    DateTime tempEnd = provider.customEnd ?? now;
+
+    String fmt(DateTime d) => '${d.day} ${_monthName(d.month)} ${d.year}';
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          Future<void> pickDate(bool isStart) async {
+            final picked = await showDatePicker(
+              context: ctx,
+              initialDate: isStart ? tempStart : tempEnd,
+              firstDate: DateTime(now.year - 2),
+              lastDate: now,
+              builder: (c, child) => Theme(
+                data: Theme.of(c).copyWith(
+                  colorScheme: ColorScheme.light(
+                    primary: WOFLTheme.primary,
+                    onPrimary: Colors.white,
+                  ),
+                ),
+                child: child!,
+              ),
+            );
+            if (picked != null) {
+              setSheetState(() {
+                if (isStart) {
+                  tempStart = picked;
+                  if (tempEnd.isBefore(tempStart)) tempEnd = tempStart;
+                } else {
+                  tempEnd = picked;
+                  if (tempStart.isAfter(tempEnd)) tempStart = tempEnd;
+                }
+              });
+            }
+          }
+
+          return Container(
+            decoration: BoxDecoration(
+              color: WOFLTheme.background,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: WOFLTheme.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Select Date Range',
+                  style: TextStyle(
+                    color: WOFLTheme.textDark,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _dateRow('From', fmt(tempStart), () => pickDate(true)),
+                const SizedBox(height: 10),
+                _dateRow('To', fmt(tempEnd), () => pickDate(false)),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: WOFLTheme.border),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(color: WOFLTheme.textLight, fontSize: 13),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          provider.changeCustomRange(tempStart, tempEnd);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: WOFLTheme.primary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Apply',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _dateRow(String label, String value, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: WOFLTheme.border.withValues(alpha: 0.7)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today_rounded, size: 15, color: WOFLTheme.primary),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: TextStyle(color: WOFLTheme.textLight, fontSize: 12),
+            ),
+            const Spacer(),
+            Text(
+              value,
+              style: TextStyle(
+                color: WOFLTheme.textDark,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right_rounded, size: 16, color: WOFLTheme.textLight),
+          ],
+        ),
+      ),
+    );
   }
 
   String _rangeDateLabel() {
@@ -199,226 +229,140 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   String _monthName(int m) => const [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ][m - 1];
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      ][m - 1];
 
-  String _formatTrendLabel(dynamic period) {
-    final raw = period?.toString() ?? '';
-    if (raw.isEmpty) return '–';
-    final parsed = DateTime.tryParse(raw);
-    if (parsed == null) return raw;
-    // Backend USE_TZ=False: periods are naive IST — treat as local, no UTC shift
-    final dt = parsed.isUtc ? parsed.toLocal() : parsed;
-    switch (_selectedRange) {
-      case 'today':
-        final h = dt.hour;
-        final suffix = h < 12 ? 'AM' : 'PM';
-        final display = h == 0 ? 12 : (h > 12 ? h - 12 : h);
-        return '$display $suffix';
-      case 'this_week':
-        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        return days[dt.weekday - 1];
-      case 'this_month':
-        return '${dt.day} ${_monthName(dt.month)}';
-      case 'this_year':
-        return _monthName(dt.month);
-      default:
-        if (dt.hour == 0 && dt.minute == 0) {
-          return '${dt.day} ${_monthName(dt.month)}';
-        }
-        final h = dt.hour;
-        final suffix = h < 12 ? 'AM' : 'PM';
-        final display = h == 0 ? 12 : (h > 12 ? h - 12 : h);
-        return '$display $suffix';
+  String _formatChartDate(String isoDate) {
+    if (isoDate.length == 7) {
+      final parts = isoDate.split('-');
+      final month = int.tryParse(parts[1]) ?? 0;
+      return _monthName(month).substring(0, 3);
     }
+    final parsed = DateTime.tryParse(isoDate);
+    if (parsed == null) return isoDate;
+    return '${parsed.day} ${_monthName(parsed.month).substring(0, 3)}';
   }
 
-  double _toDouble(dynamic v) {
-    if (v == null) return 0;
-    if (v is num) return v.toDouble();
-    return double.tryParse(v.toString()) ?? 0;
-  }
-
-  int _toInt(dynamic v) {
-    if (v == null) return 0;
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    return int.tryParse(v.toString()) ?? 0;
-  }
-
-  double _avgOrderValue() => _orderCount == 0 ? 0 : _totalRevenue / _orderCount;
-
-  // ─── BUILD ─────────────────────────────────────────────
+  // ─── BUILD ───────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WaffleTheme.background,
-      body: _isLoading
-          ? Center(
+      backgroundColor: WOFLTheme.background,
+      body: Consumer<DashboardProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(WaffleTheme.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(WOFLTheme.primary),
               ),
-            )
-          : _errorMessage != null
-          ? _buildErrorState()
-          : RefreshIndicator(
-              onRefresh: _loadDashboardData,
-              color: WaffleTheme.primary,
-              child: SingleChildScrollView(
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: provider.fetchDashboard,
+            color: WOFLTheme.primary,
+            child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeader(),
+                  _buildHeader(provider),
                   const SizedBox(height: 10),
-                  _buildKpiGrid(),
+                  _buildSalesKpiGrid(provider),
                   const SizedBox(height: 10),
-                  _buildMiddleRow(),
+                  _buildMiddleRow(provider),
+                  const SizedBox(height: 18),
+                  _buildPnlSectionHeader(),
                   const SizedBox(height: 10),
-                  _buildInsightRow(),
+                  _buildAnalyticsRow(provider),
+                  const SizedBox(height: 10),
+                  _buildLedgerTable(provider),
                 ],
               ),
             ),
-            ),
-    );
-  }
-
-  // ─── Error ─────────────────────────────────────────────
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: WaffleCard(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline_rounded,
-                color: WaffleTheme.error,
-                size: 40,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Unable to load dashboard',
-                style: TextStyle(
-                  color: WaffleTheme.textDark,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage ?? 'Something went wrong.',
-                style: TextStyle(color: WaffleTheme.textLight, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              WaffleButton(
-                text: 'Retry',
-                icon: Icons.refresh,
-                onPressed: _loadDashboardData,
-              ),
-            ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  // ─── Header ────────────────────────────────────────────
+  // ─── Header ─────────────────────────────────────────────
 
-  Widget _buildHeader() {
+  Widget _buildHeader(DashboardProvider provider) {
     return _card(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dashboard',
-                      style: TextStyle(
-                        color: WaffleTheme.textDark,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${_rangeTitle()} · ${_rangeDateLabel()}',
-                      style: TextStyle(
-                        color: WaffleTheme.textLight,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
+              Text(
+                'Dashboard',
+                style: TextStyle(
+                  color: WOFLTheme.textDark,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.3,
                 ),
               ),
-              _buildStatusPill(),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: _isLoading ? null : _loadDashboardData,
-                child: Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: WaffleTheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: WaffleTheme.primary.withValues(alpha: 0.25)),
-                  ),
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 16, height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(WaffleTheme.primary),
-                          ),
-                        )
-                      : Icon(Icons.refresh_rounded, size: 16, color: WaffleTheme.primary),
-                ),
+              const SizedBox(height: 3),
+              Text(
+                _rangeDateLabel(),
+                style: TextStyle(color: WOFLTheme.textLight, fontSize: 11),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          const Divider(height: 1, thickness: 0.5),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _filterChip('Today', 'today'),
-              _filterChip('Week', 'this_week'),
-              _filterChip('Month', 'this_month'),
-              _filterChip('Year', 'this_year'),
-            ],
+          const SizedBox(width: 14),
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _filterChip('Today', 'today', provider),
+                _filterChip('Week', 'this_week', provider),
+                _filterChip('Month', 'this_month', provider),
+                _filterChip('Year', 'this_year', provider),
+                _customChip(provider),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildStatusPill(provider),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: provider.isLoading ? null : provider.fetchDashboard,
+            child: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: WOFLTheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: WOFLTheme.primary.withValues(alpha: 0.25),
+                ),
+              ),
+              child: provider.isLoading
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(WOFLTheme.primary),
+                      ),
+                    )
+                  : Icon(Icons.refresh_rounded, size: 16, color: WOFLTheme.primary),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusPill() {
-    final isLive = _isConnectedToBackend;
-    final color = isLive ? WaffleTheme.success : WaffleTheme.accent;
+  Widget _buildStatusPill(DashboardProvider provider) {
+    final color = provider.isLive ? WOFLTheme.success : WOFLTheme.accent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -436,37 +380,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(width: 5),
           Text(
-            isLive ? 'Live' : 'Demo',
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
+            provider.isLive ? 'Live' : 'Demo',
+            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
   }
 
-  Widget _filterChip(String label, String value) {
-    final active = _selectedRange == value;
+  Widget _filterChip(String label, String value, DashboardProvider provider) {
+    final active = provider.selectedRange == value;
     return GestureDetector(
-      onTap: () => _changeRange(value),
+      onTap: () => provider.changeRange(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? WaffleTheme.primary : Colors.white,
+          color: active ? WOFLTheme.primary : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? WaffleTheme.primary : WaffleTheme.border,
+            color: active ? WOFLTheme.primary : WOFLTheme.border,
             width: active ? 1 : 0.5,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: active ? Colors.white : WaffleTheme.textLight,
+            color: active ? Colors.white : WOFLTheme.textLight,
             fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
@@ -475,48 +415,81 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // ─── KPI Grid ──────────────────────────────────────────
+  Widget _customChip(DashboardProvider provider) {
+    final active = provider.selectedRange == 'custom';
+    String label = 'Custom';
+    if (active && provider.customStart != null && provider.customEnd != null) {
+      final s = provider.customStart!;
+      final e = provider.customEnd!;
+      label = '${s.day} ${_monthName(s.month)} – ${e.day} ${_monthName(e.month)}';
+    }
+    return GestureDetector(
+      onTap: () => _pickCustomRange(context, provider),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? WOFLTheme.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: active ? WOFLTheme.primary : WOFLTheme.border,
+            width: active ? 1 : 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.calendar_month_rounded,
+              size: 12,
+              color: active ? Colors.white : WOFLTheme.textLight,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: active ? Colors.white : WOFLTheme.textLight,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  Widget _buildKpiGrid() {
+  // ─── Row B: Sales KPI Cards ──────────────────────────────
+
+  Widget _buildSalesKpiGrid(DashboardProvider provider) {
+    const gap = 10.0;
+    final cards = [
+      _kpiCard(
+        title: 'Total Revenue',
+        value: '₹${provider.totalRevenue.toStringAsFixed(0)}',
+        badge: provider.isLive ? 'Live' : 'Demo',
+        icon: Icons.trending_up_rounded,
+        accentColor: WOFLTheme.primary,
+      ),
+      _kpiCard(
+        title: 'Total Orders',
+        value: '${provider.orderCount}',
+        badge: _rangeTitle(provider.selectedRange),
+        icon: Icons.receipt_long_rounded,
+        accentColor: WOFLTheme.secondary,
+      ),
+      _kpiCard(
+        title: 'Avg Order',
+        value: '₹${provider.avgOrderValue.toStringAsFixed(0)}',
+        badge: 'per order',
+        icon: Icons.bar_chart_rounded,
+        accentColor: WOFLTheme.accent,
+      ),
+    ];
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        const gap = 10.0;
-
-        final cards = [
-          _kpiCard(
-            title: 'Total revenue',
-            value: '₹${_totalRevenue.toStringAsFixed(0)}',
-            badge: _isConnectedToBackend ? '↑ Live' : 'Demo',
-            icon: Icons.currency_rupee_rounded,
-            iconBg: WaffleTheme.primary.withValues(alpha: 0.10),
-            iconColor: WaffleTheme.primary,
-            badgeBg: WaffleTheme.primary.withValues(alpha: 0.08),
-            badgeColor: WaffleTheme.primary,
-          ),
-          _kpiCard(
-            title: 'Orders',
-            value: '$_orderCount',
-            badge: _isConnectedToBackend ? '↑ Live' : 'Demo',
-            icon: Icons.receipt_long_rounded,
-            iconBg: WaffleTheme.secondary.withValues(alpha: 0.12),
-            iconColor: WaffleTheme.secondary,
-            badgeBg: WaffleTheme.secondary.withValues(alpha: 0.08),
-            badgeColor: WaffleTheme.secondary,
-          ),
-          _kpiCard(
-            title: 'Avg. order',
-            value: '₹${_avgOrderValue().toStringAsFixed(0)}',
-            badge: 'Avg',
-            icon: Icons.shopping_bag_rounded,
-            iconBg: WaffleTheme.accent.withValues(alpha: 0.10),
-            iconColor: WaffleTheme.accent,
-            badgeBg: WaffleTheme.accent.withValues(alpha: 0.08),
-            badgeColor: WaffleTheme.accent,
-          ),
-        ];
-
-        // 3 cards: always a single row on wide screens, stack on mobile
         if (width >= 500) {
           final cardWidth = (width - gap * 2) / 3;
           return Row(
@@ -528,20 +501,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (e.key > 0) const SizedBox(width: gap),
-                      SizedBox(width: cardWidth, height: 116, child: e.value),
+                      SizedBox(width: cardWidth, height: 110, child: e.value),
                     ],
                   ),
                 )
                 .toList(),
           );
         }
-
         return Column(
           children: cards
               .map(
                 (c) => Padding(
                   padding: const EdgeInsets.only(bottom: gap),
-                  child: SizedBox(height: 116, width: width, child: c),
+                  child: SizedBox(height: 110, width: width, child: c),
                 ),
               )
               .toList(),
@@ -555,40 +527,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     required String value,
     required String badge,
     required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-    required Color badgeBg,
-    required Color badgeColor,
+    required Color accentColor,
   }) {
     return _card(
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: icon + badge
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
-                  color: iconBg,
+                  color: accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: Icon(icon, color: iconColor, size: 18),
+                child: Icon(icon, color: accentColor, size: 17),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: badgeBg,
+                  color: accentColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   badge,
                   style: TextStyle(
-                    color: badgeColor,
+                    color: accentColor,
                     fontSize: 9,
                     fontWeight: FontWeight.w500,
                   ),
@@ -597,22 +565,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ],
           ),
           const Spacer(),
-          // Value
           Text(
             value,
             style: TextStyle(
-              color: WaffleTheme.textDark,
-              fontSize: 20,
+              color: WOFLTheme.textDark,
+              fontSize: 19,
               fontWeight: FontWeight.w500,
               letterSpacing: -0.5,
             ),
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 3),
-          // Label
+          const SizedBox(height: 2),
           Text(
             title,
-            style: TextStyle(color: WaffleTheme.textLight, fontSize: 11),
+            style: TextStyle(color: WOFLTheme.textLight, fontSize: 11),
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -620,49 +586,50 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // ─── Middle Row (Trend + Payment side by side) ─────────
+  // ─── Row C: Revenue Trend + Payment Mix ──────────────────
 
-  Widget _buildMiddleRow() {
+  Widget _buildMiddleRow(DashboardProvider provider) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= 600) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 3, child: _buildTrendCard()),
+              Expanded(flex: 65, child: _buildTrendChartCard(provider)),
               const SizedBox(width: 10),
-              Expanded(flex: 2, child: _buildPaymentCard()),
+              Expanded(flex: 35, child: _buildPaymentMixCard(provider)),
             ],
           );
         }
         return Column(
           children: [
-            _buildTrendCard(),
+            _buildTrendChartCard(provider),
             const SizedBox(height: 10),
-            _buildPaymentCard(),
+            _buildPaymentMixCard(provider),
           ],
         );
       },
     );
   }
 
-  // ─── Trend Card ────────────────────────────────────────
-
-  Widget _buildTrendCard() {
-    final pts = _trendPoints;
-    final maxVal = pts.isEmpty
-        ? 1.0
-        : pts.map((p) => p.value).reduce((a, b) => a > b ? a : b);
-    final peakIndex = pts.isEmpty
+  Widget _buildTrendChartCard(DashboardProvider provider) {
+    final pts = provider.trendPoints;
+    final maxY = pts.isEmpty
+        ? 100.0
+        : (pts.map((p) => p.value).reduce((a, b) => a > b ? a : b) * 1.3).clamp(1.0, double.infinity);
+    final peakIdx = pts.isEmpty
         ? -1
-        : pts.indexWhere((p) => p.value == maxVal);
+        : pts.indexWhere(
+            (p) =>
+                p.value ==
+                pts.map((x) => x.value).reduce((a, b) => a > b ? a : b),
+          );
 
     return _card(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Expanded(
@@ -670,20 +637,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Revenue trend',
+                      'Revenue Trend',
                       style: TextStyle(
-                        color: WaffleTheme.textDark,
+                        color: WOFLTheme.textDark,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Sales for ${_rangeTitle().toLowerCase()}',
-                      style: TextStyle(
-                        color: WaffleTheme.textLight,
-                        fontSize: 11,
-                      ),
+                      '${_rangeTitle(provider.selectedRange)} sales performance',
+                      style: TextStyle(color: WOFLTheme.textLight, fontSize: 11),
                     ),
                   ],
                 ),
@@ -691,13 +655,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: WaffleTheme.accent.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(5),
+                  color: WOFLTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  'B2C only',
+                  '${pts.length} periods',
                   style: TextStyle(
-                    color: WaffleTheme.accent,
+                    color: WOFLTheme.primary,
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                   ),
@@ -705,211 +669,132 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           if (pts.isEmpty)
             SizedBox(
               height: 130,
               child: Center(
                 child: Text(
                   'No data available.',
-                  style: TextStyle(color: WaffleTheme.textLight, fontSize: 12),
+                  style: TextStyle(color: WOFLTheme.textLight, fontSize: 12),
                 ),
               ),
             )
           else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                const chartHeight = 130.0;
-                const labelHeight = 28.0; // value label + x label
-                const gridLines = 3;
-                final barAreaHeight = chartHeight - labelHeight;
-
-                return SizedBox(
-                  height: chartHeight + labelHeight,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Y-axis gridline labels
-                      SizedBox(
-                        width: 36,
-                        height: chartHeight,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: List.generate(gridLines + 1, (i) {
-                            final val = maxVal * (gridLines - i) / gridLines;
-                            return Text(
-                              val >= 1000
-                                  ? '₹${(val / 1000).toStringAsFixed(1)}k'
-                                  : '₹${val.toStringAsFixed(0)}',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: WaffleTheme.textLight,
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Chart area
-                      Expanded(
-                        child: Stack(
-                          children: [
-                            // Horizontal grid lines
-                            Positioned.fill(
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: List.generate(gridLines + 1, (i) {
-                                  return Container(
-                                    height: 0.5,
-                                    color: WaffleTheme.border.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ),
-                            // Bars + labels
-                            Positioned.fill(
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: pts.asMap().entries.map((e) {
-                                        final i = e.key;
-                                        final pt = e.value;
-                                        final isPeak = i == peakIndex;
-                                        final fraction = pt.value == 0
-                                            ? 0.03
-                                            : (pt.value / maxVal);
-                                        final barH = fraction * barAreaHeight;
-
-                                        return Expanded(
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 4,
-                                            ),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                // Value label above bar
-                                                AnimatedContainer(
-                                                  duration: const Duration(
-                                                    milliseconds: 300,
-                                                  ),
-                                                  margin: const EdgeInsets.only(
-                                                    bottom: 4,
-                                                  ),
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 4,
-                                                        vertical: 2,
-                                                      ),
-                                                  decoration: isPeak
-                                                      ? BoxDecoration(
-                                                          color: WaffleTheme
-                                                              .primary
-                                                              .withValues(
-                                                                alpha: 0.10,
-                                                              ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                4,
-                                                              ),
-                                                        )
-                                                      : null,
-                                                  child: Text(
-                                                    pt.value >= 1000
-                                                        ? '${(pt.value / 1000).toStringAsFixed(1)}k'
-                                                        : '${pt.value.toStringAsFixed(0)}',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                      fontSize: 9,
-                                                      fontWeight: isPeak
-                                                          ? FontWeight.w500
-                                                          : FontWeight.w400,
-                                                      color: isPeak
-                                                          ? WaffleTheme.primary
-                                                          : WaffleTheme
-                                                                .textLight,
-                                                    ),
-                                                  ),
-                                                ),
-                                                // Bar
-                                                AnimatedContainer(
-                                                  duration: const Duration(
-                                                    milliseconds: 400,
-                                                  ),
-                                                  height: barH,
-                                                  decoration: BoxDecoration(
-                                                    color: isPeak
-                                                        ? WaffleTheme.primary
-                                                        : WaffleTheme.primary
-                                                              .withValues(
-                                                                alpha: 0.55,
-                                                              ),
-                                                    borderRadius:
-                                                        const BorderRadius.vertical(
-                                                          top: Radius.circular(
-                                                            5,
-                                                          ),
-                                                        ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ),
-                                  // X-axis labels
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: pts.asMap().entries.map((e) {
-                                      final isPeak = e.key == peakIndex;
-                                      return Expanded(
-                                        child: Text(
-                                          e.value.label,
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            color: isPeak
-                                                ? WaffleTheme.primary
-                                                : WaffleTheme.textLight,
-                                            fontWeight: isPeak
-                                                ? FontWeight.w500
-                                                : FontWeight.w400,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+            SizedBox(
+              height: 130,
+              child: BarChart(
+                BarChartData(
+                  maxY: maxY,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: maxY > 0 ? maxY / 4 : 1,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: WOFLTheme.border.withValues(alpha: 0.4),
+                      strokeWidth: 0.5,
+                    ),
                   ),
-                );
-              },
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 46,
+                        interval: maxY > 0 ? maxY / 4 : 1,
+                        getTitlesWidget: (val, _) => Text(
+                          val >= 1000
+                              ? '₹${(val / 1000).toStringAsFixed(1)}k'
+                              : '₹${val.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 8,
+                            color: WOFLTheme.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 22,
+                        getTitlesWidget: (val, _) {
+                          final idx = val.toInt();
+                          if (idx < 0 || idx >= pts.length) {
+                            return const SizedBox.shrink();
+                          }
+                          final isPeak = idx == peakIdx;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              pts[idx].label,
+                              style: TextStyle(
+                                fontSize: 8,
+                                color: isPeak
+                                    ? WOFLTheme.primary
+                                    : WOFLTheme.textLight,
+                                fontWeight: isPeak
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: pts.asMap().entries.map((e) {
+                    final isPeak = e.key == peakIdx;
+                    return BarChartGroupData(
+                      x: e.key,
+                      barRods: [
+                        BarChartRodData(
+                          toY: e.value.value,
+                          color: isPeak
+                              ? WOFLTheme.primary
+                              : WOFLTheme.primary.withValues(alpha: 0.45),
+                          width: pts.length <= 7 ? 18 : (pts.length <= 14 ? 12 : 8),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(5),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) =>
+                          WOFLTheme.textDark.withValues(alpha: 0.9),
+                      tooltipPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      getTooltipItem: (group, groupIdx, rod, rodIdx) => BarTooltipItem(
+                        '₹${rod.toY.toStringAsFixed(0)}',
+                        const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
     );
   }
 
-  // ─── Payment Card ──────────────────────────────────────
-
-  Widget _buildPaymentCard() {
-    final total = _totalRevenue;
-    final upiPct = total == 0 ? 0.0 : _upiAmount / total;
+  Widget _buildPaymentMixCard(DashboardProvider provider) {
+    final total = provider.totalRevenue;
+    final upiPct = total == 0 ? 0.0 : provider.upiAmount / total;
     final cashPct = 1 - upiPct;
 
     return _card(
@@ -918,17 +803,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Payment mix',
+            'Payment Mix',
             style: TextStyle(
-              color: WaffleTheme.textDark,
+              color: WOFLTheme.textDark,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            'How customers are paying',
-            style: TextStyle(color: WaffleTheme.textLight, fontSize: 11),
+            'How customers pay',
+            style: TextStyle(color: WOFLTheme.textLight, fontSize: 11),
           ),
           const SizedBox(height: 20),
           Center(
@@ -941,9 +826,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     size: const Size(90, 90),
                     painter: _DonutPainter(
                       upiFraction: upiPct,
-                      primaryColor: WaffleTheme.primary,
-                      secondaryColor: WaffleTheme.secondary,
-                      bgColor: WaffleTheme.primary.withValues(alpha: 0.08),
+                      primaryColor: WOFLTheme.primary,
+                      secondaryColor: WOFLTheme.secondary,
+                      bgColor: WOFLTheme.primary.withValues(alpha: 0.08),
                     ),
                   ),
                   Center(
@@ -953,7 +838,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         Text(
                           '${(upiPct * 100).toStringAsFixed(0)}%',
                           style: TextStyle(
-                            color: WaffleTheme.textDark,
+                            color: WOFLTheme.textDark,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                           ),
@@ -961,7 +846,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         Text(
                           'UPI',
                           style: TextStyle(
-                            color: WaffleTheme.textLight,
+                            color: WOFLTheme.textLight,
                             fontSize: 9,
                           ),
                         ),
@@ -974,17 +859,379 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 20),
           _legendRow(
-            color: WaffleTheme.primary,
+            color: WOFLTheme.primary,
             label: 'UPI',
-            value: '₹${_upiAmount.toStringAsFixed(0)}',
+            value: '₹${provider.upiAmount.toStringAsFixed(0)}',
             fraction: upiPct,
           ),
           const SizedBox(height: 12),
           _legendRow(
-            color: WaffleTheme.secondary,
+            color: WOFLTheme.secondary,
             label: 'Cash',
-            value: '₹${_cashAmount.toStringAsFixed(0)}',
+            value: '₹${provider.cashAmount.toStringAsFixed(0)}',
             fraction: cashPct,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── P&L Section Divider ──────────────────────────────────
+
+  Widget _buildPnlSectionHeader() {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(
+            color: WOFLTheme.border,
+            thickness: 0.5,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'Profit & Loss Analysis',
+            style: TextStyle(
+              color: WOFLTheme.textLight,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Divider(
+            color: WOFLTheme.border,
+            thickness: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Row E: P&L Analytics (65% chart + 35% margin ring) ──
+
+  Widget _buildAnalyticsRow(DashboardProvider provider) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 600) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 65, child: _buildPnlChartCard(provider)),
+              const SizedBox(width: 10),
+              Expanded(flex: 35, child: _buildMarginRingCard(provider)),
+            ],
+          );
+        }
+        return Column(
+          children: [
+            _buildPnlChartCard(provider),
+            const SizedBox(height: 10),
+            _buildMarginRingCard(provider),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPnlChartCard(DashboardProvider provider) {
+    final displayData = provider.chartData;
+    final maxY = displayData.isEmpty
+        ? 100.0
+        : (displayData
+                    .map((p) => p.revenue > p.expense ? p.revenue : p.expense)
+                    .reduce((a, b) => a > b ? a : b) *
+                1.25)
+            .clamp(1.0, double.infinity);
+
+    return _card(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Revenue vs Expenses',
+                      style: TextStyle(
+                        color: WOFLTheme.textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Daily P&L · ${_rangeTitle(provider.selectedRange)}',
+                      style: TextStyle(color: WOFLTheme.textLight, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              _chartLegendDot(WOFLTheme.success, 'Revenue'),
+              const SizedBox(width: 12),
+              _chartLegendDot(WOFLTheme.error, 'Expense'),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (displayData.isEmpty)
+            SizedBox(
+              height: 160,
+              child: Center(
+                child: Text(
+                  'No data available.',
+                  style: TextStyle(color: WOFLTheme.textLight, fontSize: 12),
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 160,
+              child: BarChart(
+                BarChartData(
+                  maxY: maxY,
+                  groupsSpace: 6,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: maxY > 0 ? maxY / 4 : 1,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: WOFLTheme.border.withValues(alpha: 0.4),
+                      strokeWidth: 0.5,
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 46,
+                        interval: maxY > 0 ? maxY / 4 : 1,
+                        getTitlesWidget: (val, _) => Text(
+                          val >= 1000
+                              ? '₹${(val / 1000).toStringAsFixed(1)}k'
+                              : '₹${val.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 8,
+                            color: WOFLTheme.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 22,
+                        getTitlesWidget: (val, _) {
+                          final idx = val.toInt();
+                          if (idx < 0 || idx >= displayData.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              _formatChartDate(displayData[idx].date),
+                              style: TextStyle(
+                                fontSize: 8,
+                                color: WOFLTheme.textLight,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: displayData.asMap().entries.map((e) {
+                    final pt = e.value;
+                    return BarChartGroupData(
+                      x: e.key,
+                      barsSpace: 3,
+                      barRods: [
+                        BarChartRodData(
+                          toY: pt.revenue,
+                          color: WOFLTheme.success,
+                          width: 7,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
+                        ),
+                        BarChartRodData(
+                          toY: pt.expense,
+                          color: WOFLTheme.error.withValues(alpha: 0.75),
+                          width: 7,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) =>
+                          WOFLTheme.textDark.withValues(alpha: 0.9),
+                      tooltipPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final label = rodIndex == 0 ? 'Rev' : 'Exp';
+                        return BarTooltipItem(
+                          '$label: ₹${rod.toY.toStringAsFixed(0)}',
+                          const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chartLegendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(color: WOFLTheme.textLight, fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildMarginRingCard(DashboardProvider provider) {
+    final marginFraction = (provider.profitMarginPct / 100).clamp(0.0, 1.0);
+    final total = provider.totalRevenue + provider.totalExpense;
+    final revFraction = total == 0 ? 0.0 : provider.totalRevenue / total;
+    final expFraction = total == 0 ? 0.0 : provider.totalExpense / total;
+    final profitColor =
+        provider.netProfit >= 0 ? WOFLTheme.success : WOFLTheme.error;
+
+    return _card(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Profit Margin',
+            style: TextStyle(
+              color: WOFLTheme.textDark,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Net profit as % of revenue',
+            style: TextStyle(color: WOFLTheme.textLight, fontSize: 11),
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: SizedBox(
+              width: 90,
+              height: 90,
+              child: Stack(
+                children: [
+                  CustomPaint(
+                    size: const Size(90, 90),
+                    painter: _DonutPainter(
+                      upiFraction: marginFraction.abs(),
+                      primaryColor: profitColor,
+                      secondaryColor: WOFLTheme.border,
+                      bgColor: WOFLTheme.primary.withValues(alpha: 0.08),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${provider.profitMarginPct.toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            color: profitColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          'Margin',
+                          style: TextStyle(
+                            color: WOFLTheme.textLight,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _legendRow(
+            color: WOFLTheme.success,
+            label: 'Revenue',
+            value: '₹${provider.totalRevenue.toStringAsFixed(0)}',
+            fraction: revFraction,
+          ),
+          const SizedBox(height: 12),
+          _legendRow(
+            color: WOFLTheme.error,
+            label: 'Expenses',
+            value: '₹${provider.totalExpense.toStringAsFixed(0)}',
+            fraction: expFraction,
+          ),
+          const SizedBox(height: 14),
+          Divider(color: WOFLTheme.border, thickness: 0.5, height: 1),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Net Profit',
+                style: TextStyle(
+                  color: WOFLTheme.textDark,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: profitColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${provider.netProfit >= 0 ? '+' : ''}₹${provider.netProfit.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    color: profitColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1007,15 +1254,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(color: WaffleTheme.textLight, fontSize: 12),
-            ),
+            Text(label, style: TextStyle(color: WOFLTheme.textLight, fontSize: 12)),
             const Spacer(),
             Text(
               value,
               style: TextStyle(
-                color: WaffleTheme.textDark,
+                color: WOFLTheme.textDark,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -1028,7 +1272,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: LinearProgressIndicator(
             value: fraction.clamp(0.0, 1.0),
             minHeight: 5,
-            backgroundColor: WaffleTheme.primary.withValues(alpha: 0.08),
+            backgroundColor: WOFLTheme.primary.withValues(alpha: 0.08),
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -1036,94 +1280,171 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // ─── Insight Row ───────────────────────────────────────
+  // ─── Row F: Financial Ledger (horizontal cards) ──────────
 
-  Widget _buildInsightRow() {
-    String peakTime = '–';
-    if (_trendPoints.isNotEmpty) {
-      final peak = [..._trendPoints]
-        ..sort((a, b) => b.value.compareTo(a.value));
-      peakTime = peak.first.label;
-    }
+  Widget _buildLedgerTable(DashboardProvider provider) {
+    final rows = [...provider.chartData].reversed.toList();
 
+    return _card(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Daily Financial Ledger',
+                      style: TextStyle(
+                        color: WOFLTheme.textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Chronological P&L audit log',
+                      style: TextStyle(color: WOFLTheme.textLight, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: WOFLTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  '${rows.length} entries',
+                  style: TextStyle(
+                    color: WOFLTheme.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (rows.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  'No data for selected range.',
+                  style: TextStyle(color: WOFLTheme.textLight, fontSize: 12),
+                ),
+              ),
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: rows.map((pt) {
+                  final isProfit = pt.netProfit >= 0;
+                  final profitColor =
+                      isProfit ? WOFLTheme.success : WOFLTheme.error;
+                  final parsed = DateTime.tryParse(pt.date);
+                  final dateLabel = parsed != null
+                      ? '${parsed.day} ${_monthName(parsed.month)}'
+                      : pt.date;
+                  return Container(
+                    width: 112,
+                    margin: const EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: WOFLTheme.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: WOFLTheme.border.withValues(alpha: 0.6),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          dateLabel,
+                          style: TextStyle(
+                            color: WOFLTheme.textDark,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _ledgerMetricRow(
+                          label: 'Revenue',
+                          value: '₹${pt.revenue.toStringAsFixed(0)}',
+                          color: WOFLTheme.success,
+                        ),
+                        const SizedBox(height: 6),
+                        _ledgerMetricRow(
+                          label: 'Cost',
+                          value: '₹${pt.expense.toStringAsFixed(0)}',
+                          color: WOFLTheme.error,
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 5,
+                            horizontal: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: profitColor.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${isProfit ? '+' : ''}₹${pt.netProfit.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              color: profitColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ledgerMetricRow({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: _insightCard(
-            icon: Icons.schedule_rounded,
-            iconColor: WaffleTheme.primary,
-            iconBg: WaffleTheme.primary.withValues(alpha: 0.10),
-            value: peakTime,
-            label: 'Peak hour',
-          ),
+        Text(
+          label,
+          style: TextStyle(color: WOFLTheme.textLight, fontSize: 10),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _insightCard(
-            icon: Icons.phone_android_rounded,
-            iconColor: WaffleTheme.secondary,
-            iconBg: WaffleTheme.secondary.withValues(alpha: 0.10),
-            value: _upiAmount >= _cashAmount ? 'UPI' : 'Cash',
-            label: 'Top payment',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _insightCard(
-            icon: Icons.trending_up_rounded,
-            iconColor: WaffleTheme.success,
-            iconBg: WaffleTheme.success.withValues(alpha: 0.10),
-            value: '+18%',
-            label: 'vs yesterday',
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
 
-  Widget _insightCard({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required String value,
-    required String label,
-  }) {
-    return _card(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 17),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              color: WaffleTheme.textDark,
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(color: WaffleTheme.textLight, fontSize: 10),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── Shared card shell ─────────────────────────────────
+  // ─── Shared card shell ───────────────────────────────────
 
   Widget _card({required Widget child, EdgeInsets? padding}) {
     return Container(
@@ -1132,7 +1453,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: WaffleTheme.border.withValues(alpha: 0.5),
+          color: WOFLTheme.border.withValues(alpha: 0.5),
           width: 0.5,
         ),
       ),
@@ -1163,8 +1484,6 @@ class _DonutPainter extends CustomPainter {
       center: Offset(size.width / 2, size.height / 2),
       radius: size.width / 2 - strokeW / 2,
     );
-
-    // Background ring
     canvas.drawArc(
       rect,
       0,
@@ -1175,15 +1494,12 @@ class _DonutPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeW,
     );
-
-    const startAngle = -1.5708; // -π/2 (top)
-    final upiSweep = 2 * 3.14159 * upiFraction.clamp(0.02, 0.98);
-
-    // UPI arc
+    const startAngle = -1.5708;
+    final primarySweep = 2 * 3.14159 * upiFraction.clamp(0.02, 0.98);
     canvas.drawArc(
       rect,
       startAngle,
-      upiSweep,
+      primarySweep,
       false,
       Paint()
         ..color = primaryColor
@@ -1191,13 +1507,11 @@ class _DonutPainter extends CustomPainter {
         ..strokeWidth = strokeW
         ..strokeCap = StrokeCap.round,
     );
-
-    // Cash arc
-    final cashSweep = 2 * 3.14159 * (1 - upiFraction).clamp(0.02, 0.98);
+    final secondarySweep = 2 * 3.14159 * (1 - upiFraction).clamp(0.02, 0.98);
     canvas.drawArc(
       rect,
-      startAngle + upiSweep,
-      cashSweep,
+      startAngle + primarySweep,
+      secondarySweep,
       false,
       Paint()
         ..color = secondaryColor
@@ -1209,12 +1523,4 @@ class _DonutPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DonutPainter old) => old.upiFraction != upiFraction;
-}
-
-// ─── Data class ────────────────────────────────────────────
-
-class _TrendPoint {
-  final String label;
-  final double value;
-  const _TrendPoint(this.label, this.value);
 }

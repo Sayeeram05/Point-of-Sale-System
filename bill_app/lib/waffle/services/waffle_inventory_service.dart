@@ -1,15 +1,15 @@
-import '../models/waffle_product_model.dart';
-import 'waffle_api_service.dart';
+import '../models/WOFL_product_model.dart';
+import 'WOFL_api_service.dart';
 
-class WaffleInventoryService {
-  Future<List<WaffleCategory>> loadCategories() {
-    return WaffleApiService.getCategories();
+class WOFLInventoryService {
+  Future<List<WOFLCategory>> loadCategories() {
+    return WOFLApiService.getCategories();
   }
 
-  Future<List<WaffleProduct>> loadProductsForCategory(int categoryId) {
+  Future<List<WOFLProduct>> loadProductsForCategory(int categoryId) {
     if (categoryId <= 0) {
-      return WaffleApiService.getAllProducts();
+      return WOFLApiService.getAllProducts();
     }
-    return WaffleApiService.getProductsByCategory(categoryId);
+    return WOFLApiService.getProductsByCategory(categoryId);
   }
 }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../themes/waffle_theme.dart';
+import '../themes/WOFL_theme.dart';
 
-class WaffleCategoryTab extends StatelessWidget {
+class WOFLCategoryTab extends StatelessWidget {
   final String title;
   final bool selected;
   final VoidCallback onTap;
 
-  const WaffleCategoryTab({
+  const WOFLCategoryTab({
     super.key,
     required this.title,
     required this.selected,
@@ -21,18 +21,18 @@ class WaffleCategoryTab extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? WaffleTheme.primaryColor : WaffleTheme.cardColor,
+          color: selected ? WOFLTheme.primaryColor : WOFLTheme.cardColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: selected
-                ? WaffleTheme.primaryColor
-                : WaffleTheme.borderColor,
+                ? WOFLTheme.primaryColor
+                : WOFLTheme.borderColor,
           ),
         ),
         child: Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: selected ? Colors.white : WaffleTheme.textPrimary,
+            color: selected ? Colors.white : WOFLTheme.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),

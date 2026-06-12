@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'theme/waffle_theme.dart';
+import 'theme/WOFL_theme.dart';
 import 'widgets/navigation_shell.dart';
 import 'screens/home_screen.dart';
 import 'screens/products_screen.dart';
@@ -8,12 +8,12 @@ import 'screens/orders_screen.dart';
 import 'providers/providers.dart';
 
 void main() {
-  runApp(const WaffleShopAdminApp());
+  runApp(const WOFLShopAdminApp());
 }
 
-/// Main application widget for Waffle Shop Admin UI
-class WaffleShopAdminApp extends StatelessWidget {
-  const WaffleShopAdminApp({super.key});
+/// Main application widget for WOFL Shop Admin UI
+class WOFLShopAdminApp extends StatelessWidget {
+  const WOFLShopAdminApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +23,8 @@ class WaffleShopAdminApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductProvider()),
       ],
       child: MaterialApp(
-        title: 'Waffle Shop Admin',
-        theme: WaffleTheme.theme,
+        title: 'WOFL Shop Admin',
+        theme: WOFLTheme.theme,
         home: const MainScreen(),
         debugShowCheckedModeBanner: false,
       ),
@@ -61,7 +61,7 @@ class _MainScreenState extends State<MainScreen> {
       currentIndex: _currentIndex,
       onNavigationChanged: _onNavigationChanged,
       child: AnimatedSwitcher(
-        duration: WaffleTheme.animationDuration,
+        duration: WOFLTheme.animationDuration,
         child: _pages[_currentIndex],
       ),
     );

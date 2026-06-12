@@ -1,35 +1,35 @@
-import '../models/waffle_order_model.dart';
-import 'waffle_api_service.dart';
+import '../models/WOFL_order_model.dart';
+import 'WOFL_api_service.dart';
 
-class WaffleOrderService {
-  Future<WaffleOrder> createOrder() {
-    return WaffleApiService.createOrder();
+class WOFLOrderService {
+  Future<WOFLOrder> createOrder() {
+    return WOFLApiService.createOrder();
   }
 
-  Future<WaffleOrder> getOrder(int orderId) {
-    return WaffleApiService.getOrder(orderId);
+  Future<WOFLOrder> getOrder(int orderId) {
+    return WOFLApiService.getOrder(orderId);
   }
 
-  Future<WaffleOrder> updateOrderItems(
+  Future<WOFLOrder> updateOrderItems(
     int orderId,
-    List<WaffleOrderItem> items,
+    List<WOFLOrderItem> items,
   ) {
-    return WaffleApiService.updateOrderItems(orderId, items);
+    return WOFLApiService.updateOrderItems(orderId, items);
   }
 
-  Future<WaffleOrder> completeOrder(
+  Future<WOFLOrder> completeOrder(
     int orderId, {
     required double cash,
     required double upi,
   }) {
-    return WaffleApiService.completeOrder(orderId, cash: cash, upi: upi);
+    return WOFLApiService.completeOrder(orderId, cash: cash, upi: upi);
   }
 
-  Future<WaffleOrder> markOrderIncomplete(int orderId) {
-    return WaffleApiService.markOrderIncomplete(orderId);
+  Future<WOFLOrder> markOrderIncomplete(int orderId) {
+    return WOFLApiService.markOrderIncomplete(orderId);
   }
 
   Future<void> deleteOrder(int orderId) {
-    return WaffleApiService.deleteOrder(orderId);
+    return WOFLApiService.deleteOrder(orderId);
   }
 }

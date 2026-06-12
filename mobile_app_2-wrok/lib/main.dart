@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'pages/woffle_dashboard_page.dart';
-import 'theme/woffle_app_theme.dart';
-import 'services/woffle_app_performance.dart';
-import 'services/woffle_network_config.dart';
-import 'services/woffle_api_service.dart';
+import 'pages/WOFL_dashboard_page.dart';
+import 'theme/WOFL_app_theme.dart';
+import 'services/WOFL_app_performance.dart';
+import 'services/WOFL_network_config.dart';
+import 'services/WOFL_api_service.dart';
+import 'services/WOFL_realtime_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ void main() async {
   final savedIp = prefs.getString('server_ip');
   if (savedIp != null && savedIp.isNotEmpty) {
     ApiService.configure(baseUrl: 'http://$savedIp');
+    WOFLRealtimeService.instance.connect(savedIp);
   }
 
   // NOTE: We no longer clear the entire image cache on startup.
@@ -54,7 +56,7 @@ class BillApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Woffle',
+      title: 'WOFL',
       theme: AppTheme.lightTheme,
       home: const _IpGate(),
       debugShowCheckedModeBanner: false,
@@ -190,6 +192,7 @@ class _IpGateState extends State<_IpGate> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('server_ip', result);
       ApiService.configure(baseUrl: 'http://$result');
+      WOFLRealtimeService.instance.connect(result);
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const DashboardPage()),

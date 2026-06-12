@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/base_api_service.dart';
-import '../theme/waffle_theme.dart';
+import '../theme/WOFL_theme.dart';
 import '../widgets/widgets.dart';
 import 'edit_order_screen.dart';
 
@@ -79,7 +79,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   ),
                 ],
               ),
-              backgroundColor: WaffleTheme.success,
+              backgroundColor: WOFLTheme.success,
               duration: const Duration(seconds: 2),
             ),
           );
@@ -110,7 +110,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
               ],
             ),
-            backgroundColor: WaffleTheme.error,
+            backgroundColor: WOFLTheme.error,
             duration: const Duration(seconds: 4),
           ),
         );
@@ -229,14 +229,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WaffleTheme.background,
+      backgroundColor: WOFLTheme.background,
       body: Container(
-        decoration: BoxDecoration(gradient: WaffleTheme.backgroundGradient),
+        decoration: BoxDecoration(gradient: WOFLTheme.backgroundGradient),
         child: _isLoading
             ? const Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    WaffleTheme.primary,
+                    WOFLTheme.primary,
                   ),
                 ),
               )
@@ -250,16 +250,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
                     if (isCompact) {
                       return Padding(
-                        padding: const EdgeInsets.all(WaffleTheme.spacingM),
+                        padding: const EdgeInsets.all(WOFLTheme.spacingM),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildHeader(),
-                            const SizedBox(height: WaffleTheme.spacingM),
+                            const SizedBox(height: WOFLTheme.spacingM),
                             _buildSummaryCards(),
-                            const SizedBox(height: WaffleTheme.spacingM),
+                            const SizedBox(height: WOFLTheme.spacingM),
                             _buildTopBar(),
-                            const SizedBox(height: WaffleTheme.spacingM),
+                            const SizedBox(height: WOFLTheme.spacingM),
                             Expanded(child: _buildOrdersList()),
                           ],
                         ),
@@ -272,16 +272,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         SizedBox(
                           width: (screenWidth * 0.3).clamp(300.0, 400.0),
                           child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(WaffleTheme.spacingM),
+                            padding: const EdgeInsets.all(WOFLTheme.spacingM),
                             child: _buildSidebar(context),
                           ),
                         ),
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(
-                              top: WaffleTheme.spacingM,
-                              right: WaffleTheme.spacingM,
-                              bottom: WaffleTheme.spacingM,
+                              top: WOFLTheme.spacingM,
+                              right: WOFLTheme.spacingM,
+                              bottom: WOFLTheme.spacingM,
                             ),
                             child: _buildMainContent(context),
                           ),
@@ -297,28 +297,28 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Widget _buildErrorState(BuildContext context) {
     return Center(
-      child: WaffleCard(
-        padding: const EdgeInsets.all(WaffleTheme.spacingXL),
+      child: WOFLCard(
+        padding: const EdgeInsets.all(WOFLTheme.spacingXL),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, color: WaffleTheme.error, size: 48),
-            const SizedBox(height: WaffleTheme.spacingM),
+            Icon(Icons.error_outline, color: WOFLTheme.error, size: 48),
+            const SizedBox(height: WOFLTheme.spacingM),
             Text(
               'Unable to load order data',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: WaffleTheme.textDark,
+                color: WOFLTheme.textDark,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: WaffleTheme.spacingS),
+            const SizedBox(height: WOFLTheme.spacingS),
             Text(
               _errorMessage ?? 'Something went wrong while loading orders.',
-              style: TextStyle(color: WaffleTheme.textLight),
+              style: TextStyle(color: WOFLTheme.textLight),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: WaffleTheme.spacingL),
-            WaffleButton(
+            const SizedBox(height: WOFLTheme.spacingL),
+            WOFLButton(
               text: 'Retry',
               icon: Icons.refresh,
               onPressed: _loadOrdersData,
@@ -330,7 +330,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _buildHeader() {
-    return WaffleCard(
+    return WOFLCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -340,16 +340,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: WaffleTheme.primaryGradient,
+                  gradient: WOFLTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
                   Icons.receipt_long_rounded,
-                  color: WaffleTheme.creamWhite,
+                  color: WOFLTheme.creamWhite,
                   size: 24,
                 ),
               ),
-              const SizedBox(width: WaffleTheme.spacingM),
+              const SizedBox(width: WOFLTheme.spacingM),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,21 +358,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       'Order Management',
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(
-                            color: WaffleTheme.textDark,
+                            color: WOFLTheme.textDark,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
-                    const SizedBox(height: WaffleTheme.spacingXS),
+                    const SizedBox(height: WOFLTheme.spacingXS),
                     Text(
                       'Track sales activity and review order history',
-                      style: TextStyle(color: WaffleTheme.textLight),
+                      style: TextStyle(color: WOFLTheme.textLight),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: WaffleTheme.spacingL),
+          const SizedBox(height: WOFLTheme.spacingL),
           _buildDateRangeSection(),
         ],
       ),
@@ -386,15 +386,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
         Text(
           'Date Range',
           style: TextStyle(
-            color: WaffleTheme.textDark,
+            color: WOFLTheme.textDark,
             fontWeight: FontWeight.w700,
             fontSize: 16,
           ),
         ),
-        const SizedBox(height: WaffleTheme.spacingM),
+        const SizedBox(height: WOFLTheme.spacingM),
         Wrap(
-          spacing: WaffleTheme.spacingS,
-          runSpacing: WaffleTheme.spacingS,
+          spacing: WOFLTheme.spacingS,
+          runSpacing: WOFLTheme.spacingS,
           children: [
             _buildDateChip('Today', 'today'),
             _buildDateChip('Week', 'this_week'),
@@ -403,22 +403,22 @@ class _OrdersScreenState extends State<OrdersScreen> {
             _buildCustomRangeChip(),
           ],
         ),
-        const SizedBox(height: WaffleTheme.spacingM),
+        const SizedBox(height: WOFLTheme.spacingM),
         Container(
-          padding: const EdgeInsets.all(WaffleTheme.spacingM),
+          padding: const EdgeInsets.all(WOFLTheme.spacingM),
           decoration: BoxDecoration(
-            color: WaffleTheme.softOrange.withValues(alpha: 0.1),
+            color: WOFLTheme.softOrange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: WaffleTheme.border),
+            border: Border.all(color: WOFLTheme.border),
           ),
           child: Row(
             children: [
-              Icon(Icons.calendar_today, color: WaffleTheme.primary, size: 18),
-              const SizedBox(width: WaffleTheme.spacingS),
+              Icon(Icons.calendar_today, color: WOFLTheme.primary, size: 18),
+              const SizedBox(width: WOFLTheme.spacingS),
               Text(
                 _selectedRangeLabel(),
                 style: TextStyle(
-                  color: WaffleTheme.textDark,
+                  color: WOFLTheme.textDark,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -436,23 +436,23 @@ class _OrdersScreenState extends State<OrdersScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _changeRange(range),
-        borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+        borderRadius: BorderRadius.circular(WOFLTheme.badgeRadius),
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: WaffleTheme.spacingM,
-            vertical: WaffleTheme.spacingS,
+            horizontal: WOFLTheme.spacingM,
+            vertical: WOFLTheme.spacingS,
           ),
           decoration: BoxDecoration(
-            color: isActive ? WaffleTheme.primary : WaffleTheme.creamWhite,
-            borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+            color: isActive ? WOFLTheme.primary : WOFLTheme.creamWhite,
+            borderRadius: BorderRadius.circular(WOFLTheme.badgeRadius),
             border: Border.all(
-              color: isActive ? WaffleTheme.primary : WaffleTheme.border,
+              color: isActive ? WOFLTheme.primary : WOFLTheme.border,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isActive ? WaffleTheme.creamWhite : WaffleTheme.textDark,
+              color: isActive ? WOFLTheme.creamWhite : WOFLTheme.textDark,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -467,17 +467,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: _pickCustomRange,
-          borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+          borderRadius: BorderRadius.circular(WOFLTheme.badgeRadius),
           child: Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: WaffleTheme.spacingM,
-              vertical: WaffleTheme.spacingS,
+              horizontal: WOFLTheme.spacingM,
+              vertical: WOFLTheme.spacingS,
             ),
             decoration: BoxDecoration(
-              color: isActive ? WaffleTheme.primary : WaffleTheme.creamWhite,
-              borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+              color: isActive ? WOFLTheme.primary : WOFLTheme.creamWhite,
+              borderRadius: BorderRadius.circular(WOFLTheme.badgeRadius),
               border: Border.all(
-                color: isActive ? WaffleTheme.primary : WaffleTheme.border,
+                color: isActive ? WOFLTheme.primary : WOFLTheme.border,
               ),
             ),
             child: Row(
@@ -485,16 +485,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
               children: [
                 Icon(
                   Icons.calendar_today,
-                  color: isActive ? WaffleTheme.creamWhite : WaffleTheme.primary,
+                  color: isActive ? WOFLTheme.creamWhite : WOFLTheme.primary,
                   size: 16,
                 ),
-                const SizedBox(width: WaffleTheme.spacingS),
+                const SizedBox(width: WOFLTheme.spacingS),
                 Text(
                   isActive && _customRange != null
                       ? '${_fmtD(_customRange!.start)} – ${_fmtD(_customRange!.end)}'
                       : 'Custom',
                   style: TextStyle(
-                    color: isActive ? WaffleTheme.creamWhite : WaffleTheme.textDark,
+                    color: isActive ? WOFLTheme.creamWhite : WOFLTheme.textDark,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -513,7 +513,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
-        final spacing = WaffleTheme.spacingS;
+        final spacing = WOFLTheme.spacingS;
         final columns = screenWidth < 600
             ? 1
             : screenWidth < 1000
@@ -526,25 +526,25 @@ class _OrdersScreenState extends State<OrdersScreen> {
             Icons.shopping_cart_rounded,
             'Total Orders',
             _orderCount.toString(),
-            WaffleTheme.primary,
+            WOFLTheme.primary,
           ),
           _buildSummaryCard(
             Icons.attach_money_rounded,
             'Revenue',
             '₹${_totalRevenue.toStringAsFixed(0)}',
-            WaffleTheme.success,
+            WOFLTheme.success,
           ),
           _buildSummaryCard(
             Icons.qr_code_rounded,
             'UPI Payments',
             '₹${_upiAmount.toStringAsFixed(0)}',
-            WaffleTheme.secondary,
+            WOFLTheme.secondary,
           ),
           _buildSummaryCard(
             Icons.payments_rounded,
             'Cash Payments',
             '₹${_cashAmount.toStringAsFixed(0)}',
-            WaffleTheme.accent,
+            WOFLTheme.accent,
           ),
         ];
 
@@ -570,10 +570,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
     String value,
     Color color,
   ) {
-    return WaffleCard(
+    return WOFLCard(
       padding: const EdgeInsets.symmetric(
-        horizontal: WaffleTheme.spacingS,
-        vertical: WaffleTheme.spacingM,
+        horizontal: WOFLTheme.spacingS,
+        vertical: WOFLTheme.spacingM,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -587,7 +587,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
             child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(width: WaffleTheme.spacingS),
+          const SizedBox(width: WOFLTheme.spacingS),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,7 +597,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Text(
                   label,
                   style: TextStyle(
-                    color: WaffleTheme.textDark,
+                    color: WOFLTheme.textDark,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -608,7 +608,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Text(
                   value,
                   style: TextStyle(
-                    color: WaffleTheme.primary,
+                    color: WOFLTheme.primary,
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
                   ),
@@ -629,10 +629,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildHeader(),
-        const SizedBox(height: WaffleTheme.spacingM),
+        const SizedBox(height: WOFLTheme.spacingM),
         _buildSummaryCards(),
-        const SizedBox(height: WaffleTheme.spacingM),
-        WaffleButton(
+        const SizedBox(height: WOFLTheme.spacingM),
+        WOFLButton(
           text: 'Refresh Data',
           icon: Icons.refresh_rounded,
           onPressed: _loadOrdersData,
@@ -647,7 +647,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildTopBar(),
-        const SizedBox(height: WaffleTheme.spacingM),
+        const SizedBox(height: WOFLTheme.spacingM),
         Expanded(child: _buildOrdersList()),
       ],
     );
@@ -673,21 +673,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 decoration: InputDecoration(
                   prefixIcon: Icon(
                     Icons.search_rounded,
-                    color: WaffleTheme.textLight,
+                    color: WOFLTheme.textLight,
                   ),
                   hintText: 'Search orders, customers, or items...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: WaffleTheme.border),
+                    borderSide: BorderSide(color: WOFLTheme.border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: WaffleTheme.border),
+                    borderSide: BorderSide(color: WOFLTheme.border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: WaffleTheme.primary,
+                      color: WOFLTheme.primary,
                       width: 2,
                     ),
                   ),
@@ -696,24 +696,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     horizontal: 16,
                   ),
                   filled: true,
-                  fillColor: WaffleTheme.creamWhite,
+                  fillColor: WOFLTheme.creamWhite,
                 ),
               ),
-              const SizedBox(height: WaffleTheme.spacingS),
+              const SizedBox(height: WOFLTheme.spacingS),
               // Buttons row
               Row(
                 children: [
                   Expanded(
                     child: SizedBox(
                       height: 40,
-                      child: WaffleButton(
+                      child: WOFLButton(
                         text: 'New Order',
                         icon: Icons.add_rounded,
                         onPressed: _showCreateOrderDialog,
                       ),
                     ),
                   ),
-                  const SizedBox(width: WaffleTheme.spacingS),
+                  const SizedBox(width: WOFLTheme.spacingS),
                   Flexible(
                     child: PopupMenuButton<String>(
                       onSelected: (value) {
@@ -740,10 +740,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           child: Text('Lowest Amount'),
                         ),
                       ],
-                      child: WaffleCard(
+                      child: WOFLCard(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: WaffleTheme.spacingS,
-                          vertical: WaffleTheme.spacingXS,
+                          horizontal: WOFLTheme.spacingS,
+                          vertical: WOFLTheme.spacingXS,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -752,7 +752,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               child: Text(
                                 _getSortLabel(),
                                 style: TextStyle(
-                                  color: WaffleTheme.textDark,
+                                  color: WOFLTheme.textDark,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
                                 ),
@@ -762,7 +762,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             const SizedBox(width: 4),
                             Icon(
                               Icons.keyboard_arrow_down_rounded,
-                              color: WaffleTheme.textLight,
+                              color: WOFLTheme.textLight,
                               size: 16,
                             ),
                           ],
@@ -789,21 +789,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 decoration: InputDecoration(
                   prefixIcon: Icon(
                     Icons.search_rounded,
-                    color: WaffleTheme.textLight,
+                    color: WOFLTheme.textLight,
                   ),
                   hintText: 'Search orders, customers, or items...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: WaffleTheme.border),
+                    borderSide: BorderSide(color: WOFLTheme.border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: WaffleTheme.border),
+                    borderSide: BorderSide(color: WOFLTheme.border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: WaffleTheme.primary,
+                      color: WOFLTheme.primary,
                       width: 2,
                     ),
                   ),
@@ -812,20 +812,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     horizontal: 16,
                   ),
                   filled: true,
-                  fillColor: WaffleTheme.creamWhite,
+                  fillColor: WOFLTheme.creamWhite,
                 ),
               ),
             ),
-            const SizedBox(width: WaffleTheme.spacingS),
+            const SizedBox(width: WOFLTheme.spacingS),
             SizedBox(
               height: 44,
-              child: WaffleButton(
+              child: WOFLButton(
                 text: 'New Order',
                 icon: Icons.add_rounded,
                 onPressed: _showCreateOrderDialog,
               ),
             ),
-            const SizedBox(width: WaffleTheme.spacingS),
+            const SizedBox(width: WOFLTheme.spacingS),
             PopupMenuButton<String>(
               onSelected: (value) {
                 setState(() {
@@ -851,10 +851,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   child: Text('Lowest Amount'),
                 ),
               ],
-              child: WaffleCard(
+              child: WOFLCard(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: WaffleTheme.spacingM,
-                  vertical: WaffleTheme.spacingS,
+                  horizontal: WOFLTheme.spacingM,
+                  vertical: WOFLTheme.spacingS,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -862,14 +862,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     Text(
                       _getSortLabel(),
                       style: TextStyle(
-                        color: WaffleTheme.textDark,
+                        color: WOFLTheme.textDark,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: WaffleTheme.spacingS),
+                    const SizedBox(width: WOFLTheme.spacingS),
                     Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: WaffleTheme.textLight,
+                      color: WOFLTheme.textLight,
                     ),
                   ],
                 ),
@@ -901,32 +901,32 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
     if (filteredOrders.isEmpty) {
       return Center(
-        child: WaffleCard(
+        child: WOFLCard(
           child: Padding(
-            padding: const EdgeInsets.all(WaffleTheme.spacingL),
+            padding: const EdgeInsets.all(WOFLTheme.spacingL),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.receipt_long_outlined,
-                  color: WaffleTheme.textLight,
+                  color: WOFLTheme.textLight,
                   size: 48,
                 ),
-                const SizedBox(height: WaffleTheme.spacingM),
+                const SizedBox(height: WOFLTheme.spacingM),
                 Text(
                   'No orders found',
                   style: TextStyle(
-                    color: WaffleTheme.textDark,
+                    color: WOFLTheme.textDark,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: WaffleTheme.spacingS),
+                const SizedBox(height: WOFLTheme.spacingS),
                 Text(
                   _searchQuery.isNotEmpty
                       ? 'Try adjusting your search criteria'
                       : 'No orders for the selected date range',
-                  style: TextStyle(color: WaffleTheme.textLight),
+                  style: TextStyle(color: WOFLTheme.textLight),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -948,30 +948,30 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
     if (pageOrders.isEmpty) {
       return Center(
-        child: WaffleCard(
+        child: WOFLCard(
           child: Padding(
-            padding: const EdgeInsets.all(WaffleTheme.spacingL),
+            padding: const EdgeInsets.all(WOFLTheme.spacingL),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.receipt_long_outlined,
-                  color: WaffleTheme.textLight,
+                  color: WOFLTheme.textLight,
                   size: 48,
                 ),
-                const SizedBox(height: WaffleTheme.spacingM),
+                const SizedBox(height: WOFLTheme.spacingM),
                 Text(
                   'No orders found on this page',
                   style: TextStyle(
-                    color: WaffleTheme.textDark,
+                    color: WOFLTheme.textDark,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: WaffleTheme.spacingS),
+                const SizedBox(height: WOFLTheme.spacingS),
                 Text(
                   'Try switching pages or adjusting your filters.',
-                  style: TextStyle(color: WaffleTheme.textLight),
+                  style: TextStyle(color: WOFLTheme.textLight),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -991,11 +991,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
               final childAspectRatio = screenWidth < 600 ? 1.05 : 1.2;
 
               return GridView.builder(
-                padding: const EdgeInsets.only(top: WaffleTheme.spacingS),
+                padding: const EdgeInsets.only(top: WOFLTheme.spacingS),
                 gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: maxCardWidth,
-                  crossAxisSpacing: WaffleTheme.spacingS,
-                  mainAxisSpacing: WaffleTheme.spacingS,
+                  crossAxisSpacing: WOFLTheme.spacingS,
+                  mainAxisSpacing: WOFLTheme.spacingS,
                   childAspectRatio: childAspectRatio,
                 ),
                 itemCount: pageOrders.length,
@@ -1010,10 +1010,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
         if (pageCount > 1)
           Padding(
             padding: const EdgeInsets.only(
-              top: WaffleTheme.spacingS,
-              left: WaffleTheme.spacingS,
-              right: WaffleTheme.spacingS,
-              bottom: WaffleTheme.spacingM,
+              top: WOFLTheme.spacingS,
+              left: WOFLTheme.spacingS,
+              right: WOFLTheme.spacingS,
+              bottom: WOFLTheme.spacingM,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1023,14 +1023,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     Text(
                       'Page ${currentPage + 1} of $pageCount',
                       style: TextStyle(
-                        color: WaffleTheme.textLight,
+                        color: WOFLTheme.textLight,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: WaffleTheme.spacingS),
+                    const SizedBox(width: WOFLTheme.spacingS),
                     Text(
                       'Showing ${pageOrders.length} of ${filteredOrders.length} orders',
-                      style: TextStyle(color: WaffleTheme.textLight),
+                      style: TextStyle(color: WOFLTheme.textLight),
                     ),
                   ],
                 ),
@@ -1041,26 +1041,26 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ? () => setState(() => _currentPage = currentPage - 1)
                           : null,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: WaffleTheme.primary,
-                        side: BorderSide(color: WaffleTheme.primary, width: 1.5),
+                        foregroundColor: WOFLTheme.primary,
+                        side: BorderSide(color: WOFLTheme.primary, width: 1.5),
                         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius)),
+                            borderRadius: BorderRadius.circular(WOFLTheme.buttonRadius)),
                       ),
                       child: const Text('Previous',
                           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
-                    const SizedBox(width: WaffleTheme.spacingS),
+                    const SizedBox(width: WOFLTheme.spacingS),
                     OutlinedButton(
                       onPressed: currentPage < pageCount - 1
                           ? () => setState(() => _currentPage = currentPage + 1)
                           : null,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: WaffleTheme.primary,
-                        side: BorderSide(color: WaffleTheme.primary, width: 1.5),
+                        foregroundColor: WOFLTheme.primary,
+                        side: BorderSide(color: WOFLTheme.primary, width: 1.5),
                         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius)),
+                            borderRadius: BorderRadius.circular(WOFLTheme.buttonRadius)),
                       ),
                       child: const Text('Next',
                           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
@@ -1085,7 +1085,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              Icon(Icons.lock_open_rounded, color: WaffleTheme.primary, size: 22),
+              Icon(Icons.lock_open_rounded, color: WOFLTheme.primary, size: 22),
               const SizedBox(width: 8),
               const Text('Unlock Order'),
             ],
@@ -1102,7 +1102,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: WaffleTheme.primary,
+                backgroundColor: WOFLTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -1142,7 +1142,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not parse order ID: ${order.id}'),
-            backgroundColor: WaffleTheme.error,
+            backgroundColor: WOFLTheme.error,
           ),
         );
       }
@@ -1179,7 +1179,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Text('${order.displayOrderNumber} set to Pending'),
               ],
             ),
-            backgroundColor: WaffleTheme.success,
+            backgroundColor: WOFLTheme.success,
           ),
         );
       }
@@ -1190,7 +1190,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to update order status: $e'),
-            backgroundColor: WaffleTheme.error,
+            backgroundColor: WOFLTheme.error,
           ),
         );
       }
@@ -1208,8 +1208,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
       child: InkWell(
         onDoubleTap: () => _navigateToEditOrderScreen(order),
         onLongPress: () => _navigateToEditOrderScreen(order),
-        borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
-        child: WaffleCard(
+        borderRadius: BorderRadius.circular(WOFLTheme.cardRadius),
+        child: WOFLCard(
           padding: const EdgeInsets.all(0),
           child: isCompleted
               ? GestureDetector(
@@ -1234,23 +1234,23 @@ class _OrdersScreenState extends State<OrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: WaffleTheme.success.withValues(alpha: 0.15),
+            color: WOFLTheme.success.withValues(alpha: 0.15),
             borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(WaffleTheme.cardRadius),
+              top: Radius.circular(WOFLTheme.cardRadius),
             ),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.check_circle_rounded,
-                color: WaffleTheme.success,
+                color: WOFLTheme.success,
                 size: 16,
               ),
               const SizedBox(width: 6),
               Text(
                 'ORDER COMPLETED',
                 style: TextStyle(
-                  color: WaffleTheme.success,
+                  color: WOFLTheme.success,
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
                   letterSpacing: 0.5,
@@ -1273,7 +1273,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   Text(
                     order.displayOrderNumber,
                     style: TextStyle(
-                      color: WaffleTheme.textDark,
+                      color: WOFLTheme.textDark,
                       fontWeight: FontWeight.w800,
                       fontSize: 22,
                     ),
@@ -1282,7 +1282,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   Text(
                     _formatOrderDate(order.date),
                     style: TextStyle(
-                      color: WaffleTheme.textLight,
+                      color: WOFLTheme.textLight,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
@@ -1291,13 +1291,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: WaffleTheme.success.withValues(alpha: 0.15),
+                      color: WOFLTheme.success.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       'DONE',
                       style: TextStyle(
-                        color: WaffleTheme.success,
+                        color: WOFLTheme.success,
                         fontWeight: FontWeight.w700,
                         fontSize: 10,
                       ),
@@ -1309,10 +1309,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: WaffleTheme.error.withValues(alpha: 0.1),
+                        color: WOFLTheme.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Icon(Icons.delete_outline, size: 16, color: WaffleTheme.error),
+                      child: Icon(Icons.delete_outline, size: 16, color: WOFLTheme.error),
                     ),
                   ),
                 ],
@@ -1322,20 +1322,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: WaffleTheme.background,
+                  color: WOFLTheme.background,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: WaffleTheme.border),
+                  border: Border.all(color: WOFLTheme.border),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.account_balance_wallet_outlined, size: 10, color: WaffleTheme.textLight),
+                    Icon(Icons.account_balance_wallet_outlined, size: 10, color: WOFLTheme.textLight),
                     const SizedBox(width: 4),
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 180),
                       child: Text(
                         order.paymentMethod,
-                        style: TextStyle(color: WaffleTheme.textLight, fontSize: 10, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: WOFLTheme.textLight, fontSize: 10, fontWeight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1368,12 +1368,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     Expanded(
                       child: Text(
                         name,
-                        style: TextStyle(color: WaffleTheme.textDark, fontSize: 12, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: WOFLTheme.textDark, fontSize: 12, fontWeight: FontWeight.w500),
                         maxLines: 1, overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text('x$qty  ', style: TextStyle(color: WaffleTheme.textLight, fontSize: 11)),
-                    Text('₹$lineTotal', style: TextStyle(color: WaffleTheme.textDark, fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text('x$qty  ', style: TextStyle(color: WOFLTheme.textLight, fontSize: 11)),
+                    Text('₹$lineTotal', style: TextStyle(color: WOFLTheme.textDark, fontSize: 12, fontWeight: FontWeight.w600)),
                   ],
                 ),
               );
@@ -1386,7 +1386,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             padding: const EdgeInsets.only(left: 12, top: 2),
             child: Text(
               '+ ${order.items.length - 3} more items · tap to view all',
-              style: TextStyle(color: WaffleTheme.primary, fontSize: 10, fontWeight: FontWeight.w500),
+              style: TextStyle(color: WOFLTheme.primary, fontSize: 10, fontWeight: FontWeight.w500),
             ),
           ),
 
@@ -1397,9 +1397,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
           decoration: BoxDecoration(
-            color: WaffleTheme.background.withValues(alpha: 0.5),
+            color: WOFLTheme.background.withValues(alpha: 0.5),
             borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(WaffleTheme.cardRadius),
+              bottom: Radius.circular(WOFLTheme.cardRadius),
             ),
           ),
           child: Row(
@@ -1408,7 +1408,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Text(
                 'Total Amount',
                 style: TextStyle(
-                  color: WaffleTheme.textDark,
+                  color: WOFLTheme.textDark,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1416,14 +1416,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: WaffleTheme.cardBackground,
+                  color: WOFLTheme.cardBackground,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: WaffleTheme.border),
+                  border: Border.all(color: WOFLTheme.border),
                 ),
                 child: Text(
                   '₹${order.totalAmount.toStringAsFixed(0)}',
                   style: TextStyle(
-                    color: WaffleTheme.textDark,
+                    color: WOFLTheme.textDark,
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                   ),
@@ -1440,7 +1440,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Widget _buildPendingOrderCard(OrderItem order) {
     return Padding(
-      padding: const EdgeInsets.all(WaffleTheme.spacingS),
+      padding: const EdgeInsets.all(WOFLTheme.spacingS),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
@@ -1452,7 +1452,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 child: Text(
                   order.displayOrderNumber,
                   style: TextStyle(
-                    color: WaffleTheme.textDark,
+                    color: WOFLTheme.textDark,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -1476,7 +1476,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         Icon(
                           Icons.edit,
                           size: 12,
-                          color: WaffleTheme.primary,
+                          color: WOFLTheme.primary,
                         ),
                         const SizedBox(width: 4),
                         Text('Edit', style: TextStyle(fontSize: 11)),
@@ -1491,7 +1491,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         Icon(
                           Icons.delete,
                           size: 12,
-                          color: WaffleTheme.error,
+                          color: WOFLTheme.error,
                         ),
                         const SizedBox(width: 4),
                         Text('Delete', style: TextStyle(fontSize: 11)),
@@ -1502,13 +1502,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: WaffleTheme.background,
+                    color: WOFLTheme.background,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
                     Icons.more_vert,
                     size: 16,
-                    color: WaffleTheme.textLight,
+                    color: WOFLTheme.textLight,
                   ),
                 ),
               ),
@@ -1519,7 +1519,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           // Status and date row
           Row(
             children: [
-              WaffleBadge.status(
+              WOFLBadge.status(
                 order.status,
                 icon: Icons.check_circle_rounded,
                 isSmall: true,
@@ -1529,7 +1529,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 child: Text(
                   _formatOrderDate(order.date),
                   style: TextStyle(
-                    color: WaffleTheme.textLight,
+                    color: WOFLTheme.textLight,
                     fontSize: 10,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -1560,18 +1560,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         Expanded(
                           child: Text(
                             name,
-                            style: TextStyle(color: WaffleTheme.textDark, fontSize: 10, fontWeight: FontWeight.w500),
+                            style: TextStyle(color: WOFLTheme.textDark, fontSize: 10, fontWeight: FontWeight.w500),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
                           '${qty}×₹${unitPrice.toStringAsFixed(0)}',
-                          style: TextStyle(color: WaffleTheme.textLight, fontSize: 9),
+                          style: TextStyle(color: WOFLTheme.textLight, fontSize: 9),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '₹$lineTotal',
-                          style: TextStyle(color: WaffleTheme.textDark, fontSize: 10, fontWeight: FontWeight.w700),
+                          style: TextStyle(color: WOFLTheme.textDark, fontSize: 10, fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -1580,7 +1580,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 if (order.items.length > 3)
                   Text(
                     '+ ${order.items.length - 3} more',
-                    style: TextStyle(color: WaffleTheme.textLight, fontSize: 9, fontStyle: FontStyle.italic),
+                    style: TextStyle(color: WOFLTheme.textLight, fontSize: 9, fontStyle: FontStyle.italic),
                   ),
               ],
             ),
@@ -1591,24 +1591,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: WaffleTheme.border.withValues(alpha: 0.4))),
+              border: Border(top: BorderSide(color: WOFLTheme.border.withValues(alpha: 0.4))),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   '₹${order.totalAmount.toStringAsFixed(0)}',
-                  style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w800, fontSize: 14),
+                  style: TextStyle(color: WOFLTheme.textDark, fontWeight: FontWeight.w800, fontSize: 14),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: WaffleTheme.primary.withValues(alpha: 0.12),
+                    color: WOFLTheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     order.paymentMethod.length > 6 ? order.paymentMethod.substring(0, 6) + '..' : order.paymentMethod,
-                    style: TextStyle(color: WaffleTheme.primary, fontSize: 9, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: WOFLTheme.primary, fontSize: 9, fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -1620,14 +1620,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Icon(
                 order.status.toLowerCase() == 'pending' ? Icons.edit_rounded : Icons.lock_rounded,
                 size: 10,
-                color: order.status.toLowerCase() == 'pending' ? WaffleTheme.primary : WaffleTheme.textLight,
+                color: order.status.toLowerCase() == 'pending' ? WOFLTheme.primary : WOFLTheme.textLight,
               ),
               const SizedBox(width: 3),
               Text(
                 order.status.toLowerCase() == 'pending' ? 'Double-tap to edit' : 'Double-tap to unlock',
                 style: TextStyle(
                   fontSize: 9,
-                  color: order.status.toLowerCase() == 'pending' ? WaffleTheme.primary : WaffleTheme.textLight,
+                  color: order.status.toLowerCase() == 'pending' ? WOFLTheme.primary : WOFLTheme.textLight,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -1643,13 +1643,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
   void _showAllItemsDialog(OrderItem order) {
     final isCompleted = order.status.toLowerCase() == 'completed' ||
         order.status.toLowerCase() == 'done';
-    final accentColor = isCompleted ? WaffleTheme.success : WaffleTheme.primary;
+    final accentColor = isCompleted ? WOFLTheme.success : WOFLTheme.primary;
 
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: WaffleTheme.cardBackground,
+        backgroundColor: WOFLTheme.cardBackground,
         child: Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(ctx).size.height * 0.78,
@@ -1688,7 +1688,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               Text(
                                 'Order ${order.displayOrderNumber}',
                                 style: TextStyle(
-                                  color: WaffleTheme.textDark,
+                                  color: WOFLTheme.textDark,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 20,
                                 ),
@@ -1696,7 +1696,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 '${order.items.length} item${order.items.length != 1 ? 's' : ''}  ·  ${_formatOrderDate(order.date)}',
-                                style: TextStyle(color: WaffleTheme.textLight, fontSize: 12),
+                                style: TextStyle(color: WOFLTheme.textLight, fontSize: 12),
                               ),
                             ],
                           ),
@@ -1706,10 +1706,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: WaffleTheme.background,
+                              color: WOFLTheme.background,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(Icons.close, size: 18, color: WaffleTheme.textLight),
+                            child: Icon(Icons.close, size: 18, color: WOFLTheme.textLight),
                           ),
                         ),
                       ],
@@ -1728,9 +1728,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         _chip(
                           icon: Icons.account_balance_wallet_outlined,
                           label: order.paymentMethod,
-                          color: WaffleTheme.textLight,
-                          bg: WaffleTheme.background,
-                          border: WaffleTheme.border,
+                          color: WOFLTheme.textLight,
+                          bg: WOFLTheme.background,
+                          border: WOFLTheme.border,
                         ),
                       ],
                     ),
@@ -1758,9 +1758,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: WaffleTheme.background,
+                          color: WOFLTheme.background,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: WaffleTheme.border.withValues(alpha: 0.6)),
+                          border: Border.all(color: WOFLTheme.border.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           children: [
@@ -1786,13 +1786,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 children: [
                                   Text(
                                     name,
-                                    style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w600, fontSize: 13),
+                                    style: TextStyle(color: WOFLTheme.textDark, fontWeight: FontWeight.w600, fontSize: 13),
                                     maxLines: 2, overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     '$qty × ₹${unitPrice.toStringAsFixed(0)}',
-                                    style: TextStyle(color: WaffleTheme.textLight, fontSize: 11),
+                                    style: TextStyle(color: WOFLTheme.textLight, fontSize: 11),
                                   ),
                                 ],
                               ),
@@ -1800,7 +1800,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             // Line total
                             Text(
                               '₹${lineTotal.toStringAsFixed(0)}',
-                              style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w800, fontSize: 14),
+                              style: TextStyle(color: WOFLTheme.textDark, fontWeight: FontWeight.w800, fontSize: 14),
                             ),
                           ],
                         ),
@@ -1815,16 +1815,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                 decoration: BoxDecoration(
-                  color: WaffleTheme.background.withValues(alpha: 0.6),
+                  color: WOFLTheme.background.withValues(alpha: 0.6),
                   borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-                  border: Border(top: BorderSide(color: WaffleTheme.border.withValues(alpha: 0.4))),
+                  border: Border(top: BorderSide(color: WOFLTheme.border.withValues(alpha: 0.4))),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Total Amount',
-                      style: TextStyle(color: WaffleTheme.textDark, fontWeight: FontWeight.w700, fontSize: 14),
+                      style: TextStyle(color: WOFLTheme.textDark, fontWeight: FontWeight.w700, fontSize: 14),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1906,7 +1906,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
+          borderRadius: BorderRadius.circular(WOFLTheme.cardRadius),
         ),
         title: Row(
           children: [
@@ -1914,20 +1914,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: WaffleTheme.error.withValues(alpha: 0.1),
+                color: WOFLTheme.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 Icons.delete_outline,
-                color: WaffleTheme.error,
+                color: WOFLTheme.error,
                 size: 20,
               ),
             ),
-            const SizedBox(width: WaffleTheme.spacingM),
+            const SizedBox(width: WOFLTheme.spacingM),
             Text(
               'Delete Order',
               style: TextStyle(
-                color: WaffleTheme.textDark,
+                color: WOFLTheme.textDark,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1939,12 +1939,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
           children: [
             Text(
               'Are you sure you want to delete order ${order.id}?',
-              style: TextStyle(color: WaffleTheme.textDark),
+              style: TextStyle(color: WOFLTheme.textDark),
             ),
-            const SizedBox(height: WaffleTheme.spacingS),
+            const SizedBox(height: WOFLTheme.spacingS),
             Text(
               'This action cannot be undone.',
-              style: TextStyle(color: WaffleTheme.textLight, fontSize: 12),
+              style: TextStyle(color: WOFLTheme.textLight, fontSize: 12),
             ),
           ],
         ),
@@ -1954,16 +1954,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
             children: [
               SizedBox(
                 height: 40,
-                child: WaffleButton(
+                child: WOFLButton(
                   text: 'Cancel',
-                  type: WaffleButtonType.outline,
+                  type: WOFLButtonType.outline,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-              const SizedBox(width: WaffleTheme.spacingM),
+              const SizedBox(width: WOFLTheme.spacingM),
               SizedBox(
                 height: 40,
-                child: WaffleButton(
+                child: WOFLButton(
                   text: 'Delete',
                   icon: Icons.delete,
                   onPressed: () {
@@ -2020,7 +2020,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Text('Order created successfully'),
               ],
             ),
-            backgroundColor: WaffleTheme.success,
+            backgroundColor: WOFLTheme.success,
           ),
         );
         _loadOrdersData(); // Refresh the orders list
@@ -2030,7 +2030,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to create order: ${e.toString()}'),
-            backgroundColor: WaffleTheme.error,
+            backgroundColor: WOFLTheme.error,
           ),
         );
       }
@@ -2058,7 +2058,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Text('Order updated successfully'),
               ],
             ),
-            backgroundColor: WaffleTheme.success,
+            backgroundColor: WOFLTheme.success,
           ),
         );
         _loadOrdersData(); // Refresh the orders list
@@ -2068,7 +2068,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to update order: ${e.toString()}'),
-            backgroundColor: WaffleTheme.error,
+            backgroundColor: WOFLTheme.error,
           ),
         );
       }
@@ -2093,7 +2093,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Text('Order deleted successfully'),
               ],
             ),
-            backgroundColor: WaffleTheme.success,
+            backgroundColor: WOFLTheme.success,
           ),
         );
         _loadOrdersData(); // Refresh the orders list
@@ -2103,7 +2103,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to delete order: ${e.toString()}'),
-            backgroundColor: WaffleTheme.error,
+            backgroundColor: WOFLTheme.error,
           ),
         );
       }
@@ -2240,7 +2240,7 @@ class _OrderDialogState extends State<_OrderDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please add at least one product'),
-          backgroundColor: WaffleTheme.error,
+          backgroundColor: WOFLTheme.error,
         ),
       );
       return;
@@ -2297,7 +2297,7 @@ class _OrderDialogState extends State<_OrderDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
+        borderRadius: BorderRadius.circular(WOFLTheme.cardRadius),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -2316,38 +2316,38 @@ class _OrderDialogState extends State<_OrderDialog> {
               children: [
                 // Header
                 Container(
-                  padding: const EdgeInsets.all(WaffleTheme.spacingL),
+                  padding: const EdgeInsets.all(WOFLTheme.spacingL),
                   child: Row(
                     children: [
                       Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          gradient: WaffleTheme.primaryGradient,
+                          gradient: WOFLTheme.primaryGradient,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           widget.order == null
                               ? Icons.add_shopping_cart
                               : Icons.edit,
-                          color: WaffleTheme.creamWhite,
+                          color: WOFLTheme.creamWhite,
                           size: 20,
                         ),
                       ),
-                      const SizedBox(width: WaffleTheme.spacingM),
+                      const SizedBox(width: WOFLTheme.spacingM),
                       Expanded(
                         child: Text(
                           widget.title,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
-                                color: WaffleTheme.textDark,
+                                color: WOFLTheme.textDark,
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(Icons.close, color: WaffleTheme.textLight),
+                        icon: Icon(Icons.close, color: WOFLTheme.textLight),
                       ),
                     ],
                   ),
@@ -2357,7 +2357,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: WaffleTheme.spacingL,
+                      horizontal: WOFLTheme.spacingL,
                     ),
                     child: Form(
                       key: _formKey,
@@ -2371,7 +2371,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                 child: Text(
                                   'Products',
                                   style: TextStyle(
-                                    color: WaffleTheme.textDark,
+                                    color: WOFLTheme.textDark,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
@@ -2387,8 +2387,8 @@ class _OrderDialogState extends State<_OrderDialog> {
                                     icon: Icon(Icons.add, size: 16),
                                     label: Text('Add'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: WaffleTheme.primary,
-                                      foregroundColor: WaffleTheme.creamWhite,
+                                      backgroundColor: WOFLTheme.primary,
+                                      foregroundColor: WOFLTheme.creamWhite,
                                       padding: EdgeInsets.symmetric(
                                         horizontal: 12,
                                       ),
@@ -2398,25 +2398,25 @@ class _OrderDialogState extends State<_OrderDialog> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: WaffleTheme.spacingM),
+                          const SizedBox(height: WOFLTheme.spacingM),
 
                           // Selected Products List
                           if (_selectedProducts.isEmpty)
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(
-                                WaffleTheme.spacingL,
+                                WOFLTheme.spacingL,
                               ),
                               decoration: BoxDecoration(
-                                color: WaffleTheme.background,
+                                color: WOFLTheme.background,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: WaffleTheme.border),
+                                border: Border.all(color: WOFLTheme.border),
                               ),
                               child: Center(
                                 child: Text(
                                   'No products added yet',
                                   style: TextStyle(
-                                    color: WaffleTheme.textLight,
+                                    color: WOFLTheme.textLight,
                                   ),
                                 ),
                               ),
@@ -2429,15 +2429,15 @@ class _OrderDialogState extends State<_OrderDialog> {
 
                               return Container(
                                 margin: const EdgeInsets.only(
-                                  bottom: WaffleTheme.spacingM,
+                                  bottom: WOFLTheme.spacingM,
                                 ),
                                 padding: const EdgeInsets.all(
-                                  WaffleTheme.spacingM,
+                                  WOFLTheme.spacingM,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: WaffleTheme.creamWhite,
+                                  color: WOFLTheme.creamWhite,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: WaffleTheme.border),
+                                  border: Border.all(color: WOFLTheme.border),
                                 ),
                                 child: Column(
                                   children: [
@@ -2477,7 +2477,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                       },
                                     ),
                                     const SizedBox(
-                                      height: WaffleTheme.spacingM,
+                                      height: WOFLTheme.spacingM,
                                     ),
 
                                     // Quantity and delete row
@@ -2511,17 +2511,17 @@ class _OrderDialogState extends State<_OrderDialog> {
                                           ),
                                         ),
                                         const SizedBox(
-                                          width: WaffleTheme.spacingM,
+                                          width: WOFLTheme.spacingM,
                                         ),
                                         IconButton(
                                           onPressed: () =>
                                               _removeProduct(index),
                                           icon: Icon(
                                             Icons.delete,
-                                            color: WaffleTheme.error,
+                                            color: WOFLTheme.error,
                                           ),
                                           style: IconButton.styleFrom(
-                                            backgroundColor: WaffleTheme.error
+                                            backgroundColor: WOFLTheme.error
                                                 .withValues(alpha: 0.1),
                                           ),
                                         ),
@@ -2532,7 +2532,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                               );
                             }),
 
-                          const SizedBox(height: WaffleTheme.spacingL),
+                          const SizedBox(height: WOFLTheme.spacingL),
 
                           // Payment amounts
                           if (isCompact)
@@ -2547,7 +2547,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                     ),
                                     prefixIcon: Icon(
                                       Icons.qr_code,
-                                      color: WaffleTheme.primary,
+                                      color: WOFLTheme.primary,
                                     ),
                                     prefixText: '₹',
                                   ),
@@ -2560,7 +2560,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: WaffleTheme.spacingM),
+                                const SizedBox(height: WOFLTheme.spacingM),
                                 TextFormField(
                                   controller: _cashAmountController,
                                   decoration: InputDecoration(
@@ -2570,7 +2570,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                     ),
                                     prefixIcon: Icon(
                                       Icons.payments,
-                                      color: WaffleTheme.primary,
+                                      color: WOFLTheme.primary,
                                     ),
                                     prefixText: '₹',
                                   ),
@@ -2598,7 +2598,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                       ),
                                       prefixIcon: Icon(
                                         Icons.qr_code,
-                                        color: WaffleTheme.primary,
+                                        color: WOFLTheme.primary,
                                       ),
                                       prefixText: '₹',
                                     ),
@@ -2614,7 +2614,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                     },
                                   ),
                                 ),
-                                const SizedBox(width: WaffleTheme.spacingM),
+                                const SizedBox(width: WOFLTheme.spacingM),
                                 Expanded(
                                   child: TextFormField(
                                     controller: _cashAmountController,
@@ -2625,7 +2625,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                       ),
                                       prefixIcon: Icon(
                                         Icons.payments,
-                                        color: WaffleTheme.primary,
+                                        color: WOFLTheme.primary,
                                       ),
                                       prefixText: '₹',
                                     ),
@@ -2643,7 +2643,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                 ),
                               ],
                             ),
-                          const SizedBox(height: WaffleTheme.spacingL),
+                          const SizedBox(height: WOFLTheme.spacingL),
 
                           // Status
                           DropdownButtonFormField<String>(
@@ -2655,7 +2655,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                               ),
                               prefixIcon: Icon(
                                 Icons.check_circle,
-                                color: WaffleTheme.primary,
+                                color: WOFLTheme.primary,
                               ),
                             ),
                             isExpanded: true,
@@ -2671,7 +2671,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                               });
                             },
                           ),
-                          const SizedBox(height: WaffleTheme.spacingL),
+                          const SizedBox(height: WOFLTheme.spacingL),
                         ],
                       ),
                     ),
@@ -2680,7 +2680,7 @@ class _OrderDialogState extends State<_OrderDialog> {
 
                 // Action buttons
                 Container(
-                  padding: const EdgeInsets.all(WaffleTheme.spacingL),
+                  padding: const EdgeInsets.all(WOFLTheme.spacingL),
                   child: isCompact
                       ? Column(
                           children: [
@@ -2690,8 +2690,8 @@ class _OrderDialogState extends State<_OrderDialog> {
                               child: ElevatedButton(
                                 onPressed: _isLoading ? null : _saveOrder,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: WaffleTheme.primary,
-                                  foregroundColor: WaffleTheme.creamWhite,
+                                  backgroundColor: WOFLTheme.primary,
+                                  foregroundColor: WOFLTheme.creamWhite,
                                 ),
                                 child: _isLoading
                                     ? SizedBox(
@@ -2701,7 +2701,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                           strokeWidth: 2,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                                WaffleTheme.creamWhite,
+                                                WOFLTheme.creamWhite,
                                               ),
                                         ),
                                       )
@@ -2716,15 +2716,15 @@ class _OrderDialogState extends State<_OrderDialog> {
                                       ),
                               ),
                             ),
-                            const SizedBox(height: WaffleTheme.spacingM),
+                            const SizedBox(height: WOFLTheme.spacingM),
                             SizedBox(
                               width: double.infinity,
                               height: 48,
                               child: OutlinedButton(
                                 onPressed: () => Navigator.of(context).pop(),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: WaffleTheme.textDark,
-                                  side: BorderSide(color: WaffleTheme.border),
+                                  foregroundColor: WOFLTheme.textDark,
+                                  side: BorderSide(color: WOFLTheme.border),
                                 ),
                                 child: Text('Cancel'),
                               ),
@@ -2739,22 +2739,22 @@ class _OrderDialogState extends State<_OrderDialog> {
                                 child: OutlinedButton(
                                   onPressed: () => Navigator.of(context).pop(),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: WaffleTheme.textDark,
-                                    side: BorderSide(color: WaffleTheme.border),
+                                    foregroundColor: WOFLTheme.textDark,
+                                    side: BorderSide(color: WOFLTheme.border),
                                   ),
                                   child: Text('Cancel'),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: WaffleTheme.spacingM),
+                            const SizedBox(width: WOFLTheme.spacingM),
                             Expanded(
                               child: SizedBox(
                                 height: 48,
                                 child: ElevatedButton(
                                   onPressed: _isLoading ? null : _saveOrder,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: WaffleTheme.primary,
-                                    foregroundColor: WaffleTheme.creamWhite,
+                                    backgroundColor: WOFLTheme.primary,
+                                    foregroundColor: WOFLTheme.creamWhite,
                                   ),
                                   child: _isLoading
                                       ? SizedBox(
@@ -2764,7 +2764,7 @@ class _OrderDialogState extends State<_OrderDialog> {
                                             strokeWidth: 2,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                                  WaffleTheme.creamWhite,
+                                                  WOFLTheme.creamWhite,
                                                 ),
                                           ),
                                         )
@@ -2958,7 +2958,7 @@ class _CompactDateRangeDialogState extends State<_CompactDateRangeDialog> {
     }
     if (col > 0) calRows.add(row);
 
-    final primaryColor = WaffleTheme.primary;
+    final primaryColor = WOFLTheme.primary;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -2995,7 +2995,7 @@ class _CompactDateRangeDialogState extends State<_CompactDateRangeDialog> {
                               fontWeight: FontWeight.w600,
                               color: _start == null
                                   ? Colors.grey
-                                  : WaffleTheme.textDark,
+                                  : WOFLTheme.textDark,
                             ),
                           ),
                         ],
@@ -3133,7 +3133,7 @@ class _CompactDateRangeDialogState extends State<_CompactDateRangeDialog> {
                                                   ? Colors.grey.shade300
                                                   : isToday
                                                       ? primaryColor
-                                                      : WaffleTheme.textDark,
+                                                      : WOFLTheme.textDark,
                                         ),
                                       ),
                                     ),
@@ -3162,7 +3162,7 @@ class _CompactDateRangeDialogState extends State<_CompactDateRangeDialog> {
                             child: OutlinedButton(
                               onPressed: () => Navigator.of(context).pop(),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: WaffleTheme.textDark,
+                                foregroundColor: WOFLTheme.textDark,
                                 side: BorderSide(color: Colors.grey.shade300),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8)),
@@ -3204,10 +3204,10 @@ class _CompactDateRangeDialogState extends State<_CompactDateRangeDialog> {
         label,
         style: TextStyle(
           fontSize: 11,
-          color: WaffleTheme.primary,
+          color: WOFLTheme.primary,
           fontWeight: FontWeight.w600,
           decoration: TextDecoration.underline,
-          decorationColor: WaffleTheme.primary,
+          decorationColor: WOFLTheme.primary,
         ),
       ),
     );

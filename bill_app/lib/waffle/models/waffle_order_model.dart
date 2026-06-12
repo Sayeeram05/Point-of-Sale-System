@@ -1,11 +1,11 @@
-class WaffleOrderItem {
+class WOFLOrderItem {
   final int id;
   final int productId;
   final String productName;
   final double price;
   final int quantity;
 
-  WaffleOrderItem({
+  WOFLOrderItem({
     required this.id,
     required this.productId,
     required this.productName,
@@ -13,8 +13,8 @@ class WaffleOrderItem {
     required this.quantity,
   });
 
-  factory WaffleOrderItem.fromJson(Map<String, dynamic> json) {
-    return WaffleOrderItem(
+  factory WOFLOrderItem.fromJson(Map<String, dynamic> json) {
+    return WOFLOrderItem(
       id: json['ID'] as int,
       productId: json['ProductID'] is int
           ? json['ProductID'] as int
@@ -44,7 +44,7 @@ class WaffleOrderItem {
   double get totalPrice => price * quantity;
 }
 
-class WaffleOrder {
+class WOFLOrder {
   final int id;
   final bool completed;
   final double totalAmount;
@@ -52,9 +52,9 @@ class WaffleOrder {
   final double upiAmount;
   final int totalQuantity;
   final DateTime? createdAt;
-  final List<WaffleOrderItem> items;
+  final List<WOFLOrderItem> items;
 
-  WaffleOrder({
+  WOFLOrder({
     required this.id,
     required this.completed,
     required this.totalAmount,
@@ -65,7 +65,7 @@ class WaffleOrder {
     this.createdAt,
   });
 
-  factory WaffleOrder.fromJson(Map<String, dynamic> json) {
+  factory WOFLOrder.fromJson(Map<String, dynamic> json) {
     int parseId(dynamic value) {
       if (value is int) return value;
       if (value is String) {
@@ -79,14 +79,14 @@ class WaffleOrder {
         json['OrderItems'] as List<dynamic>? ??
         json['items'] as List<dynamic>? ??
         [];
-    final items = rawItems.map<WaffleOrderItem>((item) {
+    final items = rawItems.map<WOFLOrderItem>((item) {
       if (item is Map<String, dynamic>) {
-        return WaffleOrderItem.fromJson(item);
+        return WOFLOrderItem.fromJson(item);
       }
       final text = item?.toString() ?? '';
       final match = RegExp(r'^(.*) \((\d+)\)\$').firstMatch(text);
       if (match != null) {
-        return WaffleOrderItem(
+        return WOFLOrderItem(
           id: 0,
           productId: 0,
           productName: match.group(1)!.trim(),
@@ -94,7 +94,7 @@ class WaffleOrder {
           quantity: int.tryParse(match.group(2) ?? '0') ?? 0,
         );
       }
-      return WaffleOrderItem(
+      return WOFLOrderItem(
         id: 0,
         productId: 0,
         productName: text,
@@ -115,7 +115,7 @@ class WaffleOrder {
         ? (json['UpiAmount'] as num).toDouble()
         : double.tryParse(json['UpiAmount']?.toString() ?? '0') ?? 0.0;
 
-    return WaffleOrder(
+    return WOFLOrder(
       id: parseId(json['ID'] ?? json['id']),
       completed: json['Completed'] == true || status == 'completed',
       cashAmount: cashAmount,

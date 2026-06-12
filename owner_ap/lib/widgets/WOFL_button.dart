@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
-import '../theme/waffle_theme.dart';
+import '../theme/WOFL_theme.dart';
 
-/// A reusable button widget with waffle-themed styling
-/// Features hover animations and consistent waffle shop aesthetics
-class WaffleButton extends StatefulWidget {
+/// A reusable button widget with WOFL-themed styling
+/// Features hover animations and consistent WOFL shop aesthetics
+class WOFLButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
   final IconData? icon;
-  final WaffleButtonType type;
+  final WOFLButtonType type;
   final bool isLoading;
   final double? width;
 
-  const WaffleButton({
+  const WOFLButton({
     super.key,
     required this.text,
     this.onPressed,
     this.icon,
-    this.type = WaffleButtonType.primary,
+    this.type = WOFLButtonType.primary,
     this.isLoading = false,
     this.width,
   });
 
   @override
-  State<WaffleButton> createState() => _WaffleButtonState();
+  State<WOFLButton> createState() => _WOFLButtonState();
 }
 
-class _WaffleButtonState extends State<WaffleButton>
+class _WOFLButtonState extends State<WOFLButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -35,7 +35,7 @@ class _WaffleButtonState extends State<WaffleButton>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: WaffleTheme.fastAnimation,
+      duration: WOFLTheme.fastAnimation,
       vsync: this,
     );
 
@@ -64,22 +64,22 @@ class _WaffleButtonState extends State<WaffleButton>
 
   Color get _backgroundColor {
     switch (widget.type) {
-      case WaffleButtonType.primary:
-        return _isHovered ? WaffleTheme.accent : WaffleTheme.primary;
-      case WaffleButtonType.secondary:
-        return _isHovered ? WaffleTheme.primary : WaffleTheme.secondary;
-      case WaffleButtonType.outline:
-        return _isHovered ? WaffleTheme.primary : Colors.transparent;
+      case WOFLButtonType.primary:
+        return _isHovered ? WOFLTheme.accent : WOFLTheme.primary;
+      case WOFLButtonType.secondary:
+        return _isHovered ? WOFLTheme.primary : WOFLTheme.secondary;
+      case WOFLButtonType.outline:
+        return _isHovered ? WOFLTheme.primary : Colors.transparent;
     }
   }
 
   Color get _textColor {
     switch (widget.type) {
-      case WaffleButtonType.primary:
-      case WaffleButtonType.secondary:
+      case WOFLButtonType.primary:
+      case WOFLButtonType.secondary:
         return Colors.white;
-      case WaffleButtonType.outline:
-        return _isHovered ? Colors.white : WaffleTheme.primary;
+      case WOFLButtonType.outline:
+        return _isHovered ? Colors.white : WOFLTheme.primary;
     }
   }
 
@@ -94,19 +94,19 @@ class _WaffleButtonState extends State<WaffleButton>
           return Transform.scale(
             scale: _scaleAnimation.value,
             child: AnimatedContainer(
-              duration: WaffleTheme.fastAnimation,
+              duration: WOFLTheme.fastAnimation,
               width: widget.width,
               constraints: const BoxConstraints(minHeight: 44),
               decoration: BoxDecoration(
                 color: _backgroundColor,
-                borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius),
-                border: widget.type == WaffleButtonType.outline
-                    ? Border.all(color: WaffleTheme.primary, width: 2)
+                borderRadius: BorderRadius.circular(WOFLTheme.buttonRadius),
+                border: widget.type == WOFLButtonType.outline
+                    ? Border.all(color: WOFLTheme.primary, width: 2)
                     : null,
-                boxShadow: _isHovered && widget.type != WaffleButtonType.outline
+                boxShadow: _isHovered && widget.type != WOFLButtonType.outline
                     ? [
                         BoxShadow(
-                          color: WaffleTheme.accent.withOpacity(0.3),
+                          color: WOFLTheme.accent.withOpacity(0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -117,11 +117,11 @@ class _WaffleButtonState extends State<WaffleButton>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: widget.isLoading ? null : widget.onPressed,
-                  borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius),
+                  borderRadius: BorderRadius.circular(WOFLTheme.buttonRadius),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: WaffleTheme.spacingL,
-                      vertical: WaffleTheme.spacingS,
+                      horizontal: WOFLTheme.spacingL,
+                      vertical: WOFLTheme.spacingS,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -140,7 +140,7 @@ class _WaffleButtonState extends State<WaffleButton>
                           )
                         else if (widget.icon != null) ...[
                           Icon(widget.icon, color: _textColor, size: 18),
-                          const SizedBox(width: WaffleTheme.spacingS),
+                          const SizedBox(width: WOFLTheme.spacingS),
                         ],
                         Text(
                           widget.text,
@@ -163,4 +163,4 @@ class _WaffleButtonState extends State<WaffleButton>
   }
 }
 
-enum WaffleButtonType { primary, secondary, outline }
+enum WOFLButtonType { primary, secondary, outline }

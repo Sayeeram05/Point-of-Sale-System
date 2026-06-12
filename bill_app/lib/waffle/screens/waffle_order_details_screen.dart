@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
-import '../models/waffle_order_model.dart';
-import '../providers/waffle_order_provider.dart';
-import '../services/waffle_order_service.dart';
-import '../themes/waffle_theme.dart';
-import 'waffle_products_screen.dart';
+import '../models/WOFL_order_model.dart';
+import '../providers/WOFL_order_provider.dart';
+import '../services/WOFL_order_service.dart';
+import '../themes/WOFL_theme.dart';
+import 'WOFL_products_screen.dart';
 
-class WaffleOrderDetailsScreen extends StatefulWidget {
+class WOFLOrderDetailsScreen extends StatefulWidget {
   final int orderId;
 
-  const WaffleOrderDetailsScreen({super.key, required this.orderId});
+  const WOFLOrderDetailsScreen({super.key, required this.orderId});
 
   @override
-  State<WaffleOrderDetailsScreen> createState() =>
-      _WaffleOrderDetailsScreenState();
+  State<WOFLOrderDetailsScreen> createState() =>
+      _WOFLOrderDetailsScreenState();
 }
 
-class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
-  final WaffleOrderService _orderService = WaffleOrderService();
-  final WaffleOrderProvider _pickerProvider = WaffleOrderProvider();
-  WaffleOrder? _order;
+class _WOFLOrderDetailsScreenState extends State<WOFLOrderDetailsScreen> {
+  final WOFLOrderService _orderService = WOFLOrderService();
+  final WOFLOrderProvider _pickerProvider = WOFLOrderProvider();
+  WOFLOrder? _order;
   bool _isLoading = true;
   bool _isSaving = false;
   String _error = '';
@@ -70,7 +70,7 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
             builder: (context, scrollController) {
               return Container(
                 decoration: const BoxDecoration(
-                  color: WaffleTheme.backgroundColor,
+                  color: WOFLTheme.backgroundColor,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: Column(
@@ -91,7 +91,7 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Add Waffle Items',
+                            'Add WOFL Items',
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                           IconButton(
@@ -107,7 +107,7 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
                         controller: scrollController,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: WaffleProductsScreen(
+                          child: WOFLProductsScreen(
                             provider: _pickerProvider,
                           ),
                         ),
@@ -117,7 +117,7 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
                       padding: const EdgeInsets.all(16),
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: WaffleTheme.primaryColor,
+                          backgroundColor: WOFLTheme.primaryColor,
                           minimumSize: const Size.fromHeight(54),
                         ),
                         onPressed: () => Navigator.of(context).pop(true),
@@ -138,7 +138,7 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to load waffle products. $e')),
+        SnackBar(content: Text('Unable to load WOFL products. $e')),
       );
     }
   }
@@ -185,14 +185,14 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WaffleTheme.backgroundColor,
+      backgroundColor: WOFLTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: WaffleTheme.primaryColor,
-        title: const Text('Waffle Order Details'),
+        backgroundColor: WOFLTheme.primaryColor,
+        title: const Text('WOFL Order Details'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Add waffle items',
+            tooltip: 'Add WOFL items',
             onPressed: _showProductPicker,
           ),
         ],
@@ -249,9 +249,9 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: WaffleTheme.cardColor,
+                      color: WOFLTheme.cardColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: WaffleTheme.borderColor),
+                      border: Border.all(color: WOFLTheme.borderColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -318,7 +318,7 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: WaffleTheme.primaryColor,
+                      backgroundColor: WOFLTheme.primaryColor,
                       minimumSize: const Size.fromHeight(54),
                     ),
                     onPressed: _order!.completed || _isSaving
@@ -361,18 +361,18 @@ class _WaffleOrderDetailsScreenState extends State<WaffleOrderDetailsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? WaffleTheme.primaryColor : WaffleTheme.cardColor,
+          color: isSelected ? WOFLTheme.primaryColor : WOFLTheme.cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? WaffleTheme.primaryColor
-                : WaffleTheme.borderColor,
+                ? WOFLTheme.primaryColor
+                : WOFLTheme.borderColor,
           ),
         ),
         child: Text(
           method,
           style: TextStyle(
-            color: isSelected ? Colors.white : WaffleTheme.textPrimary,
+            color: isSelected ? Colors.white : WOFLTheme.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),

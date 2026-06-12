@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import '../providers/waffle_order_provider.dart';
-import '../services/waffle_order_service.dart';
-import '../themes/waffle_theme.dart';
-import '../widgets/waffle_payment_widget.dart';
-import 'waffle_products_screen.dart';
+import '../providers/WOFL_order_provider.dart';
+import '../services/WOFL_order_service.dart';
+import '../themes/WOFL_theme.dart';
+import '../widgets/WOFL_payment_widget.dart';
+import 'WOFL_products_screen.dart';
 
-class WaffleOrderScreen extends StatefulWidget {
+class WOFLOrderScreen extends StatefulWidget {
   final int orderId;
 
-  const WaffleOrderScreen({super.key, required this.orderId});
+  const WOFLOrderScreen({super.key, required this.orderId});
 
   @override
-  State<WaffleOrderScreen> createState() => _WaffleOrderScreenState();
+  State<WOFLOrderScreen> createState() => _WOFLOrderScreenState();
 }
 
-class _WaffleOrderScreenState extends State<WaffleOrderScreen> {
-  final WaffleOrderProvider _provider = WaffleOrderProvider();
-  final WaffleOrderService _orderService = WaffleOrderService();
+class _WOFLOrderScreenState extends State<WOFLOrderScreen> {
+  final WOFLOrderProvider _provider = WOFLOrderProvider();
+  final WOFLOrderService _orderService = WOFLOrderService();
 
   @override
   void initState() {
@@ -41,7 +41,7 @@ class _WaffleOrderScreenState extends State<WaffleOrderScreen> {
           animation: _provider,
           builder: (context, child) {
             return AlertDialog(
-              backgroundColor: WaffleTheme.secondaryColor,
+              backgroundColor: WOFLTheme.secondaryColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
@@ -85,7 +85,7 @@ class _WaffleOrderScreenState extends State<WaffleOrderScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    WafflePaymentWidget(provider: _provider),
+                    WOFLPaymentWidget(provider: _provider),
                     const SizedBox(height: 10),
                     if (_provider.error.isNotEmpty)
                       Text(
@@ -102,7 +102,7 @@ class _WaffleOrderScreenState extends State<WaffleOrderScreen> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: WaffleTheme.primaryColor,
+                    backgroundColor: WOFLTheme.primaryColor,
                   ),
                   onPressed: _provider.isSaving
                       ? null
@@ -145,10 +145,10 @@ class _WaffleOrderScreenState extends State<WaffleOrderScreen> {
       animation: _provider,
       builder: (context, child) {
         return Scaffold(
-          backgroundColor: WaffleTheme.backgroundColor,
+          backgroundColor: WOFLTheme.backgroundColor,
           appBar: AppBar(
-            title: const Text('Waffle Order'),
-            backgroundColor: WaffleTheme.primaryColor,
+            title: const Text('WOFL Order'),
+            backgroundColor: WOFLTheme.primaryColor,
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 10),
@@ -218,7 +218,7 @@ class _WaffleOrderScreenState extends State<WaffleOrderScreen> {
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: WaffleProductsScreen(provider: _provider),
+                        child: WOFLProductsScreen(provider: _provider),
                       ),
                     ),
 
@@ -226,7 +226,7 @@ class _WaffleOrderScreenState extends State<WaffleOrderScreen> {
                     Container(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
                       decoration: BoxDecoration(
-                        color: WaffleTheme.backgroundColor,
+                        color: WOFLTheme.backgroundColor,
                         border: Border(
                           top: BorderSide(
                             color: Colors.grey.shade200,
@@ -242,7 +242,7 @@ class _WaffleOrderScreenState extends State<WaffleOrderScreen> {
                           child: ElevatedButton(
                             onPressed: _showSummaryDialog,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: WaffleTheme.accentColor,
+                              backgroundColor: WOFLTheme.accentColor,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),

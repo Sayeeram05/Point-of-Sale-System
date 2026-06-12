@@ -78,7 +78,7 @@ class MockCategoryService implements CategoryService {
   static final List<Category> _categories = [
     Category(
       id: '1',
-      name: 'Classic Waffles',
+      name: 'Classic WOFLs',
       icon: 'restaurant',
       productCount: 3,
       createdAt: DateTime.now().subtract(const Duration(days: 30)),
@@ -86,7 +86,7 @@ class MockCategoryService implements CategoryService {
     ),
     Category(
       id: '2',
-      name: 'Chocolate Waffles',
+      name: 'Chocolate WOFLs',
       icon: 'cake',
       productCount: 2,
       createdAt: DateTime.now().subtract(const Duration(days: 25)),
@@ -94,7 +94,7 @@ class MockCategoryService implements CategoryService {
     ),
     Category(
       id: '3',
-      name: 'Fruit Waffles',
+      name: 'Fruit WOFLs',
       icon: 'apple',
       productCount: 2,
       createdAt: DateTime.now().subtract(const Duration(days: 20)),

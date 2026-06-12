@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../theme/waffle_theme.dart';
+import '../theme/WOFL_theme.dart';
 import '../widgets/widgets.dart';
 import '../models/category.dart' as models;
 import '../models/product.dart';
@@ -31,16 +31,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WaffleTheme.background,
+      backgroundColor: WOFLTheme.background,
       body: Consumer2<CategoryProvider, ProductProvider>(
         builder: (context, categoryProvider, productProvider, child) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(WaffleTheme.spacingL),
+            padding: const EdgeInsets.all(WOFLTheme.spacingL),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(categoryProvider, productProvider),
-                const SizedBox(height: WaffleTheme.spacingXL),
+                const SizedBox(height: WOFLTheme.spacingXL),
                 if (categoryProvider.isLoading || productProvider.isLoading)
                   _buildLoadingState()
                 else if (categoryProvider.hasError || productProvider.hasError)
@@ -59,7 +59,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Row(
       children: [
         Expanded(
-          child: WaffleCard(
+          child: WOFLCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -70,7 +70,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       height: 48,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [WaffleTheme.primary, WaffleTheme.secondary],
+                          colors: [WOFLTheme.primary, WOFLTheme.secondary],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -82,7 +82,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         size: 24,
                       ),
                     ),
-                    const SizedBox(width: WaffleTheme.spacingM),
+                    const SizedBox(width: WOFLTheme.spacingM),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,15 +90,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           Text(
                             'Product Management',
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              color: WaffleTheme.textDark,
+                              color: WOFLTheme.textDark,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: WaffleTheme.spacingXS),
+                          const SizedBox(height: WOFLTheme.spacingXS),
                           Text(
-                            'Manage waffle categories and products efficiently',
+                            'Manage WOFL categories and products efficiently',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: WaffleTheme.textLight,
+                              color: WOFLTheme.textLight,
                             ),
                           ),
                         ],
@@ -106,19 +106,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: WaffleTheme.spacingL),
+                const SizedBox(height: WOFLTheme.spacingL),
                 Row(
                   children: [
-                    WaffleButton(
+                    WOFLButton(
                       text: 'Add Category',
                       icon: Icons.add,
                       onPressed: _showAddCategoryDialog,
                     ),
-                    const SizedBox(width: WaffleTheme.spacingM),
-                    WaffleButton(
+                    const SizedBox(width: WOFLTheme.spacingM),
+                    WOFLButton(
                       text: 'Refresh',
                       icon: Icons.refresh,
-                      type: WaffleButtonType.outline,
+                      type: WOFLButtonType.outline,
                       onPressed: () => _refreshData(categoryProvider, productProvider),
                     ),
                   ],
@@ -127,7 +127,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
           ),
         ),
-        const SizedBox(width: WaffleTheme.spacingL),
+        const SizedBox(width: WOFLTheme.spacingL),
         _buildStatsCard(categoryProvider.categories, productProvider.productsByCategory),
       ],
     );
@@ -137,7 +137,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final totalProducts = productsByCategory.values
         .fold<int>(0, (sum, products) => sum + products.length);
     
-    return WaffleCard(
+    return WOFLCard(
       width: 200,
       child: Column(
         children: [
@@ -147,20 +147,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
               Text(
                 'Statistics',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: WaffleTheme.textDark,
+                  color: WOFLTheme.textDark,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Icon(
                 Icons.analytics_outlined,
-                color: WaffleTheme.primary,
+                color: WOFLTheme.primary,
                 size: 20,
               ),
             ],
           ),
-          const SizedBox(height: WaffleTheme.spacingL),
+          const SizedBox(height: WOFLTheme.spacingL),
           _buildStatItem('Categories', categories.length.toString()),
-          const SizedBox(height: WaffleTheme.spacingM),
+          const SizedBox(height: WOFLTheme.spacingM),
           _buildStatItem('Products', totalProducts.toString()),
         ],
       ),
@@ -174,11 +174,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
         Text(
           label,
           style: TextStyle(
-            color: WaffleTheme.textLight,
+            color: WOFLTheme.textLight,
             fontSize: 14,
           ),
         ),
-        WaffleBadge.count(int.tryParse(value) ?? 0, isSmall: true),
+        WOFLBadge.count(int.tryParse(value) ?? 0, isSmall: true),
       ],
     );
   }
@@ -189,8 +189,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: _getCrossAxisCount(context),
-        crossAxisSpacing: WaffleTheme.spacingL,
-        mainAxisSpacing: WaffleTheme.spacingL,
+        crossAxisSpacing: WOFLTheme.spacingL,
+        mainAxisSpacing: WOFLTheme.spacingL,
         childAspectRatio: 0.8,
       ),
       itemCount: 4,
@@ -199,7 +199,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Widget _buildLoadingSkeleton() {
-    return WaffleCard(
+    return WOFLCard(
       enableHover: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,27 +208,27 @@ class _ProductsScreenState extends State<ProductsScreen> {
             width: double.infinity,
             height: 20,
             decoration: BoxDecoration(
-              color: WaffleTheme.border,
+              color: WOFLTheme.border,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(height: WaffleTheme.spacingM),
+          const SizedBox(height: WOFLTheme.spacingM),
           Container(
             width: 60,
             height: 16,
             decoration: BoxDecoration(
-              color: WaffleTheme.border,
+              color: WOFLTheme.border,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(height: WaffleTheme.spacingL),
+          const SizedBox(height: WOFLTheme.spacingL),
           ...List.generate(3, (index) => Padding(
-            padding: const EdgeInsets.only(bottom: WaffleTheme.spacingS),
+            padding: const EdgeInsets.only(bottom: WOFLTheme.spacingS),
             child: Container(
               width: double.infinity,
               height: 12,
               decoration: BoxDecoration(
-                color: WaffleTheme.border.withOpacity(0.5),
+                color: WOFLTheme.border.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -239,34 +239,34 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Widget _buildErrorState(String error) {
-    return WaffleCard(
+    return WOFLCard(
       child: Column(
         children: [
           Icon(
             Icons.error_outline,
-            color: WaffleTheme.error,
+            color: WOFLTheme.error,
             size: 48,
           ),
-          const SizedBox(height: WaffleTheme.spacingM),
+          const SizedBox(height: WOFLTheme.spacingM),
           Text(
             'Failed to load data',
             style: TextStyle(
-              color: WaffleTheme.textDark,
+              color: WOFLTheme.textDark,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: WaffleTheme.spacingS),
+          const SizedBox(height: WOFLTheme.spacingS),
           Text(
             error,
             style: TextStyle(
-              color: WaffleTheme.textLight,
+              color: WOFLTheme.textLight,
               fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: WaffleTheme.spacingL),
-          WaffleButton(
+          const SizedBox(height: WOFLTheme.spacingL),
+          WOFLButton(
             text: 'Retry',
             icon: Icons.refresh,
             onPressed: () {
@@ -289,8 +289,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: _getCrossAxisCount(context),
-        crossAxisSpacing: WaffleTheme.spacingL,
-        mainAxisSpacing: WaffleTheme.spacingL,
+        crossAxisSpacing: WOFLTheme.spacingL,
+        mainAxisSpacing: WOFLTheme.spacingL,
         childAspectRatio: 0.8,
       ),
       itemCount: categories.length,
@@ -303,33 +303,33 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Widget _buildEmptyState() {
-    return WaffleCard(
+    return WOFLCard(
       child: Column(
         children: [
           Icon(
             Icons.restaurant_menu_outlined,
-            color: WaffleTheme.textLight,
+            color: WOFLTheme.textLight,
             size: 64,
           ),
-          const SizedBox(height: WaffleTheme.spacingL),
+          const SizedBox(height: WOFLTheme.spacingL),
           Text(
             'No categories found',
             style: TextStyle(
-              color: WaffleTheme.textDark,
+              color: WOFLTheme.textDark,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: WaffleTheme.spacingS),
+          const SizedBox(height: WOFLTheme.spacingS),
           Text(
-            'Start by adding your first waffle category',
+            'Start by adding your first WOFL category',
             style: TextStyle(
-              color: WaffleTheme.textLight,
+              color: WOFLTheme.textLight,
               fontSize: 14,
             ),
           ),
-          const SizedBox(height: WaffleTheme.spacingL),
-          WaffleButton(
+          const SizedBox(height: WOFLTheme.spacingL),
+          WOFLButton(
             text: 'Add Category',
             icon: Icons.add,
             onPressed: _showAddCategoryDialog,
@@ -340,7 +340,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Widget _buildCategoryCard(models.Category category, List<Product> products) {
-    return WaffleCard(
+    return WOFLCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -348,26 +348,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
             children: [
               Icon(
                 category.iconData,
-                color: WaffleTheme.primary,
+                color: WOFLTheme.primary,
                 size: 24,
               ),
-              const SizedBox(width: WaffleTheme.spacingS),
+              const SizedBox(width: WOFLTheme.spacingS),
               Expanded(
                 child: Text(
                   category.name,
                   style: TextStyle(
-                    color: WaffleTheme.textDark,
+                    color: WOFLTheme.textDark,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-              WaffleBadge.count(products.length, isSmall: true),
-              const SizedBox(width: WaffleTheme.spacingS),
+              WOFLBadge.count(products.length, isSmall: true),
+              const SizedBox(width: WOFLTheme.spacingS),
               PopupMenuButton<String>(
                 icon: Icon(
                   Icons.more_vert,
-                  color: WaffleTheme.textLight,
+                  color: WOFLTheme.textLight,
                   size: 20,
                 ),
                 onSelected: (value) => _handleCategoryAction(value, category),
@@ -406,7 +406,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: WaffleTheme.spacingL),
+          const SizedBox(height: WOFLTheme.spacingL),
           Expanded(
             child: products.isEmpty
                 ? _buildEmptyProductList(category)
@@ -423,14 +423,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
       children: [
         Icon(
           Icons.restaurant_outlined,
-          color: WaffleTheme.textLight,
+          color: WOFLTheme.textLight,
           size: 32,
         ),
-        const SizedBox(height: WaffleTheme.spacingS),
+        const SizedBox(height: WOFLTheme.spacingS),
         Text(
           'No products yet',
           style: TextStyle(
-            color: WaffleTheme.textLight,
+            color: WOFLTheme.textLight,
             fontSize: 12,
           ),
         ),
@@ -441,7 +441,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Widget _buildProductList(List<Product> products) {
     return ListView.separated(
       itemCount: products.length,
-      separatorBuilder: (context, index) => const SizedBox(height: WaffleTheme.spacingS),
+      separatorBuilder: (context, index) => const SizedBox(height: WOFLTheme.spacingS),
       itemBuilder: (context, index) {
         final product = products[index];
         return _buildProductItem(product);
@@ -451,12 +451,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   Widget _buildProductItem(Product product) {
     return Container(
-      padding: const EdgeInsets.all(WaffleTheme.spacingS),
+      padding: const EdgeInsets.all(WOFLTheme.spacingS),
       decoration: BoxDecoration(
-        color: WaffleTheme.background.withOpacity(0.5),
+        color: WOFLTheme.background.withOpacity(0.5),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: WaffleTheme.border.withOpacity(0.5),
+          color: WOFLTheme.border.withOpacity(0.5),
           width: 1,
         ),
       ),
@@ -466,24 +466,24 @@ class _ProductsScreenState extends State<ProductsScreen> {
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: product.isAvailable ? WaffleTheme.success : WaffleTheme.error,
+              color: product.isAvailable ? WOFLTheme.success : WOFLTheme.error,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(width: WaffleTheme.spacingS),
+          const SizedBox(width: WOFLTheme.spacingS),
           Expanded(
             child: Text(
               product.name,
               style: TextStyle(
-                color: WaffleTheme.textDark,
+                color: WOFLTheme.textDark,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          WaffleBadge.price(product.price, isSmall: true),
+          WOFLBadge.price(product.price, isSmall: true),
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: WaffleTheme.textLight, size: 16),
+            icon: Icon(Icons.more_vert, color: WOFLTheme.textLight, size: 16),
             padding: EdgeInsets.zero,
             onSelected: (value) => _handleProductAction(value, product),
             itemBuilder: (context) => [
@@ -626,7 +626,7 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Category Name',
-                hintText: 'e.g., Classic Waffles',
+                hintText: 'e.g., Classic WOFLs',
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {

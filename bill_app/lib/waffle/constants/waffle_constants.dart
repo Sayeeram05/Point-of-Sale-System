@@ -1,6 +1,6 @@
-class WaffleConstants {
-  static const String brandName = 'Waffle';
-  static const String dashboardTitle = 'Waffle Shop';
+class WOFLConstants {
+  static const String brandName = 'WOFL';
+  static const String dashboardTitle = 'WOFL Shop';
   static const String categoryEndpoint = 'category';
   static const String productsEndpoint = 'products';
   static const String ordersEndpoint = 'orders';

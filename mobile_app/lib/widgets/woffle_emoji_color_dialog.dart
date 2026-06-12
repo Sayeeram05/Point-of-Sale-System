@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../services/woffle_api_service.dart';
-import '../models/woffle_user_preferences.dart';
-import '../models/woffle_order.dart';
-import '../services/woffle_app_colors.dart';
-import '../theme/woffle_app_theme.dart';
-import 'woffle_color_picker_dialog.dart';
+import '../services/WOFL_api_service.dart';
+import '../models/WOFL_user_preferences.dart';
+import '../models/WOFL_order.dart';
+import '../services/WOFL_app_colors.dart';
+import '../theme/WOFL_app_theme.dart';
+import 'WOFL_color_picker_dialog.dart';
 
 class EmojiColorDialog extends StatefulWidget {
   final Order order;

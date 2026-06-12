@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import '../services/woffle_api_service.dart';
-import '../services/woffle_optimized_image_service.dart';
-import '../models/woffle_menu.dart';
-import '../models/woffle_order.dart';
-import '../widgets/woffle_order_detail_dialog.dart';
+import '../services/WOFL_api_service.dart';
+import '../services/WOFL_optimized_image_service.dart';
+import '../models/WOFL_menu.dart';
+import '../models/WOFL_order.dart';
+import '../widgets/WOFL_order_detail_dialog.dart';
 
 // --- Design tokens ------------------------------------------------------------
 class _Colors {
@@ -92,7 +92,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       if (kDebugMode) debugPrint('Failed to sync order before pop: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save order items — try again')),
+          const SnackBar(content: Text('Failed to save order items ï¿½ try again')),
         );
       }
       return false;
@@ -230,7 +230,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     }
 
     if (urls.isNotEmpty) {
-      // Fire-and-forget — downloads happen in the background with
+      // Fire-and-forget ï¿½ downloads happen in the background with
       // controlled concurrency (6 parallel downloads at a time).
       OptimizedImageService.preloadImages(urls, concurrency: 8);
     }
@@ -394,7 +394,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
                     ),
                     if (_totalPieces > 0)
                       Text(
-                        '$_totalPieces items • ?${_totalPrice.toStringAsFixed(0)}',
+                        '$_totalPieces items ï¿½ ?${_totalPrice.toStringAsFixed(0)}',
                         style: const TextStyle(
                           color: _Colors.textMid,
                           fontSize: 13,
@@ -437,7 +437,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
         onChanged: (_) => setState(() {}),
         style: const TextStyle(fontSize: 15, color: _Colors.textDark),
         decoration: InputDecoration(
-          hintText: 'Search menu items…',
+          hintText: 'Search menu itemsï¿½',
           hintStyle:
               const TextStyle(color: _Colors.textLight, fontSize: 15),
           prefixIcon:
@@ -667,7 +667,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       height: 34,
       child: Row(
         children: [
-          // Left: cream pill — minus button + count
+          // Left: cream pill ï¿½ minus button + count
           Expanded(
             child: Container(
               height: double.infinity,
@@ -717,7 +717,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
 
           const SizedBox(width: 6),
 
-          // Right: solid orange circle — plus only
+          // Right: solid orange circle ï¿½ plus only
           GestureDetector(
             onTap: () {
               _addProductToOrder(product);
@@ -950,7 +950,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     );
 
     if (completed == true) {
-      // Order marked complete on server — skip item sync to preserve completion status
+      // Order marked complete on server ï¿½ skip item sync to preserve completion status
       // Just close the menu page without syncing items
       _suppressDeleteOnPop = true;
       if (mounted) {
@@ -1055,7 +1055,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
           ),
           SizedBox(height: 16),
           Text(
-            'Loading menu…',
+            'Loading menuï¿½',
             style: TextStyle(
                 color: _Colors.textMid,
                 fontSize: 15,

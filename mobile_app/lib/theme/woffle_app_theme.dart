@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 
 class AppTheme {
   // Primary Colors
-  static const Color primaryColor = Color(0xFFC46016); // Deep Waffle Orange
+  static const Color primaryColor = Color(0xFFC46016); // Deep WOFL Orange
   static const Color primaryDark = Color(0xFF9B4714);
   static const Color primaryLight = Color(0xFFE69450); // Caramel Orange
-  static const Color accent = Color(0xFFE28A46); // Golden Waffle
+  static const Color accent = Color(0xFFE28A46); // Golden WOFL
 
   // Background Colors
   static const Color backgroundColor = Color(0xFFFBFAEE); // Warm Cream

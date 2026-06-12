@@ -3,7 +3,7 @@ import '../services/api_service.dart';
 import '../services/debug_service.dart';
 import '../models/order.dart';
 import '../widgets/order_card.dart';
-import '../waffle/screens/waffle_dashboard_screen.dart';
+import '../WOFL/screens/WOFL_dashboard_screen.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../widgets/order_detail_dialog.dart';
 import '../widgets/emoji_color_dialog.dart';
@@ -29,7 +29,7 @@ class _DashboardPageState extends State<DashboardPage>
   late TabController _tabController;
   int _selectedTabIndex = 0;
   int _selectedBrandIndex = 0;
-  final GlobalKey _waffleDashboardKey = GlobalKey();
+  final GlobalKey _WOFLDashboardKey = GlobalKey();
 
   @override
   void initState() {
@@ -364,7 +364,7 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildBrandToggle() {
     final isTablet = AppTheme.isTablet(context);
-    const brands = ['Fruitice', 'Waffle'];
+    const brands = ['Fruitice', 'WOFL'];
 
     return Container(
       decoration: BoxDecoration(
@@ -510,7 +510,7 @@ class _DashboardPageState extends State<DashboardPage>
                 if (_selectedBrandIndex == 0) {
                   _loadDashboardData(forceRefresh: true);
                 } else {
-                  final state = _waffleDashboardKey.currentState;
+                  final state = _WOFLDashboardKey.currentState;
                   if (state != null) {
                     try {
                       (state as dynamic).refresh();
@@ -532,7 +532,7 @@ class _DashboardPageState extends State<DashboardPage>
             cards,
             sortedOrders,
           ),
-          WaffleDashboardScreen(key: _waffleDashboardKey),
+          WOFLDashboardScreen(key: _WOFLDashboardKey),
         ],
       ),
       floatingActionButton: SizedBox(
@@ -543,7 +543,7 @@ class _DashboardPageState extends State<DashboardPage>
             if (_selectedBrandIndex == 0) {
               _createNewOrder();
             } else {
-              final state = _waffleDashboardKey.currentState;
+              final state = _WOFLDashboardKey.currentState;
               if (state != null) {
                 try {
                   (state as dynamic).createOrder();

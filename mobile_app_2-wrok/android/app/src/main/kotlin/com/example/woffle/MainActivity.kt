@@ -1,4 +1,4 @@
-package com.woffle.woffle
+package com.WOFL.WOFL
 
 import io.flutter.embedding.android.FlutterActivity
 

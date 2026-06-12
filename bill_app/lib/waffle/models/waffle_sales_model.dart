@@ -1,13 +1,13 @@
-import 'waffle_order_model.dart';
+import 'WOFL_order_model.dart';
 
-class WaffleSalesSummary {
+class WOFLSalesSummary {
   final int totalOrders;
   final double totalAmount;
   final double totalCash;
   final double totalUpi;
-  final List<WaffleOrder> orders;
+  final List<WOFLOrder> orders;
 
-  WaffleSalesSummary({
+  WOFLSalesSummary({
     required this.totalOrders,
     required this.totalAmount,
     required this.totalCash,
@@ -15,11 +15,11 @@ class WaffleSalesSummary {
     required this.orders,
   });
 
-  factory WaffleSalesSummary.fromJson(Map<String, dynamic> json) {
+  factory WOFLSalesSummary.fromJson(Map<String, dynamic> json) {
     final summary = json['summary'] as Map<String, dynamic>?;
     final ordersJson = json['orders'] as List<dynamic>?;
 
-    return WaffleSalesSummary(
+    return WOFLSalesSummary(
       totalOrders: summary?['orders_count'] is int
           ? summary!['orders_count'] as int
           : int.tryParse(summary?['orders_count']?.toString() ?? '0') ?? 0,
@@ -36,7 +36,7 @@ class WaffleSalesSummary {
           ordersJson
               ?.map(
                 (orderJson) =>
-                    WaffleOrder.fromJson(orderJson as Map<String, dynamic>),
+                    WOFLOrder.fromJson(orderJson as Map<String, dynamic>),
               )
               .toList() ??
           [],

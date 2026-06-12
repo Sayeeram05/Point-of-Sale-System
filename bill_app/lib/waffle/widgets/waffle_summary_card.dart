@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import '../themes/waffle_theme.dart';
+import '../themes/WOFL_theme.dart';
 
-class WaffleSummaryCard extends StatelessWidget {
+class WOFLSummaryCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
   final Color backgroundColor;
 
-  const WaffleSummaryCard({
+  const WOFLSummaryCard({
     super.key,
     required this.title,
     required this.value,
     required this.icon,
-    this.backgroundColor = WaffleTheme.secondaryColor,
+    this.backgroundColor = WOFLTheme.secondaryColor,
   });
 
   @override
@@ -26,11 +26,11 @@ class WaffleSummaryCard extends StatelessWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: WaffleTheme.primaryColor.withValues(alpha: 0.15),
+                color: WOFLTheme.primaryColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
               padding: const EdgeInsets.all(12),
-              child: Icon(icon, color: WaffleTheme.primaryColor, size: 28),
+              child: Icon(icon, color: WOFLTheme.primaryColor, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -40,7 +40,7 @@ class WaffleSummaryCard extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: WaffleTheme.textSecondary,
+                      color: WOFLTheme.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -48,7 +48,7 @@ class WaffleSummaryCard extends StatelessWidget {
                   Text(
                     value,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: WaffleTheme.textPrimary,
+                      color: WOFLTheme.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

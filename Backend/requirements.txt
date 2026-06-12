@@ -1,0 +1,6 @@
+Django==6.0.5
+djangorestframework
+django-cors-headers
+mysqlclient
+channels>=4.0
+daphne>=4.0

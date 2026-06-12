@@ -1,19 +1,19 @@
-import '../services/waffle_inventory_service.dart';
-import '../services/waffle_order_service.dart';
-import '../services/waffle_sales_service.dart';
+import '../services/WOFL_inventory_service.dart';
+import '../services/WOFL_order_service.dart';
+import '../services/WOFL_sales_service.dart';
 
-class WaffleRepository {
-  final WaffleOrderService orderService;
-  final WaffleInventoryService inventoryService;
-  final WaffleSalesService salesService;
+class WOFLRepository {
+  final WOFLOrderService orderService;
+  final WOFLInventoryService inventoryService;
+  final WOFLSalesService salesService;
 
-  WaffleRepository({
-    WaffleOrderService? orderService,
-    WaffleInventoryService? inventoryService,
-    WaffleSalesService? salesService,
-  }) : orderService = orderService ?? WaffleOrderService(),
-       inventoryService = inventoryService ?? WaffleInventoryService(),
-       salesService = salesService ?? WaffleSalesService();
+  WOFLRepository({
+    WOFLOrderService? orderService,
+    WOFLInventoryService? inventoryService,
+    WOFLSalesService? salesService,
+  }) : orderService = orderService ?? WOFLOrderService(),
+       inventoryService = inventoryService ?? WOFLInventoryService(),
+       salesService = salesService ?? WOFLSalesService();
 
   Future<void> initialize() async {
     // Placeholder for repository-level startup tasks if needed.

@@ -1,7 +1,7 @@
-// Waffle Shop Admin UI - Reusable Widgets
+// WOFL Shop Admin UI - Reusable Widgets
 // Export all custom widgets for easy importing
 
-export 'waffle_card.dart';
-export 'waffle_button.dart';
-export 'waffle_badge.dart';
+export 'WOFL_card.dart';
+export 'WOFL_button.dart';
+export 'WOFL_badge.dart';
 export 'navigation_shell.dart';

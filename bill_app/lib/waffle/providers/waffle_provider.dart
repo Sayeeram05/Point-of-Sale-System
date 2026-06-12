@@ -1,18 +1,18 @@
 import 'package:flutter/foundation.dart';
-import '../models/waffle_sales_model.dart';
-import '../models/waffle_order_model.dart';
-import '../repositories/waffle_repository.dart';
+import '../models/WOFL_sales_model.dart';
+import '../models/WOFL_order_model.dart';
+import '../repositories/WOFL_repository.dart';
 
-class WaffleProvider extends ChangeNotifier {
-  final WaffleRepository repository;
+class WOFLProvider extends ChangeNotifier {
+  final WOFLRepository repository;
 
-  WaffleSalesSummary? summary;
+  WOFLSalesSummary? summary;
   bool isLoading = false;
   String error = '';
   int selectedTabIndex = 0;
 
-  WaffleProvider({WaffleRepository? repository})
-    : repository = repository ?? WaffleRepository();
+  WOFLProvider({WOFLRepository? repository})
+    : repository = repository ?? WOFLRepository();
 
   Future<void> loadDashboard({bool forceRefresh = false}) async {
     isLoading = true;
@@ -30,13 +30,13 @@ class WaffleProvider extends ChangeNotifier {
     }
   }
 
-  List<WaffleOrder> get allOrders => summary?.orders ?? [];
-  List<WaffleOrder> get pendingOrders =>
+  List<WOFLOrder> get allOrders => summary?.orders ?? [];
+  List<WOFLOrder> get pendingOrders =>
       summary?.orders.where((order) => !order.completed).toList() ?? [];
-  List<WaffleOrder> get completedOrders =>
+  List<WOFLOrder> get completedOrders =>
       summary?.orders.where((order) => order.completed).toList() ?? [];
 
-  List<WaffleOrder> get visibleOrders {
+  List<WOFLOrder> get visibleOrders {
     switch (selectedTabIndex) {
       case 1:
         return pendingOrders;

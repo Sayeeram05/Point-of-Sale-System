@@ -16,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from Order.models import Order, OrderItem
+from Materials.models import PurchaseRecord
 
 
 class DashboardView(APIView):
@@ -73,6 +74,13 @@ class DashboardView(APIView):
             else 0
         )
 
+        revenue_map = self._get_revenue_by_date(start_date, end_date)
+        expense_map = self._get_expense_by_date(start_date, end_date)
+        pnl_timeline = self._build_pnl_timeline(
+            revenue_map, expense_map, start_date, end_date, range_key
+        )
+        pnl_summary = self._get_pnl_summary(pnl_timeline, sales_data["total_revenue"])
+
         context = {
             "range": range_key,
             "grouping": grouping,
@@ -110,6 +118,8 @@ class DashboardView(APIView):
             "yearly_breakdown": yearly_data,
             "recent_orders": recent_orders,
             "b2b_summary": {},
+            "summary": pnl_summary,
+            "chart_data": pnl_timeline,
         }
         return Response(context, status=200)
 
@@ -422,3 +432,96 @@ class DashboardView(APIView):
         if old_val == 0:
             return 100.0 if new_val > 0 else 0.0
         return round(((new_val - old_val) / old_val) * 100, 1)
+
+    def _get_revenue_by_date(self, start_date, end_date):
+        """Returns {date: revenue_float} for the range (completed orders only)."""
+        start_dt, end_dt = self._get_range_datetimes(start_date, end_date)
+        rows = (
+            Order.objects.filter(
+                CreatedAt__gte=start_dt,
+                CreatedAt__lt=end_dt,
+                Completed=True,
+            )
+            .annotate(day=TruncDay("CreatedAt"))
+            .values("day")
+            .annotate(
+                revenue=Coalesce(Sum(F("CashAmount") + F("UpiAmount")), Decimal("0"))
+            )
+            .order_by("day")
+        )
+        return {row["day"].date(): float(row["revenue"]) for row in rows}
+
+    def _get_expense_by_date(self, start_date, end_date):
+        """Returns {date: expense_float} from PurchaseRecord for the range."""
+        rows = PurchaseRecord.objects.filter(
+            target_date__gte=start_date,
+            target_date__lte=end_date,
+        ).values("target_date", "total_cost")
+        return {row["target_date"]: float(row["total_cost"]) for row in rows}
+
+    def _build_pnl_timeline(self, revenue_map, expense_map, start_date, end_date, range_key="this_week"):
+        """Builds P&L chart_data for the given range.
+        - this_year  → 12 monthly bars (Jan-current month)
+        - all others → daily bars for start..min(end, today), all days included
+        """
+        from datetime import date as _date
+        today = _date.today()
+        if range_key == "this_year":
+            return self._build_pnl_monthly_timeline(revenue_map, expense_map, start_date, today)
+        effective_end = min(end_date, today)
+        timeline = []
+        current = start_date
+        while current <= effective_end:
+            revenue = round(revenue_map.get(current, 0.0), 2)
+            expense = round(expense_map.get(current, 0.0), 2)
+            timeline.append({
+                "date": current.strftime("%Y-%m-%d"),
+                "revenue": revenue,
+                "expense": expense,
+                "net_profit": round(revenue - expense, 2),
+            })
+            current += timedelta(days=1)
+        return timeline
+
+    def _build_pnl_monthly_timeline(self, revenue_map, expense_map, start_date, today):
+        """Aggregates revenue/expense by month; returns one entry per month Jan-current."""
+        from collections import defaultdict
+        from datetime import date as _date
+        monthly_rev = defaultdict(float)
+        for day, rev in revenue_map.items():
+            monthly_rev[(day.year, day.month)] += rev
+        monthly_exp = defaultdict(float)
+        for day, exp in expense_map.items():
+            monthly_exp[(day.year, day.month)] += exp
+        timeline = []
+        for month in range(1, 13):
+            month_start = _date(start_date.year, month, 1)
+            if month_start > today:
+                break
+            key = (start_date.year, month)
+            revenue = round(monthly_rev.get(key, 0.0), 2)
+            expense = round(monthly_exp.get(key, 0.0), 2)
+            timeline.append({
+                "date": month_start.strftime("%Y-%m"),
+                "revenue": revenue,
+                "expense": expense,
+                "net_profit": round(revenue - expense, 2),
+            })
+        return timeline
+
+    def _get_pnl_summary(self, timeline, total_revenue_from_orders):
+        """Computes aggregated P&L summary over the full timeline."""
+        total_expense = sum(row["expense"] for row in timeline)
+        total_revenue = float(total_revenue_from_orders)
+        net_profit = total_revenue - total_expense
+        margin = (
+            round((net_profit / total_revenue) * 100, 1)
+            if total_revenue > 0
+            else 0.0
+        )
+        return {
+            "total_revenue": round(total_revenue, 2),
+            "total_expense": round(total_expense, 2),
+            "net_profit": round(net_profit, 2),
+            "profit_margin_percentage": margin,
+        }

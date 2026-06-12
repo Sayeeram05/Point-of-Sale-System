@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/woffle_order.dart';
-import '../models/woffle_menu.dart';
-import '../models/woffle_user_preferences.dart';
-import 'woffle_debug_service.dart';
+import '../models/WOFL_order.dart';
+import '../models/WOFL_menu.dart';
+import '../models/WOFL_user_preferences.dart';
+import 'WOFL_debug_service.dart';
 
 /// Simple TTL cache for API responses that rarely change mid-session.
 class _ApiCache {

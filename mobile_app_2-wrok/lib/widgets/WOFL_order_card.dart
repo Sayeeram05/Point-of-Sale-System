@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/woffle_order.dart';
-import '../services/woffle_app_colors.dart';
-import '../services/woffle_api_service.dart';
-import '../theme/woffle_app_theme.dart';
+import '../models/WOFL_order.dart';
+import '../services/WOFL_app_colors.dart';
+import '../services/WOFL_api_service.dart';
+import '../theme/WOFL_app_theme.dart';
 
 /// OrderCard - A refined order card widget with fixed layout, alignment, and styling.
 ///
@@ -84,23 +84,23 @@ class OrderCard extends StatelessWidget {
                 ],
               ),
               padding: const EdgeInsets.all(cardPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Completed order banner
-                  if (order.completed) _buildCompletedBanner(),
-
-                  // Fixed header row with proper alignment and overflow prevention
-                  _buildHeaderRow(context, baseColor),
-
-                  // Order items list
-                  if (order.items.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    _buildItemsList(),
-                    _buildTotalRow(baseColor),
-                  ],
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 180;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (order.completed) _buildCompletedBanner(),
+                      _buildHeaderRow(context, baseColor, compact: compact),
+                      if (order.items.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        _buildItemsList(),
+                        _buildTotalRow(baseColor, compact: compact),
+                      ],
+                    ],
+                  );
+                },
               ),
             ),
           ),
@@ -129,13 +129,16 @@ class OrderCard extends StatelessWidget {
         children: [
           Icon(Icons.check_circle, color: Colors.green[600], size: 14),
           const SizedBox(width: 4),
-          Text(
-            'ORDER COMPLETED',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: Colors.green[700],
-              letterSpacing: 0.5,
+          Flexible(
+            child: Text(
+              'ORDER COMPLETED',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.green[700],
+                letterSpacing: 0.5,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -147,14 +150,15 @@ class OrderCard extends StatelessWidget {
   ///
   /// Layout: [Emoji+Dot] [Order# + PaymentBadge] [ItemCount] [DeleteBtn]
   /// All elements are vertically centered and flex properly to prevent overflow
-  Widget _buildHeaderRow(BuildContext context, Color baseColor) {
+  Widget _buildHeaderRow(BuildContext context, Color baseColor, {required bool compact}) {
+    final hSpace = compact ? 4.0 : 6.0;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Emoji and color indicator - compact, fixed size
-        _buildEmojiColorIndicator(baseColor),
+        _buildEmojiColorIndicator(baseColor, compact: compact),
 
-        const SizedBox(width: 6),
+        SizedBox(width: hSpace),
 
         // Order number and payment badge - flexible width
         Expanded(
@@ -164,12 +168,12 @@ class OrderCard extends StatelessWidget {
             children: [
               // Order number with constrained height for vertical centering
               Container(
-                height: 24,
+                height: compact ? 20.0 : 24.0,
                 alignment: Alignment.centerLeft,
                 child: Text(
                   '#$displayNumber',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: compact ? 15.0 : 20.0,
                     fontWeight: FontWeight.bold,
                     color: order.completed ? Colors.grey[600] : baseColor,
                     height: 1.0,
@@ -181,27 +185,32 @@ class OrderCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               // Modern pill-style payment badge
-              _buildPaymentMethodBadge(baseColor),
+              _buildPaymentMethodBadge(baseColor, compact: compact),
             ],
           ),
         ),
 
-        const SizedBox(width: 6),
+        SizedBox(width: hSpace),
 
         // Items count indicator - compact vertical layout
-        _buildItemsCountIndicator(),
+        _buildItemsCountIndicator(compact: compact),
 
         const SizedBox(width: 4),
 
         // Delete button - constrained size
-        _buildDeleteButton(context),
+        _buildDeleteButton(context, compact: compact),
       ],
     );
   }
 
   /// Builds the emoji and color dot indicator
   /// Uses explicit dimensions to ensure proper vertical alignment
-  Widget _buildEmojiColorIndicator(Color baseColor) {
+  Widget _buildEmojiColorIndicator(Color baseColor, {required bool compact}) {
+    final hPad = compact ? 4.0 : 6.0;
+    final containerH = compact ? 28.0 : 32.0;
+    final emojiSize = compact ? 13.0 : 16.0;
+    final dotGap = compact ? 3.0 : 4.0;
+    final dotSize = compact ? 7.0 : 8.0;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(8),
@@ -209,8 +218,8 @@ class OrderCard extends StatelessWidget {
         onTap: order.completed ? null : onEmojiColorTap,
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
+          height: containerH,
+          padding: EdgeInsets.symmetric(horizontal: hPad),
           decoration: BoxDecoration(
             color: order.completed
                 ? Colors.grey[200]
@@ -232,16 +241,16 @@ class OrderCard extends StatelessWidget {
                     ? '✅'
                     : (order.emoji.isNotEmpty ? order.emoji : '🍦'),
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: emojiSize,
                   height: 1.0,
                   color: order.completed ? Colors.grey[600] : null,
                 ),
               ),
-              const SizedBox(width: 4),
-              // Compact color dot - 8x8 for tighter layout
+              SizedBox(width: dotGap),
+              // Compact color dot
               Container(
-                width: 8,
-                height: 8,
+                width: dotSize,
+                height: dotSize,
                 decoration: BoxDecoration(
                   color: order.completed ? Colors.grey[400] : baseColor,
                   shape: BoxShape.circle,
@@ -265,9 +274,9 @@ class OrderCard extends StatelessWidget {
 
   /// Builds the items count indicator with icon
   /// Compact vertical stack matching the emoji container height
-  Widget _buildItemsCountIndicator() {
+  Widget _buildItemsCountIndicator({required bool compact}) {
     return Container(
-      height: 32,
+      height: compact ? 28.0 : 32.0,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -294,39 +303,42 @@ class OrderCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
-          // Status pill (DONE/PENDING)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: order.completed
-                  ? Colors.green.withValues(alpha: 0.12)
-                  : Colors.orange.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
+          if (!compact) ...[
+            const SizedBox(height: 2),
+            // Status pill (DONE/PENDING) — hidden on compact to prevent overflow
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
                 color: order.completed
-                    ? Colors.green.withValues(alpha: 0.3)
-                    : Colors.orange.withValues(alpha: 0.3),
-                width: 0.5,
+                    ? Colors.green.withValues(alpha: 0.12)
+                    : Colors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: order.completed
+                      ? Colors.green.withValues(alpha: 0.3)
+                      : Colors.orange.withValues(alpha: 0.3),
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                order.completed ? 'DONE' : 'PENDING',
+                style: TextStyle(
+                  fontSize: 7,
+                  fontWeight: FontWeight.w700,
+                  color: order.completed ? Colors.green.shade700 : Colors.orange.shade700,
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
-            child: Text(
-              order.completed ? 'DONE' : 'PENDING',
-              style: TextStyle(
-                fontSize: 7,
-                fontWeight: FontWeight.w700,
-                color: order.completed ? Colors.green.shade700 : Colors.orange.shade700,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
+          ],
         ],
       ),
     );
   }
 
   /// Builds the delete button with constrained size
-  Widget _buildDeleteButton(BuildContext context) {
+  Widget _buildDeleteButton(BuildContext context, {required bool compact}) {
+    final btnSize = compact ? 28.0 : 32.0;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(8),
@@ -334,8 +346,8 @@ class OrderCard extends StatelessWidget {
         onTap: () => _showDeleteConfirmation(context),
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 32,
-          height: 32,
+          width: btnSize,
+          height: btnSize,
           decoration: BoxDecoration(
             color: order.completed
                 ? Colors.grey[200]
@@ -349,7 +361,7 @@ class OrderCard extends StatelessWidget {
           child: Icon(
             Icons.delete_outline,
             color: order.completed ? Colors.grey[500] : Colors.red.shade600,
-            size: 18,
+            size: compact ? 15.0 : 18.0,
           ),
         ),
       ),
@@ -395,7 +407,7 @@ class OrderCard extends StatelessWidget {
 
   /// Builds a modern, elegant pill-style payment method badge
   /// Features subtle desaturated colors, thin borders, and tiny icons
-  Widget _buildPaymentMethodBadge(Color baseColor) {
+  Widget _buildPaymentMethodBadge(Color baseColor, {required bool compact}) {
     // Determine payment method and colors based on payment amounts
     final String paymentMethod;
     final Color badgeColor;
@@ -442,16 +454,22 @@ class OrderCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 9, color: effectiveColor),
-          const SizedBox(width: 3),
-          Text(
-            paymentMethod,
-            style: TextStyle(
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              color: effectiveColor,
-              letterSpacing: 0.3,
+          if (!compact) ...[
+            const SizedBox(width: 3),
+            Flexible(
+              child: Text(
+                paymentMethod,
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                  color: effectiveColor,
+                  letterSpacing: 0.3,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -469,21 +487,30 @@ class OrderCard extends StatelessWidget {
         color: order.completed ? Colors.grey[100] : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: order.items.map((item) => _buildItemRow(item)).toList(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final priceW = (w * 0.30).clamp(32.0, 44.0);
+          final qtyW = (w * 0.17).clamp(20.0, 28.0);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: order.items
+                .map((item) => _buildItemRow(item, qtyW: qtyW, priceW: priceW))
+                .toList(),
+          );
+        },
       ),
     );
   }
 
   /// Builds a single item row with product name, quantity, and price
-  Widget _buildItemRow(OrderItem item) {
+  Widget _buildItemRow(OrderItem item, {required double qtyW, required double priceW}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.5),
       child: Row(
         children: [
-          // Product name - takes available space
+          // Product name - takes all remaining space, clips gracefully
           Expanded(
             child: Text(
               item.product,
@@ -494,14 +521,16 @@ class OrderCard extends StatelessWidget {
                 decoration: order.completed ? TextDecoration.lineThrough : null,
               ),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
-          // Quantity
+          // Quantity — proportional width, never overflows
           SizedBox(
-            width: 26,
+            width: qtyW,
             child: Text(
               'x${item.pieces}',
               textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 9,
                 color: order.completed ? Colors.grey[500] : Colors.grey[600],
@@ -510,12 +539,14 @@ class OrderCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 3),
-          // Price
+          // Price — proportional width, clips long amounts
           SizedBox(
-            width: 40,
+            width: priceW,
             child: Text(
               '₹${item.totalPrice.toStringAsFixed(0)}',
               textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -530,21 +561,25 @@ class OrderCard extends StatelessWidget {
   }
 
   /// Builds the total amount row at the bottom of the card
-  Widget _buildTotalRow(Color baseColor) {
+  Widget _buildTotalRow(Color baseColor, {required bool compact}) {
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Total Amount',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: order.completed ? Colors.grey[600] : Colors.grey[700],
-              decoration: order.completed ? TextDecoration.lineThrough : null,
+          Flexible(
+            child: Text(
+              compact ? 'Total' : 'Total Amount',
+              style: TextStyle(
+                fontSize: compact ? 9.0 : 11.0,
+                fontWeight: FontWeight.w600,
+                color: order.completed ? Colors.grey[600] : Colors.grey[700],
+                decoration: order.completed ? TextDecoration.lineThrough : null,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
@@ -556,7 +591,7 @@ class OrderCard extends StatelessWidget {
             child: Text(
               '₹${order.totalPrice.toStringAsFixed(0)}',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: compact ? 10.0 : 12.0,
                 fontWeight: FontWeight.bold,
                 color: order.completed ? Colors.grey[700] : baseColor,
                 decoration: order.completed ? TextDecoration.lineThrough : null,

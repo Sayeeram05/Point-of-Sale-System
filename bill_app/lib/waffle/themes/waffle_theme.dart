@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class WaffleTheme {
+class WOFLTheme {
   static const Color primaryColor = Color(0xFFEF7F1A);
   static const Color secondaryColor = Color(0xFFF6ECD5);
   static const Color accentColor = Color(0xFFBE743E);

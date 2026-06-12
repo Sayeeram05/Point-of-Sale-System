@@ -6,7 +6,7 @@ import 'theme/app_theme.dart';
 import 'services/app_performance.dart';
 import 'services/network_config.dart';
 import 'services/api_service.dart';
-import 'waffle/services/waffle_api_service.dart';
+import 'WOFL/services/WOFL_api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +22,7 @@ void main() async {
   final savedIp = prefs.getString('server_ip');
   if (savedIp != null && savedIp.isNotEmpty) {
     ApiService.configure(baseUrl: 'http://$savedIp');
-    WaffleApiService.configure(baseUrl: 'http://$savedIp');
+    WOFLApiService.configure(baseUrl: 'http://$savedIp');
   }
 
   // NOTE: We no longer clear the entire image cache on startup.

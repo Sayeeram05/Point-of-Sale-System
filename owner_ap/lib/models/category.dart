@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Category model representing waffle categories
+/// Category model representing WOFL categories
 /// Connects to Django Category API backend
 class Category {
   final String id;

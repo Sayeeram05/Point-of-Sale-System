@@ -132,7 +132,9 @@ class PurchaseRecordView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Resolve optional FK to master material
+            # Resolve optional FK to master material.
+            # raw_material_id may be absent, None (lump-sum bills), or a valid int.
+            # The falsy check intentionally handles all three cases safely.
             raw_material = None
             if item_data.get('raw_material_id'):
                 try:

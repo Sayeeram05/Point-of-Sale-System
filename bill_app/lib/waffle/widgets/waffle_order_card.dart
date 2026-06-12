@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import '../models/waffle_order_model.dart';
-import '../themes/waffle_theme.dart';
+import '../models/WOFL_order_model.dart';
+import '../themes/WOFL_theme.dart';
 
-class WaffleOrderCard extends StatelessWidget {
-  final WaffleOrder order;
+class WOFLOrderCard extends StatelessWidget {
+  final WOFLOrder order;
   final VoidCallback onTap;
 
-  const WaffleOrderCard({super.key, required this.order, required this.onTap});
+  const WOFLOrderCard({super.key, required this.order, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final statusColor = order.completed
         ? Colors.green
-        : WaffleTheme.primaryColor;
+        : WOFLTheme.primaryColor;
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -71,7 +71,7 @@ class WaffleOrderCard extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: WaffleTheme.secondaryColor,
+                          color: WOFLTheme.secondaryColor,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Text(

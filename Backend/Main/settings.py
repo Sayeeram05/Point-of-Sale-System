@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-*+2@%=haufqxr#j52z&%+g%om)l(y$bul8&r1_ah^e4khju%6m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['*']
 
 # HTTPS Configuration
 SECURE_SSL_REDIRECT = False  # Set to True in production
@@ -36,6 +36,7 @@ USE_TLS = True  # Enable TLS support for development
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',  # Added for Flutter web app CORS support
+    'channels',
     'Category',
     'Product',
     'Order',
@@ -177,3 +179,11 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
+
+ASGI_APPLICATION = "Main.asgi.application"

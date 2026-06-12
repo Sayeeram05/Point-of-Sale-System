@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/woffle_order.dart';
-import '../services/woffle_api_service.dart';
-import '../services/woffle_bill_pdf_service.dart';
-import '../theme/woffle_app_theme.dart';
+import '../models/WOFL_order.dart';
+import '../services/WOFL_api_service.dart';
+import '../services/WOFL_bill_pdf_service.dart';
+import '../theme/WOFL_app_theme.dart';
 
 class OrderDetailDialog extends StatefulWidget {
   final Order order;
@@ -217,8 +217,12 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       elevation: 8,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 40.0 : (screenWidth < 400 ? 12.0 : 24.0),
+        vertical: 24.0,
+      ),
       child: Container(
-        width: isTablet ? 850 : 420,
+        width: isTablet ? 850.0 : double.infinity,
         constraints: BoxConstraints(
           maxHeight:
               MediaQuery.of(context).size.height * (isTablet ? 0.92 : 0.95),
@@ -292,29 +296,19 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              order.emoji.isEmpty ? '🍦' : order.emoji,
-              style: TextStyle(fontSize: isTablet ? 28 : 22),
-            ),
-          ),
-          SizedBox(width: isTablet ? 16 : 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  order.orderLabel,
+                  'Order #${order.displayIndex ?? order.orderId}',
                   style: TextStyle(
                     fontSize: isTablet ? 24 : 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 if (dateStr.isNotEmpty)
                   Text(
@@ -390,171 +384,193 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
           ],
         ),
         SizedBox(height: isTablet ? 12 : 8),
-        // Table header
-        Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isTablet ? 14 : 10,
-            vertical: isTablet ? 10 : 7,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xFF546E7A),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isTablet ? 36 : 28,
-                child: Text(
-                  '#',
-                  style: TextStyle(
-                    fontSize: isTablet ? 13 : 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Text(
-                  'Item',
-                  style: TextStyle(
-                    fontSize: isTablet ? 13 : 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: isTablet ? 50 : 36,
-                child: Text(
-                  'Qty',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: isTablet ? 13 : 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: isTablet ? 80 : 65,
-                child: Text(
-                  'Price',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontSize: isTablet ? 13 : 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: isTablet ? 90 : 75,
-                child: Text(
-                  'Amount',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontSize: isTablet ? 13 : 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 2),
-        // Items list
-        ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: isTablet ? 400 : 220),
-          child: Scrollbar(
-            thumbVisibility: true,
-            controller: _itemsScrollController,
-            child: ListView.builder(
-              controller: _itemsScrollController,
-              shrinkWrap: true,
-              physics: const ClampingScrollPhysics(),
-              itemCount: order.items.length,
-              itemBuilder: (context, idx) {
-                final item = order.items[idx];
-                return Container(
+        // Table header + rows — wrapped in LayoutBuilder for proportional column widths
+        LayoutBuilder(
+          builder: (context, tableConstraints) {
+            final aw = tableConstraints.maxWidth;
+            final hPad = isTablet ? 14.0 : 10.0;
+            final innerW = aw - hPad * 2;
+            // Proportional widths that scale with available space
+            final idxW = isTablet ? 36.0 : (innerW * 0.09).clamp(18.0, 28.0);
+            final qtyW = isTablet ? 50.0 : (innerW * 0.12).clamp(24.0, 36.0);
+            final priceW = isTablet ? 80.0 : (innerW * 0.24).clamp(46.0, 68.0);
+            final amtW = isTablet ? 90.0 : (innerW * 0.28).clamp(52.0, 78.0);
+
+            return Column(
+              children: [
+                // Table header
+                Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isTablet ? 14 : 10,
+                    horizontal: hPad,
                     vertical: isTablet ? 10 : 7,
                   ),
                   decoration: BoxDecoration(
-                    color: idx.isEven ? Colors.white : const Color(0xFFF5F7FA),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey.shade200,
-                        width: 0.5,
-                      ),
-                    ),
+                    color: const Color(0xFF546E7A),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
                       SizedBox(
-                        width: isTablet ? 36 : 28,
+                        width: idxW,
                         child: Text(
-                          '${idx + 1}',
+                          '#',
                           style: TextStyle(
-                            fontSize: isTablet ? 14 : 12,
-                            color: AppTheme.textTertiary,
+                            fontSize: isTablet ? 13 : 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                       Expanded(
-                        flex: 4,
                         child: Text(
-                          item.product,
+                          'Item',
                           style: TextStyle(
-                            fontSize: isTablet ? 15 : 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textPrimary,
+                            fontSize: isTablet ? 13 : 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       SizedBox(
-                        width: isTablet ? 50 : 36,
+                        width: qtyW,
                         child: Text(
-                          '${item.pieces}',
+                          'Qty',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: isTablet ? 14 : 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: isTablet ? 80 : 65,
-                        child: Text(
-                          '\u20B9${item.priceDouble.toStringAsFixed(2)}',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: isTablet ? 14 : 12,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: isTablet ? 90 : 75,
-                        child: Text(
-                          '\u20B9${item.totalPrice.toStringAsFixed(2)}',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: isTablet ? 14 : 12,
+                            fontSize: isTablet ? 13 : 11,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: priceW,
+                        child: Text(
+                          'Price',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: isTablet ? 13 : 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: amtW,
+                        child: Text(
+                          'Amount',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: isTablet ? 13 : 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
-          ),
+                ),
+                const SizedBox(height: 2),
+                // Items list
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: isTablet ? 400 : 220),
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    controller: _itemsScrollController,
+                    child: ListView.builder(
+                      controller: _itemsScrollController,
+                      shrinkWrap: true,
+                      physics: const ClampingScrollPhysics(),
+                      itemCount: order.items.length,
+                      itemBuilder: (context, idx) {
+                        final item = order.items[idx];
+                        return Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: hPad,
+                            vertical: isTablet ? 10 : 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: idx.isEven
+                                ? Colors.white
+                                : const Color(0xFFF5F7FA),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.grey.shade200,
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: idxW,
+                                child: Text(
+                                  '${idx + 1}',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 14 : 12,
+                                    color: AppTheme.textTertiary,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  item.product,
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 15 : 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              SizedBox(
+                                width: qtyW,
+                                child: Text(
+                                  '${item.pieces}',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 14 : 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: priceW,
+                                child: Text(
+                                  '\u20B9${item.priceDouble.toStringAsFixed(2)}',
+                                  textAlign: TextAlign.right,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 14 : 12,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: amtW,
+                                child: Text(
+                                  '\u20B9${item.totalPrice.toStringAsFixed(2)}',
+                                  textAlign: TextAlign.right,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 14 : 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -786,8 +802,9 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
         SizedBox(height: isTablet ? 10 : 6),
         ValueListenableBuilder<String>(
           valueListenable: paymentMode,
-          builder: (context, value, _) => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          builder: (context, value, _) => Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
               ChoiceChip(
                 avatar: Icon(

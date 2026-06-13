@@ -37,14 +37,14 @@ cp owner_ap/lib/main.dart backup_django_flutter_connection/main.dart.backup
 git add .
 
 # Commit with descriptive message
-git commit -m "Add Django-Flutter connection: Waffle Shop Admin UI
+git commit -m "Add Django-Flutter connection: WOFL Shop Admin UI
 
 - Added CORS configuration to Django settings
 - Created complete Flutter web admin UI
 - Added HTTP client and Provider state management
 - Connected Flutter to Django Category and Product APIs
-- Added sample waffle shop data
-- Configured responsive design with waffle theme"
+- Added sample WOFL shop data
+- Configured responsive design with WOFL theme"
 ```
 
 ### Step 3: Safe Git Pull

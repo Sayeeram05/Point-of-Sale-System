@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../models/waffle_product_model.dart';
-import '../themes/waffle_theme.dart';
+import '../models/WOFL_product_model.dart';
+import '../themes/WOFL_theme.dart';
 
-class WaffleProductCard extends StatelessWidget {
-  final WaffleProduct product;
+class WOFLProductCard extends StatelessWidget {
+  final WOFLProduct product;
   final int quantity;
   final VoidCallback onAdd;
   final VoidCallback onIncrease;
   final VoidCallback onDecrease;
 
-  const WaffleProductCard({
+  const WOFLProductCard({
     super.key,
     required this.product,
     required this.quantity,
@@ -31,14 +31,14 @@ class WaffleProductCard extends StatelessWidget {
               width: double.infinity,
               height: 120,
               decoration: BoxDecoration(
-                color: WaffleTheme.secondaryColor,
+                color: WOFLTheme.secondaryColor,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Center(
                 child: Icon(
                   Icons.local_cafe,
                   size: 46,
-                  color: WaffleTheme.accentColor,
+                  color: WOFLTheme.accentColor,
                 ),
               ),
             ),
@@ -48,7 +48,7 @@ class WaffleProductCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: WaffleTheme.textPrimary,
+                color: WOFLTheme.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -56,7 +56,7 @@ class WaffleProductCard extends StatelessWidget {
             Text(
               '₹${product.price.toStringAsFixed(0)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: WaffleTheme.textSecondary,
+                color: WOFLTheme.textSecondary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -67,7 +67,7 @@ class WaffleProductCard extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: onAdd,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: WaffleTheme.primaryColor,
+                        backgroundColor: WOFLTheme.primaryColor,
                       ),
                       child: const Text('Add'),
                     ),
@@ -77,7 +77,7 @@ class WaffleProductCard extends StatelessWidget {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: WaffleTheme.secondaryColor,
+                          color: WOFLTheme.secondaryColor,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         padding: const EdgeInsets.symmetric(
@@ -108,7 +108,7 @@ class WaffleProductCard extends StatelessWidget {
                       IconButton(
                         onPressed: onAdd,
                         icon: const Icon(Icons.add_shopping_cart),
-                        color: WaffleTheme.primaryColor,
+                        color: WOFLTheme.primaryColor,
                       ),
                     ],
                   ),

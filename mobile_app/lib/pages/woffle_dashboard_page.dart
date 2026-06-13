@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../services/woffle_api_service.dart';
-import '../services/woffle_debug_service.dart';
-import '../models/woffle_order.dart';
-import '../widgets/woffle_order_card.dart';
+import '../services/WOFL_api_service.dart';
+import '../services/WOFL_debug_service.dart';
+import '../models/WOFL_order.dart';
+import '../widgets/WOFL_order_card.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import '../widgets/woffle_order_detail_dialog.dart';
-import '../widgets/woffle_emoji_color_dialog.dart';
-import 'woffle_menu_page.dart';
-import 'woffle_settings_page.dart';
-import '../theme/woffle_app_theme.dart';
+import '../widgets/WOFL_order_detail_dialog.dart';
+import '../widgets/WOFL_emoji_color_dialog.dart';
+import 'WOFL_menu_page.dart';
+import 'WOFL_settings_page.dart';
+import '../theme/WOFL_app_theme.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -298,7 +298,7 @@ class _DashboardPageState extends State<DashboardPage>
                   ),
                   SizedBox(width: isTablet ? 16 : 12),
                   Text(
-                    'Woffle',
+                    'WOFL',
                     style: AppTheme.headingMedium(context).copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -433,7 +433,7 @@ class _DashboardPageState extends State<DashboardPage>
           children: [
             Expanded(
               child: Text(
-                'Woffle',
+                'WOFL',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: isTablet ? 28 : 22,

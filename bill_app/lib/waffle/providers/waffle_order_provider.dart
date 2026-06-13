@@ -1,32 +1,32 @@
 import 'package:flutter/foundation.dart';
-import '../models/waffle_order_model.dart';
-import '../models/waffle_product_model.dart';
-import '../services/waffle_inventory_service.dart';
-import '../services/waffle_order_service.dart';
+import '../models/WOFL_order_model.dart';
+import '../models/WOFL_product_model.dart';
+import '../services/WOFL_inventory_service.dart';
+import '../services/WOFL_order_service.dart';
 
-enum WafflePaymentMode { cash, upi, both }
+enum WOFLPaymentMode { cash, upi, both }
 
-class WaffleOrderProvider extends ChangeNotifier {
-  final WaffleOrderService orderService;
-  final WaffleInventoryService inventoryService;
+class WOFLOrderProvider extends ChangeNotifier {
+  final WOFLOrderService orderService;
+  final WOFLInventoryService inventoryService;
 
-  WaffleOrder? order;
-  List<WaffleCategory> categories = [];
-  List<WaffleProduct> products = [];
-  List<WaffleOrderItem> orderItems = [];
+  WOFLOrder? order;
+  List<WOFLCategory> categories = [];
+  List<WOFLProduct> products = [];
+  List<WOFLOrderItem> orderItems = [];
   bool isLoading = true;
   bool isSaving = false;
   String error = '';
   int selectedCategoryId = 0;
-  WafflePaymentMode paymentMode = WafflePaymentMode.cash;
+  WOFLPaymentMode paymentMode = WOFLPaymentMode.cash;
   double cashAmount = 0.0;
   double upiAmount = 0.0;
 
-  WaffleOrderProvider({
-    WaffleOrderService? orderService,
-    WaffleInventoryService? inventoryService,
-  }) : orderService = orderService ?? WaffleOrderService(),
-       inventoryService = inventoryService ?? WaffleInventoryService();
+  WOFLOrderProvider({
+    WOFLOrderService? orderService,
+    WOFLInventoryService? inventoryService,
+  }) : orderService = orderService ?? WOFLOrderService(),
+       inventoryService = inventoryService ?? WOFLInventoryService();
 
   Future<void> initialize(int orderId) async {
     isLoading = true;
@@ -41,7 +41,7 @@ class WaffleOrderProvider extends ChangeNotifier {
       products = await inventoryService.loadProductsForCategory(
         selectedCategoryId,
       );
-      orderItems = List<WaffleOrderItem>.from(order?.items ?? []);
+      orderItems = List<WOFLOrderItem>.from(order?.items ?? []);
       _syncPaymentDefaults();
       isLoading = false;
       notifyListeners();
@@ -66,11 +66,11 @@ class WaffleOrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addProduct(WaffleProduct product) {
+  void addProduct(WOFLProduct product) {
     final index = orderItems.indexWhere((item) => item.productId == product.id);
     if (index == -1) {
       orderItems.add(
-        WaffleOrderItem(
+        WOFLOrderItem(
           id: 0,
           productId: product.id,
           productName: product.name,
@@ -80,7 +80,7 @@ class WaffleOrderProvider extends ChangeNotifier {
       );
     } else {
       final existing = orderItems[index];
-      orderItems[index] = WaffleOrderItem(
+      orderItems[index] = WOFLOrderItem(
         id: existing.id,
         productId: existing.productId,
         productName: existing.productName,
@@ -91,12 +91,12 @@ class WaffleOrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeProduct(WaffleProduct product) {
+  void removeProduct(WOFLProduct product) {
     final index = orderItems.indexWhere((item) => item.productId == product.id);
     if (index == -1) return;
     final existing = orderItems[index];
     if (existing.quantity > 1) {
-      orderItems[index] = WaffleOrderItem(
+      orderItems[index] = WOFLOrderItem(
         id: existing.id,
         productId: existing.productId,
         productName: existing.productName,
@@ -109,10 +109,10 @@ class WaffleOrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  int quantityForProduct(WaffleProduct product) {
+  int quantityForProduct(WOFLProduct product) {
     final item = orderItems.firstWhere(
       (item) => item.productId == product.id,
-      orElse: () => WaffleOrderItem(
+      orElse: () => WOFLOrderItem(
         id: 0,
         productId: product.id,
         productName: product.name,
@@ -128,7 +128,7 @@ class WaffleOrderProvider extends ChangeNotifier {
   int get totalItemCount =>
       orderItems.fold(0, (sum, item) => sum + item.quantity);
 
-  void setPaymentMode(WafflePaymentMode mode) {
+  void setPaymentMode(WOFLPaymentMode mode) {
     paymentMode = mode;
     _syncPaymentDefaults();
     notifyListeners();
@@ -136,7 +136,7 @@ class WaffleOrderProvider extends ChangeNotifier {
 
   void updateCashAmount(String value) {
     cashAmount = double.tryParse(value) ?? 0.0;
-    if (paymentMode == WafflePaymentMode.both) {
+    if (paymentMode == WOFLPaymentMode.both) {
       upiAmount = (totalPrice - cashAmount).clamp(0, totalPrice);
     }
     notifyListeners();
@@ -144,17 +144,17 @@ class WaffleOrderProvider extends ChangeNotifier {
 
   void updateUpiAmount(String value) {
     upiAmount = double.tryParse(value) ?? 0.0;
-    if (paymentMode == WafflePaymentMode.both) {
+    if (paymentMode == WOFLPaymentMode.both) {
       cashAmount = (totalPrice - upiAmount).clamp(0, totalPrice);
     }
     notifyListeners();
   }
 
   void _syncPaymentDefaults() {
-    if (paymentMode == WafflePaymentMode.cash) {
+    if (paymentMode == WOFLPaymentMode.cash) {
       cashAmount = totalPrice;
       upiAmount = 0.0;
-    } else if (paymentMode == WafflePaymentMode.upi) {
+    } else if (paymentMode == WOFLPaymentMode.upi) {
       upiAmount = totalPrice;
       cashAmount = 0.0;
     } else {
@@ -164,13 +164,13 @@ class WaffleOrderProvider extends ChangeNotifier {
   }
 
   bool get isPaymentValid {
-    if (paymentMode == WafflePaymentMode.both) {
+    if (paymentMode == WOFLPaymentMode.both) {
       return (cashAmount + upiAmount).toStringAsFixed(2) ==
           totalPrice.toStringAsFixed(2);
     }
-    return (paymentMode == WafflePaymentMode.cash &&
+    return (paymentMode == WOFLPaymentMode.cash &&
             cashAmount.toStringAsFixed(2) == totalPrice.toStringAsFixed(2)) ||
-        (paymentMode == WafflePaymentMode.upi &&
+        (paymentMode == WOFLPaymentMode.upi &&
             upiAmount.toStringAsFixed(2) == totalPrice.toStringAsFixed(2));
   }
 

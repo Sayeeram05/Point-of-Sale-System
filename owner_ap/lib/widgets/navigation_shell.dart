@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/waffle_theme.dart';
+import '../theme/WOFL_theme.dart';
 
-/// Main navigation shell with organic waffle-inspired design
+/// Main navigation shell with organic WOFL-inspired design
 /// Provides consistent navigation across all pages with artistic flair
 class NavigationShell extends StatefulWidget {
   final Widget child;
@@ -30,10 +30,10 @@ class _NavigationShellState extends State<NavigationShell> {
         _isMobile = constraints.maxWidth < 768;
         
         return Scaffold(
-          backgroundColor: WaffleTheme.background,
+          backgroundColor: WOFLTheme.background,
           body: Container(
             decoration: BoxDecoration(
-              gradient: WaffleTheme.backgroundGradient,
+              gradient: WOFLTheme.backgroundGradient,
             ),
             child: Column(
               children: [
@@ -51,19 +51,19 @@ class _NavigationShellState extends State<NavigationShell> {
     return Container(
       height: 80, // Slightly taller for more organic feel
       decoration: BoxDecoration(
-        gradient: WaffleTheme.primaryGradient,
-        boxShadow: WaffleTheme.elevatedShadow,
+        gradient: WOFLTheme.primaryGradient,
+        boxShadow: WOFLTheme.elevatedShadow,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: WaffleTheme.spacingL),
+        padding: const EdgeInsets.symmetric(horizontal: WOFLTheme.spacingL),
         child: Row(
           children: [
             _buildLogo(),
-            const SizedBox(width: WaffleTheme.spacingXL),
+            const SizedBox(width: WOFLTheme.spacingXL),
             if (!_isMobile) ...[
               Expanded(child: _buildNavigationItems()),
               _buildProfileSection(),
@@ -85,14 +85,14 @@ class _NavigationShellState extends State<NavigationShell> {
           height: 48,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [WaffleTheme.creamWhite, WaffleTheme.softOrange],
+              colors: [WOFLTheme.creamWhite, WOFLTheme.softOrange],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: WaffleTheme.accent.withValues(alpha: 0.3),
+                color: WOFLTheme.accent.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -100,19 +100,19 @@ class _NavigationShellState extends State<NavigationShell> {
           ),
           child: Icon(
             Icons.restaurant,
-            color: WaffleTheme.primary,
+            color: WOFLTheme.primary,
             size: 28,
           ),
         ),
-        const SizedBox(width: WaffleTheme.spacingM),
+        const SizedBox(width: WOFLTheme.spacingM),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'WAFFLE DAY',
+              'WOFL DAY',
               style: TextStyle(
-                color: WaffleTheme.creamWhite,
+                color: WOFLTheme.creamWhite,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.2,
@@ -121,7 +121,7 @@ class _NavigationShellState extends State<NavigationShell> {
             Text(
               '@admin.dashboard',
               style: TextStyle(
-                color: WaffleTheme.creamWhite.withValues(alpha: 0.8),
+                color: WOFLTheme.creamWhite.withValues(alpha: 0.8),
                 fontSize: 11,
                 fontWeight: FontWeight.w400,
                 letterSpacing: 0.5,
@@ -170,26 +170,26 @@ class _NavigationShellState extends State<NavigationShell> {
     final isActive = widget.currentIndex == item.index;
     
     return Padding(
-      padding: const EdgeInsets.only(right: WaffleTheme.spacingL),
+      padding: const EdgeInsets.only(right: WOFLTheme.spacingL),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () => widget.onNavigationChanged(item.index),
           borderRadius: BorderRadius.circular(20),
           child: AnimatedContainer(
-            duration: WaffleTheme.animationDuration,
+            duration: WOFLTheme.animationDuration,
             curve: Curves.easeInOutCubic,
             padding: const EdgeInsets.symmetric(
-              horizontal: WaffleTheme.spacingM,
-              vertical: WaffleTheme.spacingS,
+              horizontal: WOFLTheme.spacingM,
+              vertical: WOFLTheme.spacingS,
             ),
             decoration: BoxDecoration(
               color: isActive 
-                ? WaffleTheme.creamWhite.withValues(alpha: 0.25) 
+                ? WOFLTheme.creamWhite.withValues(alpha: 0.25) 
                 : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: isActive 
-                ? Border.all(color: WaffleTheme.creamWhite.withValues(alpha: 0.3), width: 1)
+                ? Border.all(color: WOFLTheme.creamWhite.withValues(alpha: 0.3), width: 1)
                 : null,
             ),
             child: Row(
@@ -197,14 +197,14 @@ class _NavigationShellState extends State<NavigationShell> {
               children: [
                 Icon(
                   isActive ? item.activeIcon : item.icon,
-                  color: WaffleTheme.creamWhite,
+                  color: WOFLTheme.creamWhite,
                   size: 22,
                 ),
-                const SizedBox(width: WaffleTheme.spacingS),
+                const SizedBox(width: WOFLTheme.spacingS),
                 Text(
                   item.label,
                   style: TextStyle(
-                    color: WaffleTheme.creamWhite,
+                    color: WOFLTheme.creamWhite,
                     fontSize: 15,
                     fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     letterSpacing: 0.3,
@@ -222,10 +222,10 @@ class _NavigationShellState extends State<NavigationShell> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: WaffleTheme.creamWhite.withValues(alpha: 0.15),
+        color: WOFLTheme.creamWhite.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: WaffleTheme.creamWhite.withValues(alpha: 0.3),
+          color: WOFLTheme.creamWhite.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -236,7 +236,7 @@ class _NavigationShellState extends State<NavigationShell> {
             height: 32,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [WaffleTheme.waffleGold, WaffleTheme.secondary],
+                colors: [WOFLTheme.WOFLGold, WOFLTheme.secondary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -244,7 +244,7 @@ class _NavigationShellState extends State<NavigationShell> {
             ),
             child: Icon(
               Icons.person_rounded,
-              color: WaffleTheme.creamWhite,
+              color: WOFLTheme.creamWhite,
               size: 18,
             ),
           ),
@@ -252,7 +252,7 @@ class _NavigationShellState extends State<NavigationShell> {
           Text(
             'Admin',
             style: TextStyle(
-              color: WaffleTheme.creamWhite,
+              color: WOFLTheme.creamWhite,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -265,7 +265,7 @@ class _NavigationShellState extends State<NavigationShell> {
   Widget _buildMobileMenuButton() {
     return Container(
       decoration: BoxDecoration(
-        color: WaffleTheme.creamWhite.withValues(alpha: 0.15),
+        color: WOFLTheme.creamWhite.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
       ),
       child: IconButton(
@@ -277,7 +277,7 @@ class _NavigationShellState extends State<NavigationShell> {
         },
         icon: Icon(
           Icons.menu_rounded,
-          color: WaffleTheme.creamWhite,
+          color: WOFLTheme.creamWhite,
           size: 24,
         ),
       ),
@@ -290,11 +290,11 @@ class _NavigationShellState extends State<NavigationShell> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          gradient: WaffleTheme.cardGradient,
+          gradient: WOFLTheme.cardGradient,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          boxShadow: WaffleTheme.elevatedShadow,
+          boxShadow: WOFLTheme.elevatedShadow,
         ),
-        padding: const EdgeInsets.all(WaffleTheme.spacingL),
+        padding: const EdgeInsets.all(WOFLTheme.spacingL),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -302,16 +302,16 @@ class _NavigationShellState extends State<NavigationShell> {
               width: 48,
               height: 5,
               decoration: BoxDecoration(
-                color: WaffleTheme.border,
+                color: WOFLTheme.border,
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
-            const SizedBox(height: WaffleTheme.spacingL),
+            const SizedBox(height: WOFLTheme.spacingL),
             _buildMobileNavItem('Home', Icons.home_rounded, 0),
             _buildMobileNavItem('Products', Icons.restaurant_menu_rounded, 1),
             _buildMobileNavItem('Orders', Icons.receipt_long_rounded, 2),
             _buildMobileNavItem('Materials', Icons.inventory_2_rounded, 3),
-            const SizedBox(height: WaffleTheme.spacingL),
+            const SizedBox(height: WOFLTheme.spacingL),
           ],
         ),
       ),
@@ -322,7 +322,7 @@ class _NavigationShellState extends State<NavigationShell> {
     final isActive = widget.currentIndex == index;
     
     return Container(
-      margin: const EdgeInsets.only(bottom: WaffleTheme.spacingS),
+      margin: const EdgeInsets.only(bottom: WOFLTheme.spacingS),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -332,19 +332,19 @@ class _NavigationShellState extends State<NavigationShell> {
           },
           borderRadius: BorderRadius.circular(20),
           child: Container(
-            padding: const EdgeInsets.all(WaffleTheme.spacingM),
+            padding: const EdgeInsets.all(WOFLTheme.spacingM),
             decoration: BoxDecoration(
               gradient: isActive 
                 ? LinearGradient(
                     colors: [
-                      WaffleTheme.primary.withValues(alpha: 0.1),
-                      WaffleTheme.secondary.withValues(alpha: 0.05),
+                      WOFLTheme.primary.withValues(alpha: 0.1),
+                      WOFLTheme.secondary.withValues(alpha: 0.05),
                     ],
                   )
                 : null,
               borderRadius: BorderRadius.circular(20),
               border: isActive 
-                ? Border.all(color: WaffleTheme.primary.withValues(alpha: 0.2))
+                ? Border.all(color: WOFLTheme.primary.withValues(alpha: 0.2))
                 : null,
             ),
             child: Row(
@@ -353,21 +353,21 @@ class _NavigationShellState extends State<NavigationShell> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isActive 
-                      ? WaffleTheme.primary 
-                      : WaffleTheme.textLight.withValues(alpha: 0.1),
+                      ? WOFLTheme.primary 
+                      : WOFLTheme.textLight.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
-                    color: isActive ? WaffleTheme.creamWhite : WaffleTheme.textDark,
+                    color: isActive ? WOFLTheme.creamWhite : WOFLTheme.textDark,
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: WaffleTheme.spacingM),
+                const SizedBox(width: WOFLTheme.spacingM),
                 Text(
                   label,
                   style: TextStyle(
-                    color: isActive ? WaffleTheme.primary : WaffleTheme.textDark,
+                    color: isActive ? WOFLTheme.primary : WOFLTheme.textDark,
                     fontSize: 16,
                     fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     letterSpacing: 0.2,

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../providers/waffle_order_provider.dart';
-import '../themes/waffle_theme.dart';
+import '../providers/WOFL_order_provider.dart';
+import '../themes/WOFL_theme.dart';
 
-class WafflePaymentWidget extends StatelessWidget {
-  final WaffleOrderProvider provider;
+class WOFLPaymentWidget extends StatelessWidget {
+  final WOFLOrderProvider provider;
 
-  const WafflePaymentWidget({super.key, required this.provider});
+  const WOFLPaymentWidget({super.key, required this.provider});
 
   @override
   Widget build(BuildContext context) {
@@ -20,27 +20,27 @@ class WafflePaymentWidget extends StatelessWidget {
             Text(
               'Payment',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: WaffleTheme.textPrimary,
+                color: WOFLTheme.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                _buildMethodButton(context, 'Cash', WafflePaymentMode.cash),
-                _buildMethodButton(context, 'UPI', WafflePaymentMode.upi),
-                _buildMethodButton(context, 'Both', WafflePaymentMode.both),
+                _buildMethodButton(context, 'Cash', WOFLPaymentMode.cash),
+                _buildMethodButton(context, 'UPI', WOFLPaymentMode.upi),
+                _buildMethodButton(context, 'Both', WOFLPaymentMode.both),
               ],
             ),
             const SizedBox(height: 16),
-            if (provider.paymentMode != WafflePaymentMode.upi)
+            if (provider.paymentMode != WOFLPaymentMode.upi)
               _buildAmountField(
                 context,
                 label: 'Cash Amount',
                 value: provider.cashAmount.toStringAsFixed(2),
                 onChanged: provider.updateCashAmount,
               ),
-            if (provider.paymentMode != WafflePaymentMode.cash) ...[
+            if (provider.paymentMode != WOFLPaymentMode.cash) ...[
               const SizedBox(height: 12),
               _buildAmountField(
                 context,
@@ -57,7 +57,7 @@ class WafflePaymentWidget extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: provider.isPaymentValid
                     ? Colors.green
-                    : WaffleTheme.textSecondary,
+                    : WOFLTheme.textSecondary,
               ),
             ),
           ],
@@ -69,7 +69,7 @@ class WafflePaymentWidget extends StatelessWidget {
   Widget _buildMethodButton(
     BuildContext context,
     String title,
-    WafflePaymentMode mode,
+    WOFLPaymentMode mode,
   ) {
     final selected = provider.paymentMode == mode;
     return Expanded(
@@ -79,19 +79,19 @@ class WafflePaymentWidget extends StatelessWidget {
           margin: const EdgeInsets.only(right: 10),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? WaffleTheme.primaryColor : WaffleTheme.cardColor,
+            color: selected ? WOFLTheme.primaryColor : WOFLTheme.cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: selected
-                  ? WaffleTheme.primaryColor
-                  : WaffleTheme.borderColor,
+                  ? WOFLTheme.primaryColor
+                  : WOFLTheme.borderColor,
             ),
           ),
           child: Center(
             child: Text(
               title,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: selected ? Colors.white : WaffleTheme.textPrimary,
+                color: selected ? Colors.white : WOFLTheme.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),

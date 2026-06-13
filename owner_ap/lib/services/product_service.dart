@@ -100,13 +100,13 @@ class ProductServiceImpl implements ProductService {
 /// Mock implementation for testing and development
 class MockProductService implements ProductService {
   static final List<Product> _products = [
-    // Classic Waffles (category id: 1)
+    // Classic WOFLs (category id: 1)
     Product(
       id: '1',
       name: 'Belgian Classic',
       price: 120.0,
       categoryId: '1',
-      description: 'Traditional Belgian waffle with crispy exterior and fluffy interior',
+      description: 'Traditional Belgian WOFL with crispy exterior and fluffy interior',
       isAvailable: true,
       createdAt: DateTime.now().subtract(const Duration(days: 20)),
       updatedAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -116,7 +116,7 @@ class MockProductService implements ProductService {
       name: 'Butter Delight',
       price: 100.0,
       categoryId: '1',
-      description: 'Classic waffle with rich butter flavor',
+      description: 'Classic WOFL with rich butter flavor',
       isAvailable: true,
       createdAt: DateTime.now().subtract(const Duration(days: 18)),
       updatedAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -126,19 +126,19 @@ class MockProductService implements ProductService {
       name: 'Honey Crisp',
       price: 110.0,
       categoryId: '1',
-      description: 'Golden waffle drizzled with natural honey',
+      description: 'Golden WOFL drizzled with natural honey',
       isAvailable: true,
       createdAt: DateTime.now().subtract(const Duration(days: 15)),
       updatedAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
     
-    // Chocolate Waffles (category id: 2)
+    // Chocolate WOFLs (category id: 2)
     Product(
       id: '4',
       name: 'Choco Lava',
       price: 180.0,
       categoryId: '2',
-      description: 'Decadent chocolate waffle with molten chocolate center',
+      description: 'Decadent chocolate WOFL with molten chocolate center',
       isAvailable: true,
       createdAt: DateTime.now().subtract(const Duration(days: 12)),
       updatedAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -148,19 +148,19 @@ class MockProductService implements ProductService {
       name: 'Dark Chocolate Supreme',
       price: 200.0,
       categoryId: '2',
-      description: 'Rich dark chocolate waffle for chocolate lovers',
+      description: 'Rich dark chocolate WOFL for chocolate lovers',
       isAvailable: true,
       createdAt: DateTime.now().subtract(const Duration(days: 10)),
       updatedAt: DateTime.now().subtract(const Duration(days: 2)),
     ),
     
-    // Fruit Waffles (category id: 3)
+    // Fruit WOFLs (category id: 3)
     Product(
       id: '6',
       name: 'Strawberry Cream',
       price: 160.0,
       categoryId: '3',
-      description: 'Fresh strawberries with whipped cream on golden waffle',
+      description: 'Fresh strawberries with whipped cream on golden WOFL',
       isAvailable: true,
       createdAt: DateTime.now().subtract(const Duration(days: 8)),
       updatedAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -182,7 +182,7 @@ class MockProductService implements ProductService {
       name: 'Caramel Pecan Royale',
       price: 250.0,
       categoryId: '4',
-      description: 'Premium waffle with caramel sauce and toasted pecans',
+      description: 'Premium WOFL with caramel sauce and toasted pecans',
       isAvailable: true,
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
       updatedAt: DateTime.now().subtract(const Duration(days: 1)),

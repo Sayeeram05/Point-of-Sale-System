@@ -1,5 +1,5 @@
 name: owner_ap
-description: "Waffle Shop POS Admin UI - A modern Flutter web dashboard for managing waffle shop operations."
+description: "WOFL Shop POS Admin UI - A modern Flutter web dashboard for managing WOFL shop operations."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -50,6 +50,9 @@ dependencies:
   # PDF generation and printing
   pdf: ^3.11.1
   printing: ^5.13.1
+
+  # Charting library for P&L dashboard
+  fl_chart: ^0.69.0
 
 dev_dependencies:
   flutter_test:

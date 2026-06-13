@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Waffle Shop themed color palette and styling constants
-/// Inspired by organic waffle day design with warm, artistic aesthetic
-class WaffleTheme {
-  // Color Palette - Organic waffle-inspired colors from the design
+/// WOFL Shop themed color palette and styling constants
+/// Inspired by organic WOFL day design with warm, artistic aesthetic
+class WOFLTheme {
+  // Color Palette - Organic WOFL-inspired colors from the design
   static const Color background = Color(0xFFFDF8F0); // Soft cream background
   static const Color primary = Color(0xFFE67E22); // Warm orange from design
   static const Color secondary = Color(0xFFF39C12); // Golden orange accent
@@ -20,7 +20,7 @@ class WaffleTheme {
   static const Color warning = Color(0xFFF39C12); // Orange warning
   
   // Organic design elements
-  static const Color waffleGold = Color(0xFFDAA520); // Waffle color
+  static const Color WOFLGold = Color(0xFFDAA520); // WOFL color
   static const Color creamWhite = Color(0xFFFFFAF0); // Cream white
   static const Color softOrange = Color(0xFFFFE4B5); // Moccasin
   
@@ -91,7 +91,7 @@ class WaffleTheme {
     end: Alignment.bottomCenter,
   );
   
-  /// Material 3 Theme Configuration with organic waffle design
+  /// Material 3 Theme Configuration with organic WOFL design
   static ThemeData get theme {
     return ThemeData(
       useMaterial3: true,

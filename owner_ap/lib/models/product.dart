@@ -1,4 +1,4 @@
-/// Product model representing waffle products
+/// Product model representing WOFL products
 /// Connects to Django Product API backend
 class Product {
   final String id;

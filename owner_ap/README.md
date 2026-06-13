@@ -1,20 +1,20 @@
-# Waffle Shop Admin UI
+# WOFL Shop Admin UI
 
-A modern, responsive Flutter web application for managing waffle shop operations with a warm, bakery-inspired design aesthetic.
+A modern, responsive Flutter web application for managing WOFL shop operations with a warm, bakery-inspired design aesthetic.
 
 ## Features
 
 ### 🏠 Home Dashboard
-- Welcome screen with waffle shop branding
+- Welcome screen with WOFL shop branding
 - Statistics overview cards
 - Placeholder areas for future dashboard widgets
 
 ### 🧇 Product Management (Main Feature)
-- **Category Management**: View, create, edit, and delete waffle categories
+- **Category Management**: View, create, edit, and delete WOFL categories
 - **Product Management**: Manage products within categories
 - **Responsive Grid Layout**: Adapts to desktop, tablet, and mobile screens
 - **Real-time Statistics**: Live category and product counts
-- **Sample Data**: Pre-loaded with realistic waffle categories and products
+- **Sample Data**: Pre-loaded with realistic WOFL categories and products
 
 ### 📋 Orders Management
 - Coming soon placeholder with planned features
@@ -22,18 +22,18 @@ A modern, responsive Flutter web application for managing waffle shop operations
 
 ## Design System
 
-### 🎨 Waffle Theme
+### 🎨 WOFL Theme
 - **Background**: #F5F1E8 (Warm cream)
-- **Primary**: #C97B36 (Waffle brown)
+- **Primary**: #C97B36 (WOFL brown)
 - **Secondary**: #F2A65A (Caramel orange)
 - **Accent**: #8B5E3C (Coffee brown)
 - **Card Background**: #FFF8EE (Light cream)
 - **Border**: #E5D3BE (Soft beige)
 
 ### 🎯 UI Components
-- **WaffleCard**: Reusable card with hover animations
-- **WaffleButton**: Themed buttons with multiple variants
-- **WaffleBadge**: Price and count badges with rounded styling
+- **WOFLCard**: Reusable card with hover animations
+- **WOFLButton**: Themed buttons with multiple variants
+- **WOFLBadge**: Price and count badges with rounded styling
 - **NavigationShell**: Responsive navigation with mobile support
 
 ## Architecture
@@ -43,11 +43,11 @@ A modern, responsive Flutter web application for managing waffle shop operations
 lib/
 ├── main.dart                 # App entry point
 ├── theme/
-│   └── waffle_theme.dart    # Theme configuration
+│   └── WOFL_theme.dart    # Theme configuration
 ├── widgets/
-│   ├── waffle_card.dart     # Reusable card component
-│   ├── waffle_button.dart   # Themed button component
-│   ├── waffle_badge.dart    # Badge component
+│   ├── WOFL_card.dart     # Reusable card component
+│   ├── WOFL_button.dart   # Themed button component
+│   ├── WOFL_badge.dart    # Badge component
 │   └── navigation_shell.dart # Main navigation
 ├── screens/
 │   ├── home_screen.dart     # Home dashboard
@@ -75,10 +75,10 @@ lib/
 ## Sample Data
 
 ### Categories
-- **Classic Waffles**: Traditional Belgian and butter waffles
-- **Chocolate Waffles**: Decadent chocolate varieties
-- **Fruit Waffles**: Fresh fruit toppings
-- **Premium Specials**: Gourmet waffle creations
+- **Classic WOFLs**: Traditional Belgian and butter WOFLs
+- **Chocolate WOFLs**: Decadent chocolate varieties
+- **Fruit WOFLs**: Fresh fruit toppings
+- **Premium Specials**: Gourmet WOFL creations
 
 ### Products
 - Belgian Classic (₹120)

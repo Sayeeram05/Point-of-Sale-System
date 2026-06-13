@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../theme/waffle_theme.dart';
+import '../theme/WOFL_theme.dart';
 
-/// A reusable card widget with organic waffle-themed styling
+/// A reusable card widget with organic WOFL-themed styling
 /// Features gradient backgrounds, soft shadows, and smooth animations
-class WaffleCard extends StatefulWidget {
+class WOFLCard extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
@@ -13,7 +13,7 @@ class WaffleCard extends StatefulWidget {
   final bool useGradient;
   final Color? customColor;
 
-  const WaffleCard({
+  const WOFLCard({
     super.key,
     required this.child,
     this.padding,
@@ -26,10 +26,10 @@ class WaffleCard extends StatefulWidget {
   });
 
   @override
-  State<WaffleCard> createState() => _WaffleCardState();
+  State<WOFLCard> createState() => _WOFLCardState();
 }
 
-class _WaffleCardState extends State<WaffleCard>
+class _WOFLCardState extends State<WOFLCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -40,7 +40,7 @@ class _WaffleCardState extends State<WaffleCard>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: WaffleTheme.animationDuration,
+      duration: WOFLTheme.animationDuration,
       vsync: this,
     );
     
@@ -98,22 +98,22 @@ class _WaffleCardState extends State<WaffleCard>
                 height: widget.height,
                 decoration: BoxDecoration(
                   gradient: widget.useGradient 
-                    ? WaffleTheme.cardGradient
+                    ? WOFLTheme.cardGradient
                     : null,
                   color: widget.useGradient 
                     ? null 
-                    : (widget.customColor ?? WaffleTheme.cardBackground),
-                  borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
+                    : (widget.customColor ?? WOFLTheme.cardBackground),
+                  borderRadius: BorderRadius.circular(WOFLTheme.cardRadius),
                   border: Border.all(
                     color: _isHovered 
-                      ? WaffleTheme.primary.withValues(alpha: 0.3)
-                      : WaffleTheme.border,
+                      ? WOFLTheme.primary.withValues(alpha: 0.3)
+                      : WOFLTheme.border,
                     width: _isHovered ? 2 : 1.5,
                   ),
                   boxShadow: [
                     // Base shadow
                     BoxShadow(
-                      color: WaffleTheme.accent.withValues(alpha: 0.08),
+                      color: WOFLTheme.accent.withValues(alpha: 0.08),
                       blurRadius: 8 + (_elevationAnimation.value * 8),
                       offset: Offset(0, 2 + (_elevationAnimation.value * 4)),
                       spreadRadius: 1 + (_elevationAnimation.value * 2),
@@ -121,7 +121,7 @@ class _WaffleCardState extends State<WaffleCard>
                     // Elevated shadow when hovered
                     if (_isHovered)
                       BoxShadow(
-                        color: WaffleTheme.primary.withValues(alpha: 0.12),
+                        color: WOFLTheme.primary.withValues(alpha: 0.12),
                         blurRadius: 20 + (_elevationAnimation.value * 12),
                         offset: Offset(0, 8 + (_elevationAnimation.value * 8)),
                         spreadRadius: 3 + (_elevationAnimation.value * 3),
@@ -129,7 +129,7 @@ class _WaffleCardState extends State<WaffleCard>
                     // Inner glow effect
                     if (_isHovered)
                       BoxShadow(
-                        color: WaffleTheme.softOrange.withValues(alpha: 0.1),
+                        color: WOFLTheme.softOrange.withValues(alpha: 0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 0),
                         spreadRadius: -2,
@@ -137,7 +137,7 @@ class _WaffleCardState extends State<WaffleCard>
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(WaffleTheme.cardRadius),
+                  borderRadius: BorderRadius.circular(WOFLTheme.cardRadius),
                   child: Container(
                     decoration: BoxDecoration(
                       // Subtle inner gradient for depth
@@ -152,7 +152,7 @@ class _WaffleCardState extends State<WaffleCard>
                     ),
                     child: Padding(
                       padding: widget.padding ?? 
-                          const EdgeInsets.all(WaffleTheme.spacingL),
+                          const EdgeInsets.all(WOFLTheme.spacingL),
                       child: widget.child,
                     ),
                   ),

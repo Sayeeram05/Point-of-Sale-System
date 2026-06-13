@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../services/woffle_api_service.dart';
-import '../services/woffle_debug_service.dart';
-import '../models/woffle_order.dart';
-import '../widgets/woffle_order_card.dart';
+import '../services/WOFL_api_service.dart';
+import '../services/WOFL_debug_service.dart';
+import '../services/WOFL_realtime_service.dart';
+import '../models/WOFL_order.dart';
+import '../widgets/WOFL_order_card.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import '../widgets/woffle_order_detail_dialog.dart';
-import '../widgets/woffle_emoji_color_dialog.dart';
-import 'woffle_menu_page.dart';
-import 'woffle_settings_page.dart';
-import '../theme/woffle_app_theme.dart';
+import '../widgets/WOFL_order_detail_dialog.dart';
+import '../widgets/WOFL_emoji_color_dialog.dart';
+import 'WOFL_menu_page.dart';
+import 'WOFL_settings_page.dart';
+import '../theme/WOFL_app_theme.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -27,6 +30,9 @@ class _DashboardPageState extends State<DashboardPage>
   late TabController _tabController;
   int _selectedTabIndex = 0;
 
+  StreamSubscription<Map<String, dynamic>>? _realtimeSub;
+  bool _pendingRefresh = false;
+
   @override
   void initState() {
     super.initState();
@@ -40,10 +46,21 @@ class _DashboardPageState extends State<DashboardPage>
     );
     _tabController = TabController(length: 3, vsync: this);
     _loadDashboardData();
+    _realtimeSub = WOFLRealtimeService.instance.stream.listen(_onOrderEvent);
+  }
+
+  void _onOrderEvent(Map<String, dynamic> event) {
+    if (!mounted) return;
+    if (_isLoading) {
+      _pendingRefresh = true;
+    } else {
+      _loadDashboardData(forceRefresh: true);
+    }
   }
 
   @override
   void dispose() {
+    _realtimeSub?.cancel();
     _animationController.dispose();
     _staggerController.dispose();
     _tabController.dispose();
@@ -66,9 +83,17 @@ class _DashboardPageState extends State<DashboardPage>
         forceRefresh: forceRefresh,
       );
 
-      // Auto-delete empty pending orders (cleanup for orders left empty)
+      // Auto-delete empty pending orders (cleanup for orders left empty).
+      // Only delete orders older than 2 minutes to avoid a race where another
+      // tab deletes a newly-created order while it is still being edited in
+      // MenuPage.
+      final staleThreshold = DateTime.now().subtract(const Duration(minutes: 2));
       final emptyOrders = summary.orders
-          .where((order) => order.items.isEmpty && !order.completed)
+          .where((order) =>
+              order.items.isEmpty &&
+              !order.completed &&
+              (order.parsedOrderDate == null ||
+                  order.parsedOrderDate!.isBefore(staleThreshold)))
           .toList();
       if (emptyOrders.isNotEmpty) {
         // Parallel delete — N orders in 1 round-trip window instead of N sequential
@@ -111,6 +136,11 @@ class _DashboardPageState extends State<DashboardPage>
         _error = e.toString();
         _isLoading = false;
       });
+    }
+
+    if (_pendingRefresh && mounted) {
+      _pendingRefresh = false;
+      _loadDashboardData(forceRefresh: true);
     }
   }
 
@@ -298,7 +328,7 @@ class _DashboardPageState extends State<DashboardPage>
                   ),
                   SizedBox(width: isTablet ? 16 : 12),
                   Text(
-                    'Woffle',
+                    'WOFL',
                     style: AppTheme.headingMedium(context).copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -433,7 +463,7 @@ class _DashboardPageState extends State<DashboardPage>
           children: [
             Expanded(
               child: Text(
-                'Woffle',
+                'WOFL',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: isTablet ? 28 : 22,
@@ -549,14 +579,16 @@ class _DashboardPageState extends State<DashboardPage>
                                     ],
                                   ),
                                   const SizedBox(height: 4),
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Expanded(child: cards[2]),
-                                      const SizedBox(width: 4),
-                                      Expanded(child: cards[3]),
-                                    ],
+                                  IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(child: cards[2]),
+                                        const SizedBox(width: 4),
+                                        Expanded(child: cards[3]),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               )
@@ -774,6 +806,7 @@ class _DashboardPageState extends State<DashboardPage>
         height: isTablet ? 76 : 60,
         width: isTablet ? 76 : 60,
         child: FloatingActionButton(
+          heroTag: 'dashboardNewOrderFab',
           onPressed: _createNewOrder,
           backgroundColor: AppTheme.primaryColor,
           foregroundColor: Colors.white,

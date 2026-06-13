@@ -1,45 +1,45 @@
 import 'package:flutter/material.dart';
-import '../theme/waffle_theme.dart';
+import '../theme/WOFL_theme.dart';
 
-/// A reusable badge widget with waffle-themed styling
+/// A reusable badge widget with WOFL-themed styling
 /// Perfect for displaying prices, counts, and status indicators
-class WaffleBadge extends StatelessWidget {
+class WOFLBadge extends StatelessWidget {
   final String text;
-  final WaffleBadgeType type;
+  final WOFLBadgeType type;
   final IconData? icon;
   final bool isSmall;
 
-  const WaffleBadge({
+  const WOFLBadge({
     super.key,
     required this.text,
-    this.type = WaffleBadgeType.price,
+    this.type = WOFLBadgeType.price,
     this.icon,
     this.isSmall = false,
   });
 
   /// Factory constructor for price badges
-  factory WaffleBadge.price(double price, {bool isSmall = false}) {
-    return WaffleBadge(
+  factory WOFLBadge.price(double price, {bool isSmall = false}) {
+    return WOFLBadge(
       text: '₹${price.toStringAsFixed(0)}',
-      type: WaffleBadgeType.price,
+      type: WOFLBadgeType.price,
       isSmall: isSmall,
     );
   }
 
   /// Factory constructor for count badges
-  factory WaffleBadge.count(int count, {bool isSmall = false}) {
-    return WaffleBadge(
+  factory WOFLBadge.count(int count, {bool isSmall = false}) {
+    return WOFLBadge(
       text: count.toString(),
-      type: WaffleBadgeType.count,
+      type: WOFLBadgeType.count,
       isSmall: isSmall,
     );
   }
 
   /// Factory constructor for status badges
-  factory WaffleBadge.status(String status, {IconData? icon, bool isSmall = false}) {
-    return WaffleBadge(
+  factory WOFLBadge.status(String status, {IconData? icon, bool isSmall = false}) {
+    return WOFLBadge(
       text: status,
-      type: WaffleBadgeType.status,
+      type: WOFLBadgeType.status,
       icon: icon,
       isSmall: isSmall,
     );
@@ -47,37 +47,37 @@ class WaffleBadge extends StatelessWidget {
 
   Color get _backgroundColor {
     switch (type) {
-      case WaffleBadgeType.price:
-        return WaffleTheme.secondary;
-      case WaffleBadgeType.count:
-        return WaffleTheme.primary;
-      case WaffleBadgeType.status:
-        return WaffleTheme.accent;
-      case WaffleBadgeType.success:
-        return WaffleTheme.success;
-      case WaffleBadgeType.error:
-        return WaffleTheme.error;
-      case WaffleBadgeType.warning:
-        return WaffleTheme.warning;
+      case WOFLBadgeType.price:
+        return WOFLTheme.secondary;
+      case WOFLBadgeType.count:
+        return WOFLTheme.primary;
+      case WOFLBadgeType.status:
+        return WOFLTheme.accent;
+      case WOFLBadgeType.success:
+        return WOFLTheme.success;
+      case WOFLBadgeType.error:
+        return WOFLTheme.error;
+      case WOFLBadgeType.warning:
+        return WOFLTheme.warning;
     }
   }
 
   Color get _textColor {
     switch (type) {
-      case WaffleBadgeType.price:
-      case WaffleBadgeType.count:
-      case WaffleBadgeType.status:
+      case WOFLBadgeType.price:
+      case WOFLBadgeType.count:
+      case WOFLBadgeType.status:
         return Colors.white;
-      case WaffleBadgeType.success:
-      case WaffleBadgeType.error:
+      case WOFLBadgeType.success:
+      case WOFLBadgeType.error:
         return Colors.white;
-      case WaffleBadgeType.warning:
-        return WaffleTheme.textDark;
+      case WOFLBadgeType.warning:
+        return WOFLTheme.textDark;
     }
   }
 
   double get _fontSize => isSmall ? 10 : 12;
-  double get _padding => isSmall ? WaffleTheme.spacingS : WaffleTheme.spacingM;
+  double get _padding => isSmall ? WOFLTheme.spacingS : WOFLTheme.spacingM;
   double get _iconSize => isSmall ? 12 : 14;
 
   @override
@@ -85,11 +85,11 @@ class WaffleBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: _padding,
-        vertical: isSmall ? WaffleTheme.spacingXS : WaffleTheme.spacingS,
+        vertical: isSmall ? WOFLTheme.spacingXS : WOFLTheme.spacingS,
       ),
       decoration: BoxDecoration(
         color: _backgroundColor,
-        borderRadius: BorderRadius.circular(WaffleTheme.badgeRadius),
+        borderRadius: BorderRadius.circular(WOFLTheme.badgeRadius),
         boxShadow: [
           BoxShadow(
             color: _backgroundColor.withOpacity(0.3),
@@ -123,7 +123,7 @@ class WaffleBadge extends StatelessWidget {
   }
 }
 
-enum WaffleBadgeType {
+enum WOFLBadgeType {
   price,
   count,
   status,

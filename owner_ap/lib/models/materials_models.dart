@@ -60,12 +60,14 @@ class PurchaseLineItem {
   final String materialName;
   final double basePrice;
   double quantity;
+  final bool isLumpSum;
 
   PurchaseLineItem({
     this.rawMaterialId,
     required this.materialName,
     required this.basePrice,
     this.quantity = 1.0,
+    this.isLumpSum = false,
   });
 
   double get subtotal => basePrice * quantity;
@@ -77,10 +79,10 @@ class PurchaseLineItem {
       quantity == quantity.truncateToDouble() ? quantity.toStringAsFixed(0) : quantity.toStringAsFixed(2);
 
   Map<String, dynamic> toJson() => {
-        'raw_material_id': rawMaterialId,
+        'raw_material_id': isLumpSum ? null : rawMaterialId,
         'material_name': materialName,
         'base_price_snapshot': basePrice,
-        'quantity': quantity,
+        'quantity': isLumpSum ? 1.0 : quantity,
       };
 }
 

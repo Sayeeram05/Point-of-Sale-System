@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../providers/waffle_order_provider.dart';
-import '../themes/waffle_theme.dart';
+import '../providers/WOFL_order_provider.dart';
+import '../themes/WOFL_theme.dart';
 
-class WaffleProductsScreen extends StatelessWidget {
-  final WaffleOrderProvider provider;
+class WOFLProductsScreen extends StatelessWidget {
+  final WOFLOrderProvider provider;
 
-  const WaffleProductsScreen({super.key, required this.provider});
+  const WOFLProductsScreen({super.key, required this.provider});
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +32,12 @@ class WaffleProductsScreen extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: provider.selectedCategoryId == 0
-                        ? WaffleTheme.primaryColor
+                        ? WOFLTheme.primaryColor
                         : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: provider.selectedCategoryId == 0
-                          ? WaffleTheme.primaryColor
+                          ? WOFLTheme.primaryColor
                           : Colors.grey.shade300,
                       width: 1.5,
                     ),
@@ -67,12 +67,12 @@ class WaffleProductsScreen extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? WaffleTheme.primaryColor
+                          ? WOFLTheme.primaryColor
                           : Colors.white,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: isSelected
-                            ? WaffleTheme.primaryColor
+                            ? WOFLTheme.primaryColor
                             : Colors.grey.shade300,
                         width: 1.5,
                       ),
@@ -124,7 +124,7 @@ class WaffleProductsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final product = provider.products[index];
               final quantity = provider.quantityForProduct(product);
-              return _WaffleProductCard(
+              return _WOFLProductCard(
                 product: product,
                 quantity: quantity,
                 onAdd: () => provider.addProduct(product),
@@ -139,14 +139,14 @@ class WaffleProductsScreen extends StatelessWidget {
 }
 
 // ── Inline product card ──────────────────────────────────────────────────────
-class _WaffleProductCard extends StatelessWidget {
+class _WOFLProductCard extends StatelessWidget {
   final dynamic product;
   final int quantity;
   final VoidCallback onAdd;
   final VoidCallback onIncrease;
   final VoidCallback onDecrease;
 
-  const _WaffleProductCard({
+  const _WOFLProductCard({
     required this.product,
     required this.quantity,
     required this.onAdd,
@@ -169,7 +169,7 @@ class _WaffleProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: inCart
-                  ? WaffleTheme.primaryColor.withValues(alpha: 102)
+                  ? WOFLTheme.primaryColor.withValues(alpha: 102)
                   : Colors.grey.shade300,
               width: 1.2,
             ),
@@ -207,7 +207,7 @@ class _WaffleProductCard extends StatelessWidget {
                         child: Icon(
                           Icons.bakery_dining,
                           size: 24,
-                          color: WaffleTheme.primaryColor,
+                          color: WOFLTheme.primaryColor,
                         ),
                       ),
                     ),
@@ -220,7 +220,7 @@ class _WaffleProductCard extends StatelessWidget {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: WaffleTheme.primaryColor,
+                          color: WOFLTheme.primaryColor,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.white, width: 1.5),
                           boxShadow: const [
@@ -269,7 +269,7 @@ class _WaffleProductCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: WaffleTheme.primaryColor,
+                        color: WOFLTheme.primaryColor,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -284,7 +284,7 @@ class _WaffleProductCard extends StatelessWidget {
                             vertical: 8,
                           ),
                           decoration: const BoxDecoration(
-                            color: WaffleTheme.primaryColor,
+                            color: WOFLTheme.primaryColor,
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
                           child: const Text(
@@ -308,7 +308,7 @@ class _WaffleProductCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: const BoxDecoration(
-                              color: WaffleTheme.primaryColor,
+                              color: WOFLTheme.primaryColor,
                               borderRadius: BorderRadius.all(
                                 Radius.circular(8),
                               ),
@@ -343,7 +343,7 @@ class _WaffleProductCard extends StatelessWidget {
         width: 30,
         height: 30,
         decoration: BoxDecoration(
-          color: WaffleTheme.primaryColor,
+          color: WOFLTheme.primaryColor,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: Colors.white, size: 16),

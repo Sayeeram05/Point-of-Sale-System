@@ -6,7 +6,7 @@ import 'package:printing/printing.dart';
 
 import '../models/materials_models.dart';
 import '../providers/materials_provider.dart';
-import '../theme/waffle_theme.dart';
+import '../theme/WOFL_theme.dart';
 
 // ============================================================================
 //  MaterialsScreen — top-level entry point
@@ -69,12 +69,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             _buildDateHeader(context, provider),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(WaffleTheme.spacingM),
+                padding: const EdgeInsets.all(WOFLTheme.spacingM),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(flex: 6, child: _buildLeftPanel(context, provider)),
-                    const SizedBox(width: WaffleTheme.spacingM),
+                    const SizedBox(width: WOFLTheme.spacingM),
                     Expanded(flex: 4, child: _buildRightPanel(context, provider)),
                   ],
                 ),
@@ -96,13 +96,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        WaffleTheme.spacingL, WaffleTheme.spacingM,
-        WaffleTheme.spacingL, WaffleTheme.spacingM,
+        WOFLTheme.spacingL, WOFLTheme.spacingM,
+        WOFLTheme.spacingL, WOFLTheme.spacingM,
       ),
       decoration: BoxDecoration(
-        color: WaffleTheme.cardBackground,
-        border: Border(bottom: BorderSide(color: WaffleTheme.border)),
-        boxShadow: WaffleTheme.cardShadow,
+        color: WOFLTheme.cardBackground,
+        border: Border(bottom: BorderSide(color: WOFLTheme.border)),
+        boxShadow: WOFLTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,13 +113,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: WaffleTheme.primaryGradient,
+                  gradient: WOFLTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.inventory_2_rounded,
                     color: Colors.white, size: 22),
               ),
-              const SizedBox(width: WaffleTheme.spacingM),
+              const SizedBox(width: WOFLTheme.spacingM),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,11 +127,11 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     Text('Materials Tracking & Procurement',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: WaffleTheme.textDark,
+                              color: WOFLTheme.textDark,
                             )),
                     Text('Track daily raw material purchases and costs',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: WaffleTheme.textLight,
+                              color: WOFLTheme.textLight,
                             )),
                   ],
                 ),
@@ -139,7 +139,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               _buildActionButtons(context, provider),
             ],
           ),
-          const SizedBox(height: WaffleTheme.spacingM),
+          const SizedBox(height: WOFLTheme.spacingM),
           // ── Date selector row ──
           Row(
             children: [
@@ -148,22 +148,22 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 isSelected: isToday,
                 onTap: () => provider.loadRecordForDate(DateTime.now()),
               ),
-              const SizedBox(width: WaffleTheme.spacingS),
+              const SizedBox(width: WOFLTheme.spacingS),
               _dateChip(
                 label: '📅  Custom',
                 isSelected: !isToday,
                 onTap: () => _pickDate(context, provider),
               ),
-              const SizedBox(width: WaffleTheme.spacingM),
-              Container(width: 1, height: 32, color: WaffleTheme.border),
-              const SizedBox(width: WaffleTheme.spacingM),
+              const SizedBox(width: WOFLTheme.spacingM),
+              Container(width: 1, height: 32, color: WOFLTheme.border),
+              const SizedBox(width: WOFLTheme.spacingM),
               Expanded(
                 child: provider.recentDates.isEmpty
                     ? const Center(
                         child: Text(
                           'No past entries yet.',
                           style: TextStyle(
-                              color: WaffleTheme.textMuted, fontSize: 12),
+                              color: WOFLTheme.textMuted, fontSize: 12),
                         ),
                       )
                     : SizedBox(
@@ -204,20 +204,20 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: WaffleTheme.fastAnimation,
+        duration: WOFLTheme.fastAnimation,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isSelected ? WaffleTheme.primaryGradient : null,
-          color: isSelected ? null : WaffleTheme.background,
+          gradient: isSelected ? WOFLTheme.primaryGradient : null,
+          color: isSelected ? null : WOFLTheme.background,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? WaffleTheme.primary : WaffleTheme.border,
+            color: isSelected ? WOFLTheme.primary : WOFLTheme.border,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? WaffleTheme.creamWhite : WaffleTheme.textDark,
+            color: isSelected ? WOFLTheme.creamWhite : WOFLTheme.textDark,
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
@@ -233,19 +233,19 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     required VoidCallback onTap,
   }) {
     final borderColor = isSelected
-        ? WaffleTheme.primary
+        ? WOFLTheme.primary
         : hasRecord
-            ? WaffleTheme.success.withValues(alpha: 0.55)
-            : WaffleTheme.border;
+            ? WOFLTheme.success.withValues(alpha: 0.55)
+            : WOFLTheme.border;
 
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: WaffleTheme.fastAnimation,
+        duration: WOFLTheme.fastAnimation,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          gradient: isSelected ? WaffleTheme.primaryGradient : null,
-          color: isSelected ? null : WaffleTheme.background,
+          gradient: isSelected ? WOFLTheme.primaryGradient : null,
+          color: isSelected ? null : WOFLTheme.background,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
         ),
@@ -256,7 +256,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               _fmtShort(date),
               style: TextStyle(
                 color:
-                    isSelected ? WaffleTheme.creamWhite : WaffleTheme.textDark,
+                    isSelected ? WOFLTheme.creamWhite : WOFLTheme.textDark,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
@@ -266,7 +266,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 width: 4, height: 4,
                 margin: const EdgeInsets.only(top: 2),
                 decoration: BoxDecoration(
-                  color: WaffleTheme.success, shape: BoxShape.circle,
+                  color: WOFLTheme.success, shape: BoxShape.circle,
                 ),
               ),
           ],
@@ -284,8 +284,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       builder: (c, child) => Theme(
         data: Theme.of(c).copyWith(
           colorScheme: ColorScheme.light(
-            primary: WaffleTheme.primary,
-            onPrimary: WaffleTheme.creamWhite,
+            primary: WOFLTheme.primary,
+            onPrimary: WOFLTheme.creamWhite,
           ),
         ),
         child: child!,
@@ -310,14 +310,14 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         _actionBtn(
           label: 'Edit',
           icon: Icons.edit_rounded,
-          color: WaffleTheme.primary,
+          color: WOFLTheme.primary,
           onTap: provider.enterEditMode,
         ),
-        const SizedBox(width: WaffleTheme.spacingS),
+        const SizedBox(width: WOFLTheme.spacingS),
         _actionBtn(
           label: 'Save PDF',
           icon: Icons.picture_as_pdf_rounded,
-          color: WaffleTheme.success,
+          color: WOFLTheme.success,
           onTap: () => _generateAndPrint(ctx, provider),
         ),
       ]);
@@ -326,14 +326,14 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       _actionBtn(
         label: 'Save',
         icon: Icons.save_rounded,
-        color: WaffleTheme.success,
+        color: WOFLTheme.success,
         onTap: () => _saveRecord(ctx, provider),
       ),
-      const SizedBox(width: WaffleTheme.spacingS),
+      const SizedBox(width: WOFLTheme.spacingS),
       _actionBtn(
         label: 'Cancel',
         icon: Icons.cancel_rounded,
-        color: WaffleTheme.error,
+        color: WOFLTheme.error,
         onTap: provider.cancelEdits,
       ),
     ]);
@@ -349,12 +349,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius),
+        borderRadius: BorderRadius.circular(WOFLTheme.buttonRadius),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(WaffleTheme.buttonRadius),
+            borderRadius: BorderRadius.circular(WOFLTheme.buttonRadius),
             border: Border.all(color: color.withValues(alpha: 0.4)),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -380,8 +380,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       decoration: BoxDecoration(
         color: locked ? const Color(0xFFF5F1E8) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: WaffleTheme.border, width: 1.5),
-        boxShadow: WaffleTheme.cardShadow,
+        border: Border.all(color: WOFLTheme.border, width: 1.5),
+        boxShadow: WOFLTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -389,26 +389,29 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           // Panel header
           _panelHeader(
             icon: locked ? Icons.lock_rounded : Icons.edit_note_rounded,
-            iconColor: locked ? WaffleTheme.textLight : WaffleTheme.primary,
+            iconColor: locked ? WOFLTheme.textLight : WOFLTheme.primary,
             title: locked
                 ? 'Purchase Record — View Mode'
                 : 'Purchase Record — Edit Mode',
             trailing: Text(
               _fmtFull(provider.selectedDate),
               style: const TextStyle(
-                  color: WaffleTheme.textLight,
+                  color: WOFLTheme.textLight,
                   fontSize: 12,
                   fontWeight: FontWeight.w500),
             ),
             gradientColors: [
-              WaffleTheme.primary.withValues(alpha: 0.10),
-              WaffleTheme.secondary.withValues(alpha: 0.04),
+              WOFLTheme.primary.withValues(alpha: 0.10),
+              WOFLTheme.secondary.withValues(alpha: 0.04),
             ],
             isTop: true,
           ),
 
           // Column headers
           _buildGridHeader(locked),
+
+          // Lump-sum action bar — edit mode only
+          if (!locked) _buildLumpSumBar(ctx, provider),
 
           // Rows
           Expanded(
@@ -419,7 +422,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     itemCount: provider.purchaseItems.length,
                     separatorBuilder: (sc, si) => Divider(
                       height: 1,
-                      color: WaffleTheme.border.withValues(alpha: 0.45),
+                      color: WOFLTheme.border.withValues(alpha: 0.45),
                     ),
                     itemBuilder: (c, i) => _PurchaseGridRow(
                       index: i,
@@ -428,6 +431,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                       isLocked: locked,
                       onQtyChanged: provider.updateItemQuantity,
                       onRemove: provider.removeItem,
+                      onLumpSumPriceChanged: provider.updateLumpSumPrice,
+                      onLumpSumNameChanged: provider.updateLumpSumName,
                     ),
                   ),
           ),
@@ -443,10 +448,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: WaffleTheme.textDark.withValues(alpha: 0.05),
+        color: WOFLTheme.textDark.withValues(alpha: 0.05),
         border: Border(
             bottom: BorderSide(
-                color: WaffleTheme.border.withValues(alpha: 0.7))),
+                color: WOFLTheme.border.withValues(alpha: 0.7))),
       ),
       child: Row(children: [
         _hCell('S.No', flex: 1),
@@ -465,7 +470,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           label,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: WaffleTheme.textDark,
+            color: WOFLTheme.textDark,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.4,
@@ -476,22 +481,22 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   Widget _buildGridEmptyState(bool locked) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(WaffleTheme.spacingXL),
+        padding: const EdgeInsets.all(WOFLTheme.spacingXL),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(
             locked
                 ? Icons.lock_outline_rounded
                 : Icons.add_shopping_cart_rounded,
             size: 52,
-            color: WaffleTheme.border,
+            color: WOFLTheme.border,
           ),
-          const SizedBox(height: WaffleTheme.spacingM),
+          const SizedBox(height: WOFLTheme.spacingM),
           Text(
             locked
                 ? 'No purchase record for this date.'
                 : 'Tap a material from the catalog\nto add it to the purchase list.',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: WaffleTheme.textMuted, fontSize: 14),
+            style: const TextStyle(color: WOFLTheme.textMuted, fontSize: 14),
           ),
         ]),
       ),
@@ -501,11 +506,11 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   Widget _buildTotalBanner(MaterialsProvider provider) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: WaffleTheme.spacingM, vertical: WaffleTheme.spacingS),
+          horizontal: WOFLTheme.spacingM, vertical: WOFLTheme.spacingS),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: [
-          WaffleTheme.success.withValues(alpha: 0.12),
-          WaffleTheme.success.withValues(alpha: 0.05),
+          WOFLTheme.success.withValues(alpha: 0.12),
+          WOFLTheme.success.withValues(alpha: 0.05),
         ]),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(16),
@@ -513,7 +518,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         ),
         border: Border(
           top: BorderSide(
-              color: WaffleTheme.success.withValues(alpha: 0.3)),
+              color: WOFLTheme.success.withValues(alpha: 0.3)),
         ),
       ),
       child: Row(
@@ -521,12 +526,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         children: [
           Row(children: [
             const Icon(Icons.calculate_rounded,
-                color: WaffleTheme.success, size: 18),
+                color: WOFLTheme.success, size: 18),
             const SizedBox(width: 8),
             const Text(
               'Total Material Cost',
               style: TextStyle(
-                  color: WaffleTheme.success,
+                  color: WOFLTheme.success,
                   fontWeight: FontWeight.w700,
                   fontSize: 14),
             ),
@@ -534,13 +539,63 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           Text(
             '₹${provider.totalCost.toStringAsFixed(2)}',
             style: const TextStyle(
-              color: WaffleTheme.success,
+              color: WOFLTheme.success,
               fontWeight: FontWeight.w800,
               fontSize: 22,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLumpSumBar(BuildContext ctx, MaterialsProvider provider) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: WOFLTheme.WOFLGold.withValues(alpha: 0.07),
+        border: Border(
+          bottom: BorderSide(
+              color: WOFLTheme.WOFLGold.withValues(alpha: 0.25)),
+        ),
+      ),
+      child: Row(children: [
+        const Icon(Icons.receipt_long_rounded,
+            size: 14, color: WOFLTheme.textMuted),
+        const SizedBox(width: 6),
+        const Expanded(
+          child: Text(
+            'Log a flat-rate vendor bill without itemizing ingredients',
+            style: TextStyle(color: WOFLTheme.textMuted, fontSize: 11),
+          ),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: provider.addLumpSumItem,
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: WOFLTheme.WOFLGold.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                  color: WOFLTheme.WOFLGold.withValues(alpha: 0.5)),
+            ),
+            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.add_rounded,
+                  size: 13, color: WOFLTheme.WOFLGold),
+              SizedBox(width: 4),
+              Text(
+                '+ Add Total Bill',
+                style: TextStyle(
+                    color: WOFLTheme.WOFLGold,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700),
+              ),
+            ]),
+          ),
+        ),
+      ]),
     );
   }
 
@@ -551,20 +606,20 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   Widget _buildRightPanel(BuildContext ctx, MaterialsProvider provider) {
     return Container(
       decoration: BoxDecoration(
-        color: WaffleTheme.cardBackground,
+        color: WOFLTheme.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: WaffleTheme.border, width: 1.5),
-        boxShadow: WaffleTheme.cardShadow,
+        border: Border.all(color: WOFLTheme.border, width: 1.5),
+        boxShadow: WOFLTheme.cardShadow,
       ),
       child: Column(children: [
         _panelHeader(
           icon: Icons.category_rounded,
-          iconColor: WaffleTheme.secondary,
+          iconColor: WOFLTheme.secondary,
           title: 'Material Catalog',
           trailing: _addNewBtn(ctx, provider),
           gradientColors: [
-            WaffleTheme.secondary.withValues(alpha: 0.10),
-            WaffleTheme.waffleGold.withValues(alpha: 0.04),
+            WOFLTheme.secondary.withValues(alpha: 0.10),
+            WOFLTheme.WOFLGold.withValues(alpha: 0.04),
           ],
           isTop: true,
         ),
@@ -592,7 +647,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          gradient: WaffleTheme.primaryGradient,
+          gradient: WOFLTheme.primaryGradient,
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Row(mainAxisSize: MainAxisSize.min, children: [
@@ -618,9 +673,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         child: Container(
           padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
-            color: WaffleTheme.background,
+            color: WOFLTheme.background,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: WaffleTheme.border),
+            border: Border.all(color: WOFLTheme.border),
           ),
           child: Row(children: [
             // Icon
@@ -629,13 +684,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               height: 40,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  WaffleTheme.softOrange,
-                  WaffleTheme.secondary.withValues(alpha: 0.28),
+                  WOFLTheme.softOrange,
+                  WOFLTheme.secondary.withValues(alpha: 0.28),
                 ]),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.grain_rounded,
-                  color: WaffleTheme.textDark, size: 20),
+                  color: WOFLTheme.textDark, size: 20),
             ),
             const SizedBox(width: 10),
             // Name + price
@@ -645,24 +700,24 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   children: [
                     Text(material.name,
                         style: const TextStyle(
-                          color: WaffleTheme.textDark,
+                          color: WOFLTheme.textDark,
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         )),
                     Text(material.formattedPrice,
                         style: const TextStyle(
-                            color: WaffleTheme.textLight, fontSize: 11)),
+                            color: WOFLTheme.textLight, fontSize: 11)),
                   ]),
             ),
             // Micro-actions
             Row(mainAxisSize: MainAxisSize.min, children: [
-              _microAction(Icons.edit_rounded, WaffleTheme.primary, 'Edit',
+              _microAction(Icons.edit_rounded, WOFLTheme.primary, 'Edit',
                   () => _showMaterialDialog(ctx, provider, existing: material)),
               const SizedBox(width: 4),
-              _microAction(Icons.delete_rounded, WaffleTheme.error, 'Delete',
+              _microAction(Icons.delete_rounded, WOFLTheme.error, 'Delete',
                   () => _confirmDelete(ctx, provider, material)),
               const SizedBox(width: 4),
-              _microAction(Icons.add_rounded, WaffleTheme.success, 'Add to list',
+              _microAction(Icons.add_rounded, WOFLTheme.success, 'Add to list',
                   () => _onCatalogTap(ctx, provider, material)),
             ]),
           ]),
@@ -681,7 +736,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             SizedBox(width: 8),
             Text('Unlock editing to modify data.'),
           ]),
-          backgroundColor: WaffleTheme.textDark,
+          backgroundColor: WOFLTheme.textDark,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
           shape: RoundedRectangleBorder(
@@ -716,17 +771,17 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   Widget _buildCatalogEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(WaffleTheme.spacingXL),
+        padding: const EdgeInsets.all(WOFLTheme.spacingXL),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.inventory_2_outlined,
-                size: 52, color: WaffleTheme.border),
-            const SizedBox(height: WaffleTheme.spacingM),
+                size: 52, color: WOFLTheme.border),
+            const SizedBox(height: WOFLTheme.spacingM),
             const Text(
               'No materials in catalog yet.\nTap "Add New" to create one.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: WaffleTheme.textMuted, fontSize: 14),
+              style: TextStyle(color: WOFLTheme.textMuted, fontSize: 14),
             ),
           ],
         ),
@@ -748,7 +803,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: WaffleTheme.spacingM, vertical: 14),
+          horizontal: WOFLTheme.spacingM, vertical: 14),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: gradientColors),
         borderRadius: isTop
@@ -762,7 +817,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         const SizedBox(width: 8),
         Text(title,
             style: const TextStyle(
-                color: WaffleTheme.textDark,
+                color: WOFLTheme.textDark,
                 fontWeight: FontWeight.w700,
                 fontSize: 14)),
         const Spacer(),
@@ -788,14 +843,14 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     showDialog(
       context: ctx,
       builder: (dlgCtx) => AlertDialog(
-        backgroundColor: WaffleTheme.cardBackground,
+        backgroundColor: WOFLTheme.cardBackground,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              gradient: WaffleTheme.primaryGradient,
+              gradient: WOFLTheme.primaryGradient,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -867,7 +922,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               if (!ok && provider.error != null && ctx.mounted) {
                 ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                   content: Text(provider.error!),
-                  backgroundColor: WaffleTheme.error,
+                  backgroundColor: WOFLTheme.error,
                 ));
               }
             },
@@ -894,7 +949,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              const BorderSide(color: WaffleTheme.primary, width: 1.5),
+              const BorderSide(color: WOFLTheme.primary, width: 1.5),
         ),
         isDense: true,
       ),
@@ -906,7 +961,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     showDialog(
       context: ctx,
       builder: (dlgCtx) => AlertDialog(
-        backgroundColor: WaffleTheme.cardBackground,
+        backgroundColor: WOFLTheme.cardBackground,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Material?',
@@ -919,7 +974,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: WaffleTheme.error,
+                backgroundColor: WOFLTheme.error,
                 foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(dlgCtx);
@@ -943,7 +998,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       content: Text(ok
           ? 'Purchase record saved successfully!'
           : provider.error ?? 'Save failed.'),
-      backgroundColor: ok ? WaffleTheme.success : WaffleTheme.error,
+      backgroundColor: ok ? WOFLTheme.success : WOFLTheme.error,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ));
@@ -972,7 +1027,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text('WAFFLE DAY',
+                  pw.Text('WOFL DAY',
                       style: pw.TextStyle(
                           color: PdfColors.white,
                           fontSize: 20,
@@ -1068,7 +1123,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
     await Printing.layoutPdf(
       onLayout: (_) async => doc.save(),
-      name: 'waffle_materials_${_fmtApi(provider.selectedDate)}.pdf',
+      name: 'WOFL_materials_${_fmtApi(provider.selectedDate)}.pdf',
     );
   }
 
@@ -1099,6 +1154,8 @@ class _PurchaseGridRow extends StatefulWidget {
   final bool isLocked;
   final void Function(int index, double qty) onQtyChanged;
   final void Function(int index) onRemove;
+  final void Function(int index, double price)? onLumpSumPriceChanged;
+  final void Function(int index, String name)? onLumpSumNameChanged;
 
   const _PurchaseGridRow({
     required this.index,
@@ -1107,6 +1164,8 @@ class _PurchaseGridRow extends StatefulWidget {
     required this.isLocked,
     required this.onQtyChanged,
     required this.onRemove,
+    this.onLumpSumPriceChanged,
+    this.onLumpSumNameChanged,
   });
 
   @override
@@ -1115,6 +1174,8 @@ class _PurchaseGridRow extends StatefulWidget {
 
 class _PurchaseGridRowState extends State<_PurchaseGridRow> {
   late TextEditingController _ctrl;
+  TextEditingController? _priceCtrl;
+  TextEditingController? _nameCtrl;
 
   String _fmt(double qty) => qty == qty.truncateToDouble()
       ? qty.toStringAsFixed(0)
@@ -1124,6 +1185,12 @@ class _PurchaseGridRowState extends State<_PurchaseGridRow> {
   void initState() {
     super.initState();
     _ctrl = TextEditingController(text: _fmt(widget.quantity));
+    if (widget.item.isLumpSum) {
+      final initPrice = widget.item.basePrice;
+      _priceCtrl = TextEditingController(
+          text: initPrice > 0 ? initPrice.toStringAsFixed(2) : '');
+      _nameCtrl = TextEditingController(text: widget.item.materialName);
+    }
   }
 
   @override
@@ -1145,6 +1212,8 @@ class _PurchaseGridRowState extends State<_PurchaseGridRow> {
   @override
   void dispose() {
     _ctrl.dispose();
+    _priceCtrl?.dispose();
+    _nameCtrl?.dispose();
     super.dispose();
   }
 
@@ -1155,9 +1224,11 @@ class _PurchaseGridRowState extends State<_PurchaseGridRow> {
     final idx = widget.index;
 
     return Container(
-      color: idx.isOdd
-          ? WaffleTheme.background.withValues(alpha: 0.45)
-          : Colors.transparent,
+      color: item.isLumpSum
+          ? WOFLTheme.WOFLGold.withValues(alpha: 0.06)
+          : (idx.isOdd
+              ? WOFLTheme.background.withValues(alpha: 0.45)
+              : Colors.transparent),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       child: Row(children: [
         // S.No
@@ -1166,38 +1237,148 @@ class _PurchaseGridRowState extends State<_PurchaseGridRow> {
           child: Text('${idx + 1}',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  color: WaffleTheme.textLight,
+                  color: WOFLTheme.textLight,
                   fontSize: 12,
                   fontWeight: FontWeight.w600)),
         ),
-        // Name
+        // Name — editable TextFormField for lump-sum in edit mode
         Expanded(
           flex: 4,
-          child: Text(item.materialName,
-              style: const TextStyle(
-                  color: WaffleTheme.textDark,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600)),
+          child: (item.isLumpSum && !locked)
+              ? TextFormField(
+                  controller: _nameCtrl,
+                  style: const TextStyle(
+                      color: WOFLTheme.textDark,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    hintText: 'Bill description...',
+                    hintStyle: const TextStyle(
+                        color: WOFLTheme.textMuted, fontSize: 11),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide:
+                            const BorderSide(color: WOFLTheme.border)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                            color: WOFLTheme.WOFLGold, width: 1.5)),
+                    isDense: true,
+                  ),
+                  onChanged: (val) =>
+                      widget.onLumpSumNameChanged?.call(widget.index, val),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(item.materialName,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: WOFLTheme.textDark,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600)),
+                    ),
+                    if (item.isLumpSum) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: WOFLTheme.WOFLGold
+                              .withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                              color: WOFLTheme.WOFLGold
+                                  .withValues(alpha: 0.40)),
+                        ),
+                        child: const Text('BILL',
+                            style: TextStyle(
+                                color: WOFLTheme.WOFLGold,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5)),
+                      ),
+                    ],
+                  ],
+                ),
         ),
-        // Base Price
+        // Base Price — numeric input for lump-sum in edit mode
         Expanded(
           flex: 2,
-          child: Text(item.formattedBasePrice,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  color: WaffleTheme.textDark, fontSize: 12)),
-        ),
-        // Quantity (interactive or read-only)
-        Expanded(
-          flex: locked ? 2 : 3,
-          child: locked
-              ? Text(item.displayQty,
+          child: (item.isLumpSum && !locked)
+              ? TextFormField(
+                  controller: _priceCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      color: WaffleTheme.textDark,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600))
-              : _buildQtyInput(idx),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: WOFLTheme.WOFLGold),
+                  decoration: InputDecoration(
+                    prefixText: '₹',
+                    prefixStyle: const TextStyle(
+                        color: WOFLTheme.WOFLGold, fontSize: 12),
+                    hintText: '0.00',
+                    hintStyle: const TextStyle(
+                        color: WOFLTheme.textMuted, fontSize: 11),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide:
+                            const BorderSide(color: WOFLTheme.border)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                            color: WOFLTheme.WOFLGold, width: 1.5)),
+                    isDense: true,
+                  ),
+                  onChanged: (val) {
+                    final p = double.tryParse(val);
+                    if (p != null) {
+                      widget.onLumpSumPriceChanged?.call(widget.index, p);
+                    }
+                  },
+                )
+              : Text(item.formattedBasePrice,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: WOFLTheme.textDark, fontSize: 12)),
+        ),
+        // Quantity — locked chip for lump-sum, stepper/text otherwise
+        Expanded(
+          flex: locked ? 2 : 3,
+          child: item.isLumpSum
+              ? Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: WOFLTheme.border.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      '× 1',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: WOFLTheme.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                )
+              : locked
+                  ? Text(item.displayQty,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: WOFLTheme.textDark,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600))
+                  : _buildQtyInput(idx),
         ),
         // Subtotal
         Expanded(
@@ -1205,7 +1386,7 @@ class _PurchaseGridRowState extends State<_PurchaseGridRow> {
           child: Text(item.formattedSubtotal,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  color: WaffleTheme.success,
+                  color: WOFLTheme.success,
                   fontSize: 13,
                   fontWeight: FontWeight.w700)),
         ),
@@ -1217,7 +1398,7 @@ class _PurchaseGridRowState extends State<_PurchaseGridRow> {
               child: IconButton(
                 onPressed: () => widget.onRemove(idx),
                 icon: const Icon(Icons.delete_rounded,
-                    color: WaffleTheme.error, size: 18),
+                    color: WOFLTheme.error, size: 18),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 tooltip: 'Remove',
@@ -1258,12 +1439,12 @@ class _PurchaseGridRowState extends State<_PurchaseGridRow> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide:
-                  const BorderSide(color: WaffleTheme.border),
+                  const BorderSide(color: WOFLTheme.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(
-                  color: WaffleTheme.primary, width: 1.5),
+                  color: WOFLTheme.primary, width: 1.5),
             ),
             isDense: true,
           ),
@@ -1288,12 +1469,12 @@ class _PurchaseGridRowState extends State<_PurchaseGridRow> {
         width: 26,
         height: 26,
         decoration: BoxDecoration(
-          color: WaffleTheme.primary.withValues(alpha: 0.10),
+          color: WOFLTheme.primary.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(7),
           border: Border.all(
-              color: WaffleTheme.primary.withValues(alpha: 0.30)),
+              color: WOFLTheme.primary.withValues(alpha: 0.30)),
         ),
-        child: Icon(icon, size: 14, color: WaffleTheme.primary),
+        child: Icon(icon, size: 14, color: WOFLTheme.primary),
       ),
     );
   }

@@ -82,14 +82,14 @@ flutter run -d chrome
 # Django Model
 {
     "ID": 1,
-    "Name": "Classic Waffles"
+    "Name": "Classic WOFLs"
 }
 ```
 ```dart
 // Flutter Model
 Category(
     id: "1",
-    name: "Classic Waffles",
+    name: "Classic WOFLs",
     icon: "restaurant", // Auto-mapped based on name
     productCount: 0,    // Calculated separately
     createdAt: DateTime.now(),

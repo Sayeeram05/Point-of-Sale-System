@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/base_api_service.dart';
 import 'orders_screen.dart';
 
-// Exact same design tokens as woffle_menu_page.dart
+// Exact same design tokens as WOFL_menu_page.dart
 class _C {
   static const primary          = Color(0xFFFF8C00);
   static const primaryLight     = Color(0xFFFFF3E0);
@@ -47,7 +47,7 @@ class _EditOrderScreenState extends State<EditOrderScreen>
   double _totalPrice = 0.0;
   int _totalPieces = 0;
 
-  // Controllers — same as woffle_menu_page
+  // Controllers — same as WOFL_menu_page
   late AnimationController _fabAnimController;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -649,7 +649,7 @@ class _EditOrderScreenState extends State<EditOrderScreen>
     );
   }
 
-  // ─── Product card — exact match of woffle_menu_page ──────────────────────
+  // ─── Product card — exact match of WOFL_menu_page ──────────────────────
 
   Widget _buildProductCard(Map<String, dynamic> product) {
     final name = product['Name']?.toString() ?? '—';
@@ -978,7 +978,7 @@ class _CartEntry {
   }) : qty = quantity;
 }
 
-// ─── Complete Order Dialog — exact replica of woffle_order_detail_dialog ─────
+// ─── Complete Order Dialog — exact replica of WOFL_order_detail_dialog ─────
 
 class _CompleteOrderDialog extends StatefulWidget {
   final String orderId;

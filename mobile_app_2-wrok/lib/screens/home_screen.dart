@@ -150,7 +150,7 @@ class _HomePageState extends State<HomePage> {
 
     final key = name.toLowerCase();
 
-    if (key.contains('waffle')) {
+    if (key.contains('WOFL')) {
 
       return Icons.emoji_food_beverage_rounded;
 
@@ -316,7 +316,7 @@ class _HomePageState extends State<HomePage> {
 
                       Text(
 
-                        'Let’s have a waffle!',
+                        'Let’s have a WOFL!',
 
                         style: TextStyle(
 
@@ -420,7 +420,7 @@ class _HomePageState extends State<HomePage> {
 
                       decoration: InputDecoration(
 
-                        hintText: 'Search waffles, drinks...',
+                        hintText: 'Search WOFLs, drinks...',
 
                         border: InputBorder.none,
 
@@ -510,7 +510,7 @@ class _HomePageState extends State<HomePage> {
 
                 Text(
 
-                  'Popular Waffles',
+                  'Popular WOFLs',
 
                   style: TextStyle(
 

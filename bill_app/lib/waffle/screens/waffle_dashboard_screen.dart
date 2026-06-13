@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import '../providers/waffle_provider.dart';
-import '../services/waffle_order_service.dart';
-import '../themes/waffle_theme.dart';
-import '../widgets/waffle_summary_card.dart';
-import '../widgets/waffle_order_card.dart';
-import 'waffle_order_screen.dart';
-import 'waffle_order_details_screen.dart'; 
+import '../providers/WOFL_provider.dart';
+import '../services/WOFL_order_service.dart';
+import '../themes/WOFL_theme.dart';
+import '../widgets/WOFL_summary_card.dart';
+import '../widgets/WOFL_order_card.dart';
+import 'WOFL_order_screen.dart';
+import 'WOFL_order_details_screen.dart'; 
 
-class WaffleDashboardScreen extends StatefulWidget {
-  const WaffleDashboardScreen({super.key});
+class WOFLDashboardScreen extends StatefulWidget {
+  const WOFLDashboardScreen({super.key});
 
   @override
-  State<WaffleDashboardScreen> createState() => _WaffleDashboardScreenState();
+  State<WOFLDashboardScreen> createState() => _WOFLDashboardScreenState();
 }
 
-class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
-  final WaffleProvider _provider = WaffleProvider();
-  final WaffleOrderService _orderService = WaffleOrderService();
+class _WOFLDashboardScreenState extends State<WOFLDashboardScreen> {
+  final WOFLProvider _provider = WOFLProvider();
+  final WOFLOrderService _orderService = WOFLOrderService();
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
       if (!mounted) return;
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => WaffleOrderScreen(orderId: order.id)),
+        MaterialPageRoute(builder: (_) => WOFLOrderScreen(orderId: order.id)),
       );
       await _provider.loadDashboard(forceRefresh: true);
     } catch (e) {
@@ -57,7 +57,7 @@ class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
         Row(
           children: [
             Expanded(
-              child: WaffleSummaryCard(
+              child: WOFLSummaryCard(
                 title: 'Orders',
                 value: summary.totalOrders.toString(),
                 icon: Icons.list_alt,
@@ -65,7 +65,7 @@ class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: WaffleSummaryCard(
+              child: WOFLSummaryCard(
                 title: 'Sales',
                 value: '₹${summary.totalAmount.toStringAsFixed(2)}',
                 icon: Icons.trending_up,
@@ -77,7 +77,7 @@ class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
         Row(
           children: [
             Expanded(
-              child: WaffleSummaryCard(
+              child: WOFLSummaryCard(
                 title: 'UPI',
                 value: '₹${summary.totalUpi.toStringAsFixed(2)}',
                 icon: Icons.qr_code,
@@ -85,7 +85,7 @@ class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: WaffleSummaryCard(
+              child: WOFLSummaryCard(
                 title: 'Cash',
                 value: '₹${summary.totalCash.toStringAsFixed(2)}',
                 icon: Icons.currency_rupee,
@@ -110,20 +110,20 @@ class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
               margin: EdgeInsets.only(right: index < labels.length - 1 ? 8 : 0),
               decoration: BoxDecoration(
                 color: selected
-                    ? WaffleTheme.primaryColor
-                    : WaffleTheme.cardColor,
+                    ? WOFLTheme.primaryColor
+                    : WOFLTheme.cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: selected
-                      ? WaffleTheme.primaryColor
-                      : WaffleTheme.borderColor,
+                      ? WOFLTheme.primaryColor
+                      : WOFLTheme.borderColor,
                 ),
               ),
               child: Center(
                 child: Text(
                   labels[index],
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: selected ? Colors.white : WaffleTheme.textPrimary,
+                    color: selected ? Colors.white : WOFLTheme.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -140,7 +140,7 @@ class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
     if (orders.isEmpty) {
       return Center(
         child: Text(
-          'No waffle orders yet. Tap + to start a new order.',
+          'No WOFL orders yet. Tap + to start a new order.',
           style: Theme.of(context).textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
@@ -151,14 +151,14 @@ class _WaffleDashboardScreenState extends State<WaffleDashboardScreen> {
           .map(
             (order) => Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
-              child: WaffleOrderCard(
+              child: WOFLOrderCard(
                 order: order,
                 onTap: () async {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) =>
-                          WaffleOrderDetailsScreen(orderId: order.id),
+                          WOFLOrderDetailsScreen(orderId: order.id),
                     ),
                   );
                   await _provider.loadDashboard(forceRefresh: true);

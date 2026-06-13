@@ -1,4 +1,4 @@
-// Waffle Shop Admin UI - Screens
+// WOFL Shop Admin UI - Screens
 // Export all screen widgets for easy importing
 
 export 'home_screen.dart';

@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../constants/waffle_constants.dart';
-import '../models/waffle_product_model.dart';
-import '../models/waffle_order_model.dart';
-import '../models/waffle_sales_model.dart';
+import '../constants/WOFL_constants.dart';
+import '../models/WOFL_product_model.dart';
+import '../models/WOFL_order_model.dart';
+import '../models/WOFL_sales_model.dart';
 
-class WaffleApiService {
+class WOFLApiService {
   static String _baseUrl = 'http://127.0.0.1:8000';
   static final http.Client _client = http.Client();
   static const Map<String, String> _headers = {
@@ -33,25 +33,25 @@ class WaffleApiService {
     return '$defaultMessage (${response.statusCode})';
   }
 
-  static Future<List<WaffleCategory>> getCategories() async {
-    final uri = Uri.parse('$_root/${WaffleConstants.categoryEndpoint}/');
+  static Future<List<WOFLCategory>> getCategories() async {
+    final uri = Uri.parse('$_root/${WOFLConstants.categoryEndpoint}/');
     final response = await _client
         .get(uri, headers: _headers)
         .timeout(_timeout);
     if (response.statusCode == 200) {
       final jsonBody = json.decode(response.body) as List<dynamic>;
       return jsonBody
-          .map((item) => WaffleCategory.fromJson(item as Map<String, dynamic>))
+          .map((item) => WOFLCategory.fromJson(item as Map<String, dynamic>))
           .toList();
     }
     throw Exception(_extractError(response, 'Failed to load categories'));
   }
 
-  static Future<List<WaffleProduct>> getProductsByCategory(
+  static Future<List<WOFLProduct>> getProductsByCategory(
     int categoryId,
   ) async {
     final uri = Uri.parse(
-      '$_root/${WaffleConstants.productsEndpoint}/category/$categoryId/',
+      '$_root/${WOFLConstants.productsEndpoint}/category/$categoryId/',
     );
     final response = await _client
         .get(uri, headers: _headers)
@@ -59,30 +59,30 @@ class WaffleApiService {
     if (response.statusCode == 200) {
       final jsonBody = json.decode(response.body) as List<dynamic>;
       return jsonBody
-          .map((item) => WaffleProduct.fromJson(item as Map<String, dynamic>))
+          .map((item) => WOFLProduct.fromJson(item as Map<String, dynamic>))
           .where((product) => !product.deleted)
           .toList();
     }
     throw Exception(_extractError(response, 'Failed to load products'));
   }
 
-  static Future<List<WaffleProduct>> getAllProducts() async {
-    final uri = Uri.parse('$_root/${WaffleConstants.productsEndpoint}/');
+  static Future<List<WOFLProduct>> getAllProducts() async {
+    final uri = Uri.parse('$_root/${WOFLConstants.productsEndpoint}/');
     final response = await _client
         .get(uri, headers: _headers)
         .timeout(_timeout);
     if (response.statusCode == 200) {
       final jsonBody = json.decode(response.body) as List<dynamic>;
       return jsonBody
-          .map((item) => WaffleProduct.fromJson(item as Map<String, dynamic>))
+          .map((item) => WOFLProduct.fromJson(item as Map<String, dynamic>))
           .where((product) => !product.deleted)
           .toList();
     }
     throw Exception(_extractError(response, 'Failed to load products'));
   }
 
-  static Future<WaffleOrder> createOrder() async {
-    final uri = Uri.parse('$_root/${WaffleConstants.ordersEndpoint}/create/');
+  static Future<WOFLOrder> createOrder() async {
+    final uri = Uri.parse('$_root/${WOFLConstants.ordersEndpoint}/create/');
     final response = await _client
         .post(
           uri,
@@ -97,32 +97,32 @@ class WaffleApiService {
         .timeout(_timeout);
 
     if (response.statusCode == 201 || response.statusCode == 200) {
-      return WaffleOrder.fromJson(
+      return WOFLOrder.fromJson(
         json.decode(response.body) as Map<String, dynamic>,
       );
     }
     throw Exception(_extractError(response, 'Failed to create order'));
   }
 
-  static Future<WaffleOrder> getOrder(int orderId) async {
-    final uri = Uri.parse('$_root/${WaffleConstants.ordersEndpoint}/$orderId/');
+  static Future<WOFLOrder> getOrder(int orderId) async {
+    final uri = Uri.parse('$_root/${WOFLConstants.ordersEndpoint}/$orderId/');
     final response = await _client
         .get(uri, headers: _headers)
         .timeout(_timeout);
     if (response.statusCode == 200) {
-      return WaffleOrder.fromJson(
+      return WOFLOrder.fromJson(
         json.decode(response.body) as Map<String, dynamic>,
       );
     }
     throw Exception(_extractError(response, 'Failed to load order'));
   }
 
-  static Future<WaffleOrder> updateOrderItems(
+  static Future<WOFLOrder> updateOrderItems(
     int orderId,
-    List<WaffleOrderItem> items,
+    List<WOFLOrderItem> items,
   ) async {
     final uri = Uri.parse(
-      '$_root/${WaffleConstants.ordersEndpoint}/$orderId/update/',
+      '$_root/${WOFLConstants.ordersEndpoint}/$orderId/update/',
     );
     final body = {
       'TotalQuantity': items.fold<int>(0, (sum, item) => sum + item.quantity),
@@ -135,43 +135,43 @@ class WaffleApiService {
         .put(uri, headers: _headers, body: json.encode(body))
         .timeout(_timeout);
     if (response.statusCode == 200) {
-      return WaffleOrder.fromJson(
+      return WOFLOrder.fromJson(
         json.decode(response.body) as Map<String, dynamic>,
       );
     }
     throw Exception(_extractError(response, 'Failed to update order'));
   }
 
-  static Future<WaffleOrder> completeOrder(
+  static Future<WOFLOrder> completeOrder(
     int orderId, {
     double cash = 0,
     double upi = 0,
   }) async {
     final uri = Uri.parse(
-      '$_root/${WaffleConstants.ordersEndpoint}/$orderId/patch/',
+      '$_root/${WOFLConstants.ordersEndpoint}/$orderId/patch/',
     );
     final body = {'Completed': true, 'CashAmount': cash, 'UpiAmount': upi};
     final response = await _client
         .patch(uri, headers: _headers, body: json.encode(body))
         .timeout(_timeout);
     if (response.statusCode == 200) {
-      return WaffleOrder.fromJson(
+      return WOFLOrder.fromJson(
         json.decode(response.body) as Map<String, dynamic>,
       );
     }
     throw Exception(_extractError(response, 'Failed to complete order'));
   }
 
-  static Future<WaffleOrder> markOrderIncomplete(int orderId) async {
+  static Future<WOFLOrder> markOrderIncomplete(int orderId) async {
     final uri = Uri.parse(
-      '$_root/${WaffleConstants.ordersEndpoint}/$orderId/patch/',
+      '$_root/${WOFLConstants.ordersEndpoint}/$orderId/patch/',
     );
     final body = {'Completed': false, 'CashAmount': 0, 'UpiAmount': 0};
     final response = await _client
         .patch(uri, headers: _headers, body: json.encode(body))
         .timeout(_timeout);
     if (response.statusCode == 200) {
-      return WaffleOrder.fromJson(
+      return WOFLOrder.fromJson(
         json.decode(response.body) as Map<String, dynamic>,
       );
     }
@@ -180,7 +180,7 @@ class WaffleApiService {
 
   static Future<void> deleteOrder(int orderId) async {
     final uri = Uri.parse(
-      '$_root/${WaffleConstants.ordersEndpoint}/$orderId/delete/',
+      '$_root/${WOFLConstants.ordersEndpoint}/$orderId/delete/',
     );
     final response = await _client
         .delete(uri, headers: _headers)
@@ -191,20 +191,20 @@ class WaffleApiService {
     throw Exception(_extractError(response, 'Failed to delete order'));
   }
 
-  static Future<WaffleSalesSummary> getDailySummary({
+  static Future<WOFLSalesSummary> getDailySummary({
     String date = 'today',
   }) async {
     final uri = Uri.parse(
-      '$_root/${WaffleConstants.ordersEndpoint}/?date=$date',
+      '$_root/${WOFLConstants.ordersEndpoint}/?date=$date',
     );
     final response = await _client
         .get(uri, headers: _headers)
         .timeout(_timeout);
     if (response.statusCode == 200) {
-      return WaffleSalesSummary.fromJson(
+      return WOFLSalesSummary.fromJson(
         json.decode(response.body) as Map<String, dynamic>,
       );
     }
-    throw Exception(_extractError(response, 'Failed to load waffle summary'));
+    throw Exception(_extractError(response, 'Failed to load WOFL summary'));
   }
 }

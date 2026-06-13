@@ -100,6 +100,7 @@ class MaterialsProvider extends ChangeNotifier {
                   materialName: item.materialName,
                   basePrice: item.basePriceSnapshot,
                   quantity: item.quantity,
+                  isLumpSum: item.rawMaterialId == null,
                 ))
             .toList();
         _totalCost = record.totalCost;
@@ -169,6 +170,52 @@ class MaterialsProvider extends ChangeNotifier {
     }
   }
 
+  void addLumpSumItem() {
+    if (_isLocked) return;
+    final now = DateTime.now();
+    final h = now.hour;
+    final m = now.minute.toString().padLeft(2, '0');
+    final period = h >= 12 ? 'PM' : 'AM';
+    final h12 = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    _purchaseItems.add(PurchaseLineItem(
+      rawMaterialId: null,
+      materialName: 'Vendor Bill — $h12:$m $period',
+      basePrice: 0.0,
+      quantity: 1.0,
+      isLumpSum: true,
+    ));
+    _recalcTotal();
+    notifyListeners();
+  }
+
+  void updateLumpSumPrice(int index, double price) {
+    if (index < 0 || index >= _purchaseItems.length) return;
+    final old = _purchaseItems[index];
+    if (!old.isLumpSum) return;
+    _purchaseItems[index] = PurchaseLineItem(
+      rawMaterialId: null,
+      materialName: old.materialName,
+      basePrice: price,
+      quantity: 1.0,
+      isLumpSum: true,
+    );
+    _recalcTotal();
+    notifyListeners();
+  }
+
+  void updateLumpSumName(int index, String name) {
+    if (index < 0 || index >= _purchaseItems.length) return;
+    final old = _purchaseItems[index];
+    if (!old.isLumpSum) return;
+    _purchaseItems[index] = PurchaseLineItem(
+      rawMaterialId: null,
+      materialName: name,
+      basePrice: old.basePrice,
+      quantity: 1.0,
+      isLumpSum: true,
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Persistence
   // ---------------------------------------------------------------------------
@@ -179,6 +226,31 @@ class MaterialsProvider extends ChangeNotifier {
     _isSaving = true;
     _error = null;
     notifyListeners();
+
+    // Pre-flight sanitization for lump-sum items
+    int billCount = 0;
+    for (int i = 0; i < _purchaseItems.length; i++) {
+      final item = _purchaseItems[i];
+      if (!item.isLumpSum) continue;
+      billCount++;
+      if (item.basePrice <= 0) {
+        final label =
+            item.materialName.trim().isEmpty ? 'Bill #$billCount' : item.materialName;
+        _error = 'Bill amount for "$label" must be greater than ₹0.';
+        _isSaving = false;
+        notifyListeners();
+        return false;
+      }
+      if (item.materialName.trim().isEmpty) {
+        _purchaseItems[i] = PurchaseLineItem(
+          rawMaterialId: null,
+          materialName: 'Bill #$billCount',
+          basePrice: item.basePrice,
+          quantity: 1.0,
+          isLumpSum: true,
+        );
+      }
+    }
 
     try {
       final record = await MaterialsService.savePurchaseRecord(

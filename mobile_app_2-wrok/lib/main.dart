@@ -148,7 +148,7 @@ class _IpGateState extends State<_IpGate> {
               autofocus: true,
               decoration: InputDecoration(
                 labelText: 'IP Address:Port',
-                hintText: '192.168.1.100:8000',
+                hintText: '192.168.1.100:8001',
                 prefixIcon: const Icon(Icons.dns),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -167,7 +167,7 @@ class _IpGateState extends State<_IpGate> {
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   const SnackBar(
                     content: Text(
-                      'Format must be IP:Port, e.g. 192.168.1.1:8000',
+                      'Format must be IP:Port, e.g. 192.168.1.1:8001',
                     ),
                   ),
                 );

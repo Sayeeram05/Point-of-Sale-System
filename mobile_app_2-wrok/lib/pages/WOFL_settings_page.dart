@@ -663,7 +663,7 @@ class _SettingsPageState extends State<SettingsPage>
                       keyboardType: TextInputType.url,
                       decoration: InputDecoration(
                         labelText: 'IP Address:Port',
-                        hintText: '192.168.1.100:8000',
+                        hintText: '192.168.1.100:8001',
                         prefixIcon: const Icon(Icons.language),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
